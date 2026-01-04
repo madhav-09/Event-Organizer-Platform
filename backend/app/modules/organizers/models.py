@@ -2,12 +2,11 @@ from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
 
-class Booking(BaseModel):
+class Organizer(BaseModel):
     id: Optional[str] = Field(None, alias="_id")
     user_id: str
-    event_id: str
-    ticket_id: str
-    quantity: int
-    total_amount: float
-    status: str = "PENDING"  # PENDING | CONFIRMED | CANCELLED
+    brand_name: str
+    description: str = ""
+    kyc_status: str = "PENDING"  # PENDING | APPROVED
+    bank_details: Optional[dict] = None
     created_at: datetime = datetime.utcnow()
