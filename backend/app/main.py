@@ -7,6 +7,7 @@ from app.modules.tickets.routes import router as ticket_router
 from app.modules.bookings.routes import router as booking_router
 from app.modules.payments.routes import router as payment_router
 from app.modules.admin.routes import router as admin_router
+from app.modules.payments import webhook
 
 app = FastAPI(title=PROJECT_NAME)
 
@@ -22,3 +23,4 @@ app.include_router(ticket_router)
 app.include_router(booking_router)
 app.include_router(payment_router)
 app.include_router(admin_router)
+app.include_router(webhook.router, prefix="/payments")

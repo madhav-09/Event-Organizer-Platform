@@ -3,6 +3,8 @@ from bson import ObjectId
 from app.core.database import db
 from app.modules.bookings.models import Booking
 from app.common.utils.dependencies import get_current_user
+from app.modules.bookings.service import send_ticket_email
+from app.modules.tickets.service import create_ticket
 
 router = APIRouter(prefix="/bookings", tags=["bookings"])
 
@@ -33,6 +35,10 @@ async def create_booking(data: Booking, current_user=Depends(get_current_user(re
     )
 
     result = await db.bookings.insert_one(booking)
+    
+    ticket_path = create_ticket(booking)
+    send_ticket_email(booking["email"], ticket_path)
+    
     return {"message": "Booking created", "booking_id": str(result.inserted_id)}
 
 
@@ -66,3 +72,21 @@ async def cancel_booking(booking_id: str, current_user=Depends(get_current_user(
 
 
 
+@router.post("/confirm")
+def confirm_booking(order_id: str):
+    payment = db.payments.find_one({"order_id": order_id, "status": "SUCCESS"})
+
+    if not payment:
+        raise HTTPException(400, "Payment not completed")
+
+    db.bookings.insert_one({
+        "user_id": payment["user_id"],
+        "event_id": payment["event_id"],
+        "amount": payment["amount"],
+        "status": "CONFIRMED"
+    })
+
+    return {"message": "Booking confirmed"}
+
+
+    

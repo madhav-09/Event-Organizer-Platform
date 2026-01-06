@@ -51,3 +51,35 @@ async def list_tickets(event_id: str):
         t["_id"] = str(t["_id"])
         tickets.append(t)
     return tickets
+
+
+from app.modules.tickets.service import create_ticket
+
+@router.post("/verify")
+def verify_payment(data: dict):
+    booking = db.bookings.find_one({"_id": ObjectId(data["booking_id"])})
+    
+    db.bookings.update_one(
+        {"_id": booking["_id"]},
+        {"$set": {"status": "CONFIRMED"}}
+    )
+
+    ticket_path = create_ticket(booking)
+
+    return {
+        "message": "Booking confirmed",
+        "ticket": ticket_path
+    }
+
+
+
+@router.post("/scan")
+def scan_ticket(code: str):
+    booking = db.bookings.find_one({"_id": ObjectId(code)})
+
+    if not booking or booking["status"] != "CONFIRMED":
+        return {"valid": False}
+
+    return {"valid": True}
+
+

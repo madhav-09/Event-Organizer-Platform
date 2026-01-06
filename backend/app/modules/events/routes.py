@@ -4,6 +4,8 @@ from app.common.utils.dependencies import get_current_user
 from app.core.database import db
 from app.modules.events.models import Event
 from bson import ObjectId
+from bson import ObjectId
+from bson.errors import InvalidId
 
 router = APIRouter(prefix="/events", tags=["events"])
 
@@ -36,24 +38,42 @@ async def delete_event(event_id: str, current_user=Depends(get_current_user(requ
 @router.get("/", response_model=List[Event])
 async def list_events(city: str = None, category: str = None, date: str = None):
     query = {}
+
     if city:
         query["city"] = city
     if category:
         query["category"] = category
     if date:
         query["start_date"] = {"$lte": date}
+
     events_cursor = db.events.find(query)
     events = []
+
     async for e in events_cursor:
         e["_id"] = str(e["_id"])
+
+        if "organizer_id" in e:
+            e["organizer_id"] = str(e["organizer_id"])
+
         events.append(e)
+
     return events
 
-# Get Event Details
+
 @router.get("/{event_id}")
 async def get_event(event_id: str):
-    event = await db.events.find_one({"_id": ObjectId(event_id)})
+    try:
+        obj_id = ObjectId(event_id)
+    except InvalidId:
+        raise HTTPException(status_code=400, detail="Invalid event id")
+
+    event = await db.events.find_one({"_id": obj_id})
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
+
     event["_id"] = str(event["_id"])
+
+    if "organizer_id" in event:
+        event["organizer_id"] = str(event["organizer_id"])
+
     return event

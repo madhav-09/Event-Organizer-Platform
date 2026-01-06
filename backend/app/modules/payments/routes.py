@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from bson import ObjectId
 from app.core.database import db
 from app.core.payment import client
-
+from typing import Optional
 router = APIRouter(prefix="/payments", tags=["payments"])
 
 @router.post("/create-order/{booking_id}")
@@ -57,3 +57,39 @@ async def verify_payment(payload: dict):
     )
 
     return {"message": "Payment verified, booking confirmed"}
+
+
+@router.post("/refund")
+def refund_payment(
+    payment_id: str,
+    amount: Optional[int] = None
+):
+    try:
+        refund = client.payment.refund(payment_id, {
+            "amount": amount
+        } if amount else None)
+
+        db.refunds.insert_one({
+            "payment_id": payment_id,
+            "refund_id": refund["id"],
+            "amount": refund["amount"],
+            "status": refund["status"]
+        })
+
+        return refund
+
+    except Exception as e:
+        raise HTTPException(400, str(e))
+    
+    
+@router.post("/verify")
+def verify_payment(data: dict):
+    db.bookings.update_one(
+        {"_id": ObjectId(data["booking_id"])},
+        {"$set": {
+            "payment_id": data["payment_id"],
+            "status": "CONFIRMED"
+        }}
+    )
+    return {"message": "Booking confirmed"}
+    

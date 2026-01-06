@@ -6,6 +6,8 @@ from fastapi import Body
 from app.common.utils.security import verify_password
 from app.common.utils.jwt import create_access_token
 import os
+from fastapi import Depends, HTTPException
+from fastapi.security import OAuth2PasswordRequestForm
 
 router = APIRouter(prefix="/users", tags=["users"])
 SECRET_KEY = os.getenv("SECRET_KEY")
@@ -26,9 +28,14 @@ async def register_user(user: User):
 
 
 
-
 @router.post("/login")
-async def login_user(email: str = Body(...), password: str = Body(...)):
+async def login_user(
+    form_data: OAuth2PasswordRequestForm = Depends()
+):
+    # OAuth2 uses "username" even if it's actually an email
+    email = form_data.username
+    password = form_data.password
+
     user = await db.users.find_one({"email": email})
     if not user:
         raise HTTPException(status_code=400, detail="Invalid credentials")
