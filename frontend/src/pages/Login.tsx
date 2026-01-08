@@ -91,7 +91,7 @@ export default function Login() {
         <div className="text-center mb-8">
           <div className="inline-block w-16 h-16 bg-white rounded-2xl flex items-center justify-center mb-4 shadow-xl">
             <span className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              T
+              SC
             </span>
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">

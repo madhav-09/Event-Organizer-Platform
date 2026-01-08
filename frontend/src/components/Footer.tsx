@@ -9,9 +9,9 @@ export default function Footer() {
           <div>
             <div className="flex items-center space-x-2 mb-4">
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xl">T</span>
+                <span className="text-white font-bold text-xl">SC</span>
               </div>
-              <span className="text-2xl font-bold text-white">Townscript</span>
+              <span className="text-2xl font-bold text-white">Swasthya Chetna</span>
             </div>
             <p className="text-gray-400 mb-4">
               Discover and book tickets for the best events happening near you.
