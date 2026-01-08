@@ -80,7 +80,7 @@ export default function Navbar() {
     {/* ADMIN QUICK LINK */}
     {user.role === "ADMIN" && (
       <Link
-        to="/admin"
+        to="/admin/events"
         className="px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg"
       >
         Admin Panel

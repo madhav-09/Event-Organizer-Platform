@@ -1,17 +1,16 @@
-import { Link } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
+import AdminEvents from "./Events";
+import Organizers from "./Organizers";
+import UsersList from "./UsersList";
 
-const AdminDashboard = () => {
+function AdminRoutes() {
   return (
-    <>
-      <h1>Admin Dashboard</h1>
-
-      <ul>
-        <li><Link to="/admin/organizers">Organizers</Link></li>
-        <li><Link to="/admin/events">Events</Link></li>
-        <li><Link to="/admin/analytics">Analytics</Link></li>
-      </ul>
-    </>
+    <Routes>
+      <Route path="/admin/events" element={<AdminEvents />} />
+      <Route path="/admin/organizers" element={<Organizers />} />
+      <Route path="/admin/users" element={<UsersList />} />
+    </Routes>
   );
-};
+}
 
-export default AdminDashboard;
+export default AdminRoutes;

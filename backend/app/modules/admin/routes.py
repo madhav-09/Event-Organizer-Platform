@@ -2,12 +2,42 @@ from fastapi import APIRouter, Depends, HTTPException
 from bson import ObjectId
 from app.core.database import db
 from app.common.utils.dependencies import get_current_user
+from app.modules.users.models import User
+from app.common.utils.security import get_current_admin
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
 def admin_only(user):
     if user["role"] != "ADMIN":
         raise HTTPException(status_code=403, detail="Admin only")
+
+
+@router.get("/organizers")
+async def get_organizers(
+    admin=Depends(get_current_user("ADMIN"))
+):
+    pipeline = [
+        {"$match": {"kyc_status": "PENDING"}},
+        {
+            "$lookup": {
+                "from": "users",
+                "localField": "user_id",
+                "foreignField": "_id",
+                "as": "user"
+            }
+        },
+        {"$unwind": "$user"}
+    ]
+
+    results = await db.organizers.aggregate(pipeline).to_list(None)
+
+    for r in results:
+        r["_id"] = str(r["_id"])
+        r["user_id"] = str(r["user_id"])
+        r["user"]["_id"] = str(r["user"]["_id"])
+
+    return results
+
 
 # Approve Organizer
 @router.put("/organizers/{organizer_id}/approve")
@@ -30,7 +60,25 @@ async def approve_organizer(organizer_id: str, current_user=Depends(get_current_
 
     return {"message": "Organizer approved"}
 
+@router.put("/organizers/{organizer_id}/reject")
+async def reject_organizer(
+    organizer_id: str,
+    current_user=Depends(get_current_user())
+):
+    admin_only(current_user)
 
+    organizer = await db.organizers.find_one(
+        {"_id": ObjectId(organizer_id)}
+    )
+    if not organizer:
+        raise HTTPException(status_code=404, detail="Organizer not found")
+
+    await db.organizers.update_one(
+        {"_id": ObjectId(organizer_id)},
+        {"$set": {"kyc_status": "REJECTED"}}
+    )
+
+    return {"message": "Organizer rejected"}
 
 
 
@@ -117,3 +165,30 @@ async def organizer_stats(current_user=Depends(get_current_user())):
     ]
 
     return await db.bookings.aggregate(pipeline).to_list(None)
+
+
+@router.get("/users")
+async def get_users(current_user=Depends(get_current_user("ADMIN"))):
+    """
+    Get all users with their organizer details (if any)
+    """
+    users_cursor = db.users.find({})
+    users_list = await users_cursor.to_list(None)
+
+    result = []
+    for user in users_list:
+        # Convert ObjectId to string
+        user["_id"] = str(user["_id"])
+        
+        # Find organizer details for this user (if exists)
+        organizer = await db.organizers.find_one({"user_id": ObjectId(user["_id"])})
+        if organizer:
+            organizer["_id"] = str(organizer["_id"])
+            organizer["user_id"] = str(organizer["user_id"])
+            user["organizer"] = organizer
+        else:
+            user["organizer"] = None
+
+        result.append(user)
+
+    return result

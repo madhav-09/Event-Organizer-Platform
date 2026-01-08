@@ -13,6 +13,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import Organizers from "./pages/admin/Organizers";
 import AdminEvents from "./pages/admin/Events";
 import Analytics from "./pages/admin/Analytics";
+import UsersList from "./pages/admin/UsersList";
 
 const App = () => {
   const { user } = useAuth();
@@ -50,6 +51,7 @@ const App = () => {
           </ProtectedRoute>
         }
       />
+       <Route path="/admin/users" element={<UsersList />} />
       <Route
         path="/admin/organizers"
         element={
