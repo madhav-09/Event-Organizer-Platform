@@ -8,7 +8,7 @@ import CreateEvent from "./pages/CreateEvent";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicLayout from "./layout/PublicLayout";
-
+import ApplyOrganizer from "./pages/ApplyOrganizer";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import Organizers from "./pages/admin/Organizers";
 import AdminEvents from "./pages/admin/Events";
@@ -41,6 +41,7 @@ const App = () => {
           }
         />
       </Route>
+            <Route path="/apply-organizer" element={<ApplyOrganizer />} />
 
       {/* Admin */}
       <Route

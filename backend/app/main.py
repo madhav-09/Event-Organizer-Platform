@@ -9,6 +9,11 @@ from app.modules.payments.routes import router as payment_router
 from app.modules.admin.routes import router as admin_router
 from app.modules.payments import webhook
 from fastapi.middleware.cors import CORSMiddleware
+import os
+from fastapi.staticfiles import StaticFiles
+import uuid
+import shutil
+from fastapi import FastAPI, UploadFile, File
 
 app = FastAPI(title=PROJECT_NAME)
 
@@ -36,3 +41,26 @@ app.include_router(booking_router)
 app.include_router(payment_router)
 app.include_router(admin_router)
 app.include_router(webhook.router, prefix="/payments")
+
+
+UPLOAD_DIR = "uploads/events"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+# Serve uploaded files
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
+
+@app.post("/upload")
+async def upload_image(file: UploadFile = File(...)):
+    if not file:
+        return {"url": ""}
+    file_ext = file.filename.split(".")[-1]
+    filename = f"{uuid.uuid4()}.{file_ext}"
+    file_path = os.path.join(UPLOAD_DIR, filename)
+
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+
+    return {
+        "url": f"/uploads/events/{filename}"
+    }

@@ -3,15 +3,17 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-const cities = [
-  "Bengaluru", "Delhi", "Mumbai", "Pune", "Hyderabad",
-  "Chennai", "Kolkata", "Ahmedabad", "Jaipur", "Chandigarh",
-];
+// const cities = [
+//   "Bengaluru", "Delhi", "Mumbai", "Pune", "Hyderabad",
+//   "Chennai", "Kolkata", "Ahmedabad", "Jaipur", "Chandigarh",
+// ];
 const roleStyles: Record<string, string> = {
   ADMIN: "bg-red-100 text-red-700",
   ORGANIZER: "bg-purple-100 text-purple-700",
   USER: "bg-blue-100 text-blue-700",
 };
+
+// import api from "../services/api";
 
 export default function Navbar() {
   const [selectedCity, setSelectedCity] = useState("Pune");
@@ -26,6 +28,31 @@ export default function Navbar() {
     navigate("/login");
   };
 
+const handleCreateEvent = () => {
+  // 1️⃣ User not logged in
+  if (!user) {
+    navigate("/login");
+    return;
+  }
+
+  // 2️⃣ Normal user → apply as organizer
+  if (user.role === "USER") {
+    navigate("/apply-organizer");
+    return;
+  }
+
+  // 3️⃣ Organizer or Admin → create event
+  navigate("/create-event");
+};
+
+  <button
+  onClick={handleCreateEvent}
+  className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg"
+>
+  Create Event
+</button>
+
+
   return (
     <nav className="bg-white shadow-sm sticky top-0 z-50 border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -34,10 +61,10 @@ export default function Navbar() {
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xl">T</span>
+              <span className="text-white font-bold text-xl">ST</span>
             </div>
             <span className="text-2xl font-bold text-gray-900 hidden sm:block">
-              Townscript
+              Swasthya Chetna
             </span>
           </Link>
 
@@ -52,12 +79,13 @@ export default function Navbar() {
               <span>{selectedCity}</span>
             </button>
 
-            <Link
-              to="/create-event"
-              className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg"
-            >
-              Create Event
-            </Link>
+<button
+  onClick={handleCreateEvent}
+  className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg"
+>
+  Create Event
+</button>
+
 
             {/* AUTH BUTTON */}
 {!user ? (
@@ -111,9 +139,13 @@ export default function Navbar() {
         {/* Mobile Menu */}
         {showMobileMenu && (
           <div className="md:hidden pb-4 space-y-2">
-            <Link to="/create-event" className="block px-4 py-2">
-              Create Event
-            </Link>
+<button
+  onClick={handleCreateEvent}
+  className="block w-full text-left px-4 py-2"
+>
+  Create Event
+</button>
+
 
             {!user ? (
   <Link to="/login" className="flex items-center px-4 py-2">

@@ -3,12 +3,15 @@ import { createContext, useContext, useState } from "react";
 export type Role = "ADMIN" | "USER" | "ORGANIZER";
 
 export type User = {
+  id: string;
+  name: string;
+  email: string;
   role: Role;
 };
 
 type LoginResponse = {
   access_token: string;
-  role: Role;
+  user: User;
 };
 
 type AuthContextType = {
@@ -21,19 +24,24 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(() => {
-    const role = localStorage.getItem("role");
-    return role ? { role: role as Role } : null;
+    try {
+      const stored = localStorage.getItem("user");
+      if (!stored || stored === "undefined") return null;
+      return JSON.parse(stored) as User;
+    } catch {
+      return null;
+    }
   });
 
   const login = (data: LoginResponse) => {
     localStorage.setItem("token", data.access_token);
-    localStorage.setItem("role", data.role);
-    setUser({ role: data.role });
+    localStorage.setItem("user", JSON.stringify(data.user));
+    setUser(data.user);
   };
 
   const logout = () => {
     localStorage.removeItem("token");
-    localStorage.removeItem("role");
+    localStorage.removeItem("user");
     setUser(null);
   };
 

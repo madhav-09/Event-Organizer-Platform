@@ -3,9 +3,6 @@ import type { InternalAxiosRequestConfig } from 'axios';
 
 const api = axios.create({
   baseURL: 'http://127.0.0.1:8000',
-  headers: {
-    'Content-Type': 'application/json',
-  },
 });
 
 api.interceptors.request.use(
@@ -23,3 +20,7 @@ api.interceptors.request.use(
 );
 
 export default api;
+
+
+export const createEvent = (payload: any) =>
+  api.post("/events/", payload);
