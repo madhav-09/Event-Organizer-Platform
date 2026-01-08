@@ -50,12 +50,20 @@ async def publish_event(event_id: str, current_user=Depends(get_current_user()))
 
 @router.get("/bookings")
 async def all_bookings(current_user=Depends(get_current_user())):
-    admin_only(current_user)
+    admin_only(current_user)  # Ensure only admins can access
 
     cursor = db.bookings.find()
     bookings = []
     async for b in cursor:
+        # Convert all ObjectId fields to string
         b["_id"] = str(b["_id"])
+        if "user_id" in b:
+            b["user_id"] = str(b["user_id"])
+        if "event_id" in b:
+            b["event_id"] = str(b["event_id"])
+        if "ticket_id" in b:
+            b["ticket_id"] = str(b["ticket_id"])
+
         bookings.append(b)
 
     return bookings

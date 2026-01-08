@@ -37,7 +37,10 @@ async def create_booking(data: Booking, current_user=Depends(get_current_user(re
     result = await db.bookings.insert_one(booking)
     
     ticket_path = create_ticket(booking)
-    send_ticket_email(booking["email"], ticket_path)
+    # user = await db.users.find_one({"_id": booking["user_id"]})
+    # send_ticket_email(user["email"], ticket_path)
+
+    # send_ticket_email(booking["email"], ticket_path)
     
     return {"message": "Booking created", "booking_id": str(result.inserted_id)}
 

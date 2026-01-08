@@ -1,37 +1,85 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Navbar from './components/Navbar';
-import Footer from './components/Footer';
-import Home from './pages/Home';
-import EventDetail from './pages/EventDetail';
-import Login from './pages/Login';
-import CreateEvent from './pages/CreateEvent';
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "./context/AuthContext";
 
-function App() {
+import Home from "./pages/Home";
+import EventDetail from "./pages/EventDetail";
+import Login from "./pages/Login";
+import CreateEvent from "./pages/CreateEvent";
+
+import ProtectedRoute from "./components/ProtectedRoute";
+import PublicLayout from "./layout/PublicLayout";
+
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import Organizers from "./pages/admin/Organizers";
+import AdminEvents from "./pages/admin/Events";
+import Analytics from "./pages/admin/Analytics";
+
+const App = () => {
+  const { user } = useAuth();
+
   return (
-    <Router>
-      <div className="min-h-screen flex flex-col">
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route
-            path="/*"
-            element={
-              <>
-                <Navbar />
-                <main className="flex-1">
-                  <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/event/:id" element={<EventDetail />} />
-                    <Route path="/create-event" element={<CreateEvent />} />
-                  </Routes>
-                </main>
-                <Footer />
-              </>
-            }
-          />
-        </Routes>
-      </div>
-    </Router>
+    <Routes>
+
+      {/* Login */}
+      <Route
+        path="/login"
+        element={user ? <Navigate to="/" /> : <Login />}
+      />
+
+      {/* Public */}
+      <Route element={<PublicLayout />}>
+        <Route path="/" element={<Home />} />
+        <Route path="/event/:id" element={<EventDetail />} />
+
+        <Route
+          path="/create-event"
+          element={
+            <ProtectedRoute>
+              <CreateEvent />
+            </ProtectedRoute>
+          }
+        />
+      </Route>
+
+      {/* Admin */}
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute role="ADMIN">
+            <AdminDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/organizers"
+        element={
+          <ProtectedRoute role="ADMIN">
+            <Organizers />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/events"
+        element={
+          <ProtectedRoute role="ADMIN">
+            <AdminEvents />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/analytics"
+        element={
+          <ProtectedRoute role="ADMIN">
+            <Analytics />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Fallback */}
+      <Route path="*" element={<Navigate to="/login" />} />
+
+    </Routes>
   );
-}
+};
 
 export default App;

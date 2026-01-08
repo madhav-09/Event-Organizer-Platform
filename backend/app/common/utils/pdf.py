@@ -1,7 +1,11 @@
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
+from reportlab.lib.utils import ImageReader
+import os
 
 def generate_ticket_pdf(booking, qr_buffer):
+    os.makedirs("tickets", exist_ok=True)
+
     file_path = f"tickets/{booking['_id']}.pdf"
     c = canvas.Canvas(file_path, pagesize=A4)
 
@@ -13,7 +17,10 @@ def generate_ticket_pdf(booking, qr_buffer):
     c.drawString(50, 740, f"User ID: {booking['user_id']}")
     c.drawString(50, 720, f"Quantity: {booking['quantity']}")
 
-    c.drawImage(qr_buffer, 50, 500, width=150, height=150)
+    qr_buffer.seek(0)  # 🔥 VERY IMPORTANT
+    qr_image = ImageReader(qr_buffer)
+
+    c.drawImage(qr_image, 50, 500, width=150, height=150)
 
     c.save()
     return file_path

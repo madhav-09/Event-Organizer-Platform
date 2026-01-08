@@ -3,6 +3,8 @@ from bson import ObjectId
 from app.core.database import db
 from app.core.payment import client
 from typing import Optional
+from app.core.payment import client as razorpay_client
+
 router = APIRouter(prefix="/payments", tags=["payments"])
 
 @router.post("/create-order/{booking_id}")
@@ -39,24 +41,29 @@ async def create_payment_order(booking_id: str):
 
 @router.post("/verify")
 async def verify_payment(payload: dict):
-    order_id = payload.get("order_id")
-    payment_id = payload.get("payment_id")
-
-    payment = await db.payments.find_one({"order_id": order_id})
-    if not payment:
-        raise HTTPException(status_code=404, detail="Payment not found")
+    try:
+        razorpay_client.utility.verify_payment_signature({
+            "razorpay_order_id": payload["order_id"],
+            "razorpay_payment_id": payload["payment_id"],
+            "razorpay_signature": payload["signature"],
+        })
+    except:
+        raise HTTPException(400, "Payment verification failed")
 
     await db.payments.update_one(
-        {"order_id": order_id},
-        {"$set": {"payment_id": payment_id, "status": "PAID"}}
+        {"order_id": payload["order_id"]},
+        {"$set": {
+            "payment_id": payload["payment_id"],
+            "status": "PAID"
+        }}
     )
 
     await db.bookings.update_one(
-        {"_id": ObjectId(payment["booking_id"])},
+        {"_id": ObjectId(payload["booking_id"])},
         {"$set": {"status": "CONFIRMED"}}
     )
 
-    return {"message": "Payment verified, booking confirmed"}
+    return {"message": "Payment verified"}
 
 
 @router.post("/refund")
@@ -92,4 +99,6 @@ def verify_payment(data: dict):
         }}
     )
     return {"message": "Booking confirmed"}
+    
+    
     

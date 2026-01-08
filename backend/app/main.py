@@ -8,9 +8,21 @@ from app.modules.bookings.routes import router as booking_router
 from app.modules.payments.routes import router as payment_router
 from app.modules.admin.routes import router as admin_router
 from app.modules.payments import webhook
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title=PROJECT_NAME)
 
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 @app.get("/health")
 async def health_check():
     return {"status": "OK"}

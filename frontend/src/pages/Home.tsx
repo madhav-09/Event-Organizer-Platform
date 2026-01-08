@@ -1,108 +1,91 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import axios from 'axios';
 import HeroSearch from '../components/HeroSearch';
 import CategoryFilter from '../components/Categoryfilter';
 import EventCard from '../components/EventCard';
 import CityGrid from '../components/CityGrid';
 import { TrendingUp, Calendar } from 'lucide-react';
 
-const mockEvents = [
-  {
-    id: '1',
-    title: 'Sunburn Arena ft. Alan Walker',
-    date: 'Sat, 15 Feb 2026',
-    time: '6:00 PM',
-    location: 'Phoenix Marketcity',
-    city: 'Pune',
-    price: '₹1,999',
-    image: 'https://images.pexels.com/photos/1763075/pexels-photo-1763075.jpeg',
-    category: 'Music',
-  },
-  {
-    id: '2',
-    title: 'Stand-Up Comedy Night with Kenny Sebastian',
-    date: 'Fri, 21 Feb 2026',
-    time: '8:00 PM',
-    location: 'The Comedy Theatre',
-    city: 'Bengaluru',
-    price: '₹499',
-    image: 'https://images.pexels.com/photos/2263410/pexels-photo-2263410.jpeg',
-    category: 'Comedy',
-  },
-  {
-    id: '3',
-    title: 'Digital Marketing Workshop 2026',
-    date: 'Sun, 23 Feb 2026',
-    time: '10:00 AM',
-    location: 'WeWork Prestige',
-    city: 'Mumbai',
-    price: '₹799',
-    image: 'https://images.pexels.com/photos/1181406/pexels-photo-1181406.jpeg',
-    category: 'Workshop',
-  },
-  {
-    id: '4',
-    title: 'India Tech Summit 2026',
-    date: 'Mon, 24 Feb 2026',
-    time: '9:00 AM',
-    location: 'Hyderabad Convention Center',
-    city: 'Hyderabad',
-    price: '₹2,999',
-    image: 'https://images.pexels.com/photos/2774556/pexels-photo-2774556.jpeg',
-    category: 'Conference',
-  },
-  {
-    id: '5',
-    title: 'NH7 Weekender Music Festival',
-    date: 'Sat, 1 Mar 2026',
-    time: '4:00 PM',
-    location: 'Mahalaxmi Race Course',
-    city: 'Mumbai',
-    price: '₹3,499',
-    image: 'https://images.pexels.com/photos/1105666/pexels-photo-1105666.jpeg',
-    category: 'Music',
-  },
-  {
-    id: '6',
-    title: 'Food & Wine Festival Delhi',
-    date: 'Sun, 2 Mar 2026',
-    time: '12:00 PM',
-    location: 'Jawaharlal Nehru Stadium',
-    city: 'Delhi',
-    price: '₹599',
-    image: 'https://images.pexels.com/photos/1640774/pexels-photo-1640774.jpeg',
-    category: 'Food',
-  },
-  {
-    id: '7',
-    title: 'Art Exhibition: Modern Perspectives',
-    date: 'Thu, 27 Feb 2026',
-    time: '11:00 AM',
-    location: 'National Gallery of Modern Art',
-    city: 'Bengaluru',
-    price: 'Free',
-    image: 'https://images.pexels.com/photos/1839919/pexels-photo-1839919.jpeg',
-    category: 'Art',
-  },
-  {
-    id: '8',
-    title: 'IPL 2026: Mumbai vs Bangalore',
-    date: 'Sat, 8 Mar 2026',
-    time: '7:30 PM',
-    location: 'Wankhede Stadium',
-    city: 'Mumbai',
-    price: '₹1,200',
-    image: 'https://images.pexels.com/photos/274422/pexels-photo-274422.jpeg',
-    category: 'Sports',
-  },
-];
+interface Ticket {
+  _id: string;
+  event_id: string;
+  title: string;
+  price: number;
+  quantity: number;
+  sold: number;
+  created_at: string;
+}
+
+interface Event {
+  _id: string;
+  organizer_id: string;
+  title: string;
+  description: string;
+  category: string;
+  type: string;
+  city: string;
+  venue: string;
+  start_date: string;
+  end_date: string;
+  banner_url: string;
+  status: string;
+  created_at: string;
+  tickets?: Ticket[];
+}
 
 export default function Home() {
+  const [events, setEvents] = useState<Event[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch events and their tickets
+  useEffect(() => {
+    const fetchEvents = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const res = await axios.get<Event[]>('http://127.0.0.1:8000/events/');
+        const eventsData = res.data;
+
+        const eventsWithTickets = await Promise.all(
+          eventsData.map(async (event) => {
+            try {
+              const ticketRes = await axios.get<Ticket[]>(
+                `http://127.0.0.1:8000/tickets/event/${event._id}`
+              );
+              return { ...event, tickets: ticketRes.data };
+            } catch (ticketErr: unknown) {
+              // Log the ticket fetching error
+              console.error('Error fetching tickets for', event.title, ticketErr);
+              return { ...event, tickets: [] };
+            }
+          })
+        );
+
+        setEvents(eventsWithTickets);
+      } catch (err: unknown) {
+        if (axios.isAxiosError(err)) {
+          const data = err.response?.data as { detail?: string };
+          setError(data?.detail || err.message);
+        } else if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError('Something went wrong while fetching events');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEvents();
+  }, []);
 
   const filteredEvents =
     selectedCategory === 'All'
-      ? mockEvents
-      : mockEvents.filter((event) => event.category === selectedCategory);
+      ? events
+      : events.filter((event) => event.category === selectedCategory);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -122,11 +105,38 @@ export default function Home() {
           </select>
         </div>
 
-        {filteredEvents.length > 0 ? (
+        {loading ? (
+          <p className="text-center text-gray-600 py-16">Loading events...</p>
+        ) : error ? (
+          <p className="text-center text-red-500 py-16">{error}</p>
+        ) : filteredEvents.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-16">
-            {filteredEvents.map((event) => (
-              <EventCard key={event.id} {...event} />
-            ))}
+            {filteredEvents.map((event) => {
+              const price =
+                event.tickets && event.tickets.length > 0
+                  ? `₹${event.tickets[0].price}`
+                  : 'Free';
+              const date = new Date(event.start_date).toDateString();
+              const time = new Date(event.start_date).toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+              });
+
+              return (
+                <EventCard
+                  key={event._id}
+                  id={event._id}
+                  title={event.title}
+                  date={date}
+                  time={time}
+                  location={event.venue}
+                  city={event.city}
+                  price={price}
+                  image={event.banner_url}
+                  category={event.category}
+                />
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-16">
