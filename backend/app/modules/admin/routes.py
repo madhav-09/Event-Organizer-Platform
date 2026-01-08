@@ -169,26 +169,31 @@ async def organizer_stats(current_user=Depends(get_current_user())):
 
 @router.get("/users")
 async def get_users(current_user=Depends(get_current_user("ADMIN"))):
-    """
-    Get all users with their organizer details (if any)
-    """
-    users_cursor = db.users.find({})
-    users_list = await users_cursor.to_list(None)
-
+    users = await db.users.find({}).to_list(None)
     result = []
-    for user in users_list:
-        # Convert ObjectId to string
-        user["_id"] = str(user["_id"])
-        
-        # Find organizer details for this user (if exists)
-        organizer = await db.organizers.find_one({"user_id": ObjectId(user["_id"])})
-        if organizer:
-            organizer["_id"] = str(organizer["_id"])
-            organizer["user_id"] = str(organizer["user_id"])
-            user["organizer"] = organizer
-        else:
-            user["organizer"] = None
 
-        result.append(user)
+    for user in users:
+        user_id = user.get("_id")
+
+        # SAFETY CHECK
+        if not user_id:
+            continue  # skip broken records
+
+        organizer = await db.organizers.find_one({
+            "user_id": user_id  # <-- DO NOT ObjectId() AGAIN
+        })
+
+        result.append({
+            "id": str(user_id),
+            "name": user.get("name"),
+            "email": user.get("email"),
+            "role": user.get("role"),
+            "organizer": {
+                "id": str(organizer["_id"]),
+                "brand_name": organizer.get("brand_name"),
+                "status": organizer.get("status")
+            } if organizer else None
+        })
 
     return result
+

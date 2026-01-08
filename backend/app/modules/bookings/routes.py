@@ -5,11 +5,16 @@ from app.modules.bookings.models import Booking
 from app.common.utils.dependencies import get_current_user
 from app.modules.bookings.service import send_ticket_email
 from app.modules.tickets.service import create_ticket
+from app.common.utils.email import send_email
+from app.common.utils.pdf import generate_ticket_pdf
 
 router = APIRouter(prefix="/bookings", tags=["bookings"])
 
 @router.post("/")
-async def create_booking(data: Booking, current_user=Depends(get_current_user(required_role="USER"))):
+async def create_booking(
+    data: Booking,
+    current_user=Depends(get_current_user(required_role="USER"))
+):
     ticket = await db.tickets.find_one({"_id": ObjectId(data.ticket_id)})
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket not found")
@@ -35,15 +40,38 @@ async def create_booking(data: Booking, current_user=Depends(get_current_user(re
     )
 
     result = await db.bookings.insert_one(booking)
-    
-    ticket_path = create_ticket(booking)
-    # user = await db.users.find_one({"_id": booking["user_id"]})
-    # send_ticket_email(user["email"], ticket_path)
 
-    # send_ticket_email(booking["email"], ticket_path)
-    
-    return {"message": "Booking created", "booking_id": str(result.inserted_id)}
+    # ---------------- PDF + EMAIL (UPDATED PART) ----------------
 
+    pdf_bytes = generate_ticket_pdf({
+        "user_name": current_user["name"],
+        # "event_name": ticket["event_name"],
+        "ticket_title": ticket["title"],
+        "quantity": data.quantity,
+        "total_amount": total
+    })
+
+    await send_email(
+        to_email=current_user["email"],
+        subject="Your Event Ticket",
+        template_name="ticket_booking.html",
+        context={
+            "name": current_user["name"],
+            # "event_name": ticket["event_name"],
+            "ticket_title": ticket["title"],
+            "quantity": data.quantity,
+            "total_amount": total,
+        },
+        pdf_bytes=pdf_bytes,
+        pdf_filename=f"{ticket['title']}_ticket.pdf"
+    )
+
+    # ------------------------------------------------------------
+
+    return {
+        "message": "Booking created",
+        "booking_id": str(result.inserted_id)
+    }
 
 
 @router.post("/{booking_id}/cancel")

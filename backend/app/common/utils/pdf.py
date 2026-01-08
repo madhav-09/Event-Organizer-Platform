@@ -1,26 +1,50 @@
-from reportlab.lib.pagesizes import A4
+from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+from reportlab.lib.units import inch
 from reportlab.lib.utils import ImageReader
-import os
+from io import BytesIO
+import qrcode
 
-def generate_ticket_pdf(booking, qr_buffer):
-    os.makedirs("tickets", exist_ok=True)
 
-    file_path = f"tickets/{booking['_id']}.pdf"
-    c = canvas.Canvas(file_path, pagesize=A4)
+def generate_ticket_pdf(ticket_info: dict) -> bytes:
+    buffer = BytesIO()
+    c = canvas.Canvas(buffer, pagesize=letter)
+    width, height = letter
 
-    c.setFont("Helvetica-Bold", 18)
-    c.drawString(50, 800, "Event Ticket")
+    c.setFont("Helvetica-Bold", 20)
+    c.drawCentredString(width / 2, height - 50, "Event Ticket")
 
-    c.setFont("Helvetica", 12)
-    c.drawString(50, 760, f"Event ID: {booking['event_id']}")
-    c.drawString(50, 740, f"User ID: {booking['user_id']}")
-    c.drawString(50, 720, f"Quantity: {booking['quantity']}")
+    c.setFont("Helvetica", 14)
+    c.drawString(50, height - 100, f"Name: {ticket_info['user_name']}")
+    c.drawString(50, height - 140, f"Ticket: {ticket_info['ticket_title']}")
+    c.drawString(50, height - 160, f"Quantity: {ticket_info['quantity']}")
+    c.drawString(50, height - 180, f"Total Amount: ₹{ticket_info['total_amount']}")
 
-    qr_buffer.seek(0)  # 🔥 VERY IMPORTANT
+    # ---------- QR CODE ----------
+    qr_data = (
+        f"BOOKING:{ticket_info.get('booking_id', '')}|"
+        f"EVENT:{ticket_info.get('event_id', '')}|"
+        f"USER:{ticket_info.get('user_name', '')}"
+    )
+
+    qr = qrcode.make(qr_data)
+    qr_buffer = BytesIO()
+    qr.save(qr_buffer, format="PNG")
+    qr_buffer.seek(0)
+
     qr_image = ImageReader(qr_buffer)
 
-    c.drawImage(qr_image, 50, 500, width=150, height=150)
+    c.drawImage(
+        qr_image,
+        width - 2.5 * inch,
+        height - 3.5 * inch,
+        width=2 * inch,
+        height=2 * inch,
+        mask="auto"
+    )
+    # ----------------------------
 
+    c.showPage()
     c.save()
-    return file_path
+    buffer.seek(0)
+    return buffer.read()

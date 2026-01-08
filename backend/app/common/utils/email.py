@@ -1,31 +1,59 @@
-import smtplib
-from email.message import EmailMessage
 import os
+from pathlib import Path
+from typing import Optional
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.application import MIMEApplication
+import aiosmtplib
+from jinja2 import Environment, FileSystemLoader
+from dotenv import load_dotenv
 
-def send_email(to, subject, body, attachment=None):
-    msg = EmailMessage()
-    msg["From"] = os.getenv("SMTP_EMAIL")
-    msg["To"] = to
+load_dotenv()
+
+SMTP_HOST = "smtp.gmail.com"
+SMTP_PORT = 587
+SMTP_USER = os.getenv("EMAIL_USER")
+SMTP_PASS = os.getenv("EMAIL_PASS")
+
+BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
+TEMPLATES_DIR = BASE_DIR / "app" / "templates" / "email"
+
+env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)))
+
+
+async def send_email(
+    to_email: str,
+    subject: str,
+    template_name: str,
+    context: dict,
+    pdf_bytes: Optional[bytes] = None,
+    pdf_filename: str = "ticket.pdf",
+):
+    template = env.get_template(template_name)
+    html_content = template.render(**context)
+
+    msg = MIMEMultipart("mixed")
+    msg["From"] = SMTP_USER
+    msg["To"] = to_email
     msg["Subject"] = subject
-    msg.set_content(body)
 
-    if attachment:
-        with open(attachment, "rb") as f:
-            msg.add_attachment(
-                f.read(),
-                maintype="application",
-                subtype="pdf",
-                filename="ticket.pdf"
-            )
+    msg.attach(MIMEText(html_content, "html"))
 
-    server = smtplib.SMTP(
-        os.getenv("SMTP_HOST"),
-        int(os.getenv("SMTP_PORT"))
+    if pdf_bytes:
+        pdf_part = MIMEApplication(pdf_bytes, _subtype="pdf")
+        pdf_part.add_header(
+            "Content-Disposition",
+            f'attachment; filename="{pdf_filename}"'
+        )
+        msg.attach(pdf_part)
+
+    await aiosmtplib.send(
+        msg,
+        hostname=SMTP_HOST,
+        port=SMTP_PORT,
+        start_tls=True,
+        username=SMTP_USER,
+        password=SMTP_PASS,
     )
-    server.starttls()
-    server.login(
-        os.getenv("SMTP_EMAIL"),
-        os.getenv("SMTP_PASSWORD")
-    )
-    server.send_message(msg)
-    server.quit()
+
+    print(f"Email sent to {to_email} successfully!")
