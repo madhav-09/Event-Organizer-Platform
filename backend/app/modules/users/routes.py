@@ -10,6 +10,9 @@ from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from app.common.utils.dependencies import get_current_user
 from bson import ObjectId
+from typing import List, Optional
+from fastapi import Query
+from app.modules.events.models import Event
 
 router = APIRouter(prefix="/users", tags=["users"])
 SECRET_KEY = os.getenv("SECRET_KEY")
@@ -85,6 +88,7 @@ async def my_bookings(user=Depends(get_current_user())):
     cursor = db.bookings.find(
         {"user_id": ObjectId(user["_id"])}
     )
+    
 
     bookings = []
 
@@ -119,3 +123,77 @@ async def my_bookings(user=Depends(get_current_user())):
         })
 
     return bookings
+
+
+from typing import Optional, List
+from fastapi import Query
+from typing import Optional, List
+from fastapi import Query
+
+@router.get("/search", response_model=List[Event])
+async def search_events(
+    q: Optional[str] = Query(None),
+    city: Optional[str] = Query(None),
+    venue: Optional[str] = Query(None)
+):
+    query = {"status": "PUBLISHED"}
+
+    # 🔍 Search in title, city, venue
+    if q and q.strip():
+        regex = {"$regex": q.strip(), "$options": "i"}
+        query["$or"] = [
+            {"title": regex},
+            {"city": regex},
+            {"venue": regex},
+        ]
+
+    # 📍 Filters
+    if city and city.strip():
+        query["city"] = {"$regex": city.strip(), "$options": "i"}
+
+    if venue and venue.strip():
+        query["venue"] = {"$regex": venue.strip(), "$options": "i"}
+
+    cursor = db.events.find(query)
+
+    events = []
+    async for e in cursor:
+        e["_id"] = str(e["_id"])
+        e["organizer_id"] = str(e["organizer_id"])
+        events.append(e)
+
+    return events
+
+
+@router.get("/suggestions", response_model=List[str])
+async def event_suggestions(q: str = Query(..., min_length=1)):
+    regex = {"$regex": q, "$options": "i"}
+
+    cursor = db.events.find(
+        {
+            "status": "PUBLISHED",
+            "$or": [
+                {"title": regex},
+                {"city": regex},
+                {"venue": regex},
+            ],
+        },
+        {
+            "_id": 0,
+            "title": 1,
+            "city": 1,
+            "venue": 1,
+        }
+    ).limit(8)
+
+    suggestions = set()
+
+    async for doc in cursor:
+        if doc.get("title"):
+            suggestions.add(doc["title"])
+        if doc.get("city"):
+            suggestions.add(doc["city"])
+        if doc.get("venue"):
+            suggestions.add(doc["venue"])
+
+    return list(suggestions)

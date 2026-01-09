@@ -2,18 +2,41 @@ import { MapPin, User, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useSearchParams } from "react-router-dom";
 
 const roleStyles: Record<string, string> = {
   ADMIN: "bg-red-100 text-red-700",
   ORGANIZER: "bg-purple-100 text-purple-700",
   USER: "bg-blue-100 text-blue-700",
 };
+const popularCities = [
+  "Pune",
+  "Mumbai",
+  "Delhi",
+  "Bangalore",
+  "Hyderabad",
+  "Chennai",
+  "Ahmedabad",
+];
 
 export default function Navbar() {
-  const [selectedCity, setSelectedCity] = useState("Pune");
-  const [showCityDropdown, setShowCityDropdown] = useState(false);
+  // const [showCityDropdown, setShowCityDropdown] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [showCityDropdown, setShowCityDropdown] = useState(false);
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedCity = searchParams.get("city") || "Pune";
+
+  const handleCitySelect = (city: string) => {
+    setSearchParams((prev) => {
+      prev.set("city", city);
+      return prev;
+    });
+
+    setShowCityDropdown(false);
+    navigate(`/?city=${city}`);
+  };
 
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -64,13 +87,31 @@ export default function Navbar() {
           {/* Desktop */}
           <div className="hidden md:flex items-center space-x-6">
             {/* City */}
-            <button
-              onClick={() => setShowCityDropdown(!showCityDropdown)}
-              className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg"
-            >
-              <MapPin className="w-5 h-5 text-blue-600" />
-              <span>{selectedCity}</span>
-            </button>
+            {/* City */}
+<div className="relative">
+  <button
+    onClick={() => setShowCityDropdown(!showCityDropdown)}
+    className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg"
+  >
+    <MapPin className="w-5 h-5 text-blue-600" />
+    <span>{selectedCity}</span>
+  </button>
+
+  {showCityDropdown && (
+    <div className="absolute mt-2 w-48 bg-white border rounded-lg shadow-lg z-50">
+      {popularCities.map((city) => (
+        <button
+          key={city}
+          onClick={() => handleCitySelect(city)}
+          className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+        >
+          {city}
+        </button>
+      ))}
+    </div>
+  )}
+</div>
+
 
 <button
   onClick={handleCreateEvent}
