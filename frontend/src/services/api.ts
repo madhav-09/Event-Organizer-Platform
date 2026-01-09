@@ -24,3 +24,13 @@ export default api;
 
 export const createEvent = (payload: any) =>
   api.post("/events/", payload);
+
+
+export const getMyEvents = async () => {
+  const res = await api.get("/organizers/me/events");
+  return res.data;
+};
+export const getMyBookings = async () => {
+  const res = await api.get("/users/me/bookings");
+  return res.data;
+}

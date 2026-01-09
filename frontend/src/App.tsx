@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
-
+import MyBookings from "./pages/MyBookings";
+import MyEvents from "./pages/MyEvents";
 import Home from "./pages/Home";
 import EventDetail from "./pages/EventDetail";
 import Login from "./pages/Login";
@@ -80,6 +81,8 @@ const App = () => {
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/login" />} />
+<Route path="/my-bookings" element={<MyBookings />} />
+<Route path="/organizer/events" element={<MyEvents />} />
 
     </Routes>
   );
