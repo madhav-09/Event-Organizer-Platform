@@ -34,7 +34,6 @@ app.add_middleware(
 async def health_check():
     return {"status": "OK"}
 
-
 app.include_router(user_router)
 app.include_router(organizer_router)
 app.include_router(event_router)
