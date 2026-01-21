@@ -11,10 +11,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import PublicLayout from "./layout/PublicLayout";
 import ApplyOrganizer from "./pages/ApplyOrganizer";
 import AdminDashboard from "./pages/admin/AdminDashboard";
-import Organizers from "./pages/admin/Organizers";
-import AdminEvents from "./pages/admin/Events";
-import Analytics from "./pages/admin/Analytics";
-import UsersList from "./pages/admin/UsersList";
+import OrganizerDashboard from "./pages/OrganizerDashboard";
 
 const App = () => {
   const { user } = useAuth();
@@ -42,48 +39,37 @@ const App = () => {
           }
         />
       </Route>
-            <Route path="/apply-organizer" element={<ApplyOrganizer />} />
+      <Route path="/apply-organizer" element={<ApplyOrganizer />} />
+
+      <Route path="/my-bookings" element={<MyBookings />} />
+      <Route path="/organizer/events" element={<MyEvents />} />
+
 
       {/* Admin */}
       <Route
-        path="/admin"
+        path="/admin/*" // Use a wildcard to catch all sub-paths under /admin
         element={
           <ProtectedRoute role="ADMIN">
             <AdminDashboard />
           </ProtectedRoute>
         }
       />
-       <Route path="/admin/users" element={<UsersList />} />
+
+      <Route path="/my-bookings" element={<MyBookings />} />
+      <Route path="/organizer/events" element={<MyEvents />} />
+
+      {/* Organizer */}
       <Route
-        path="/admin/organizers"
+        path="/organizer/dashboard/*"
         element={
-          <ProtectedRoute role="ADMIN">
-            <Organizers />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/events"
-        element={
-          <ProtectedRoute role="ADMIN">
-            <AdminEvents />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/analytics"
-        element={
-          <ProtectedRoute role="ADMIN">
-            <Analytics />
+          <ProtectedRoute role="ORGANIZER">
+            <OrganizerDashboard />
           </ProtectedRoute>
         }
       />
 
       {/* Fallback */}
       <Route path="*" element={<Navigate to="/login" />} />
-<Route path="/my-bookings" element={<MyBookings />} />
-<Route path="/organizer/events" element={<MyEvents />} />
-
     </Routes>
   );
 };

@@ -1,16 +1,36 @@
-import { Routes, Route } from "react-router-dom";
+import { useState } from "react";
+import AdminLayout from "./AdminLayout";
 import AdminEvents from "./Events";
 import Organizers from "./Organizers";
 import UsersList from "./UsersList";
+import Analytics from "./Analytics";
 
-function AdminRoutes() {
+function AdminDashboard() {
+  const [activeSection, setActiveSection] = useState("events");
+
+  const renderContent = () => {
+    switch (activeSection) {
+      case "events":
+        return <AdminEvents />;
+      case "organizers":
+        return <Organizers />;
+      case "users":
+        return <UsersList />;
+      case "analytics":
+        return <Analytics />;
+      default:
+        return <AdminEvents />;
+    }
+  };
+
   return (
-    <Routes>
-      <Route path="/admin/events" element={<AdminEvents />} />
-      <Route path="/admin/organizers" element={<Organizers />} />
-      <Route path="/admin/users" element={<UsersList />} />
-    </Routes>
+    <AdminLayout
+      activeSection={activeSection}
+      onSelectSection={setActiveSection}
+    >
+      {renderContent()}
+    </AdminLayout>
   );
 }
 
-export default AdminRoutes;
+export default AdminDashboard;

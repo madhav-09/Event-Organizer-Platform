@@ -174,6 +174,15 @@ export default function Navbar() {
       {/* ORGANIZER → My Events */}
       {user.role === "ORGANIZER" && (
         <Link
+          to="/organizer/dashboard/overview"
+          onClick={() => setShowProfileDropdown(false)}
+          className="block px-4 py-2 hover:bg-gray-100"
+        >
+          Organizer Dashboard
+        </Link>
+      )}
+      {user.role === "ORGANIZER" && (
+        <Link
           to="/organizer/events"
           onClick={() => setShowProfileDropdown(false)}
           className="block px-4 py-2 hover:bg-gray-100"
@@ -264,6 +273,15 @@ export default function Navbar() {
       )}
 
       {/* ORGANIZER → My Events */}
+      {user.role === "ORGANIZER" && (
+        <Link
+          to="/organizer/dashboard/overview"
+          onClick={() => setShowProfileDropdown(false)}
+          className="block px-4 py-2 hover:bg-gray-100"
+        >
+          Organizer Dashboard
+        </Link>
+      )}
       {user.role === "ORGANIZER" && (
         <Link
           to="/organizer/events"

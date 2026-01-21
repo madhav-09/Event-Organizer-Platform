@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import { Calendar, MapPin, Users } from "lucide-react";
-import { getMyEvents } from "../services/api";
+import { getMyEvents } from "../services/api"; // Assuming this API fetches organizer's events
+import { FaEye, FaEdit } from "react-icons/fa";
+import { Link } from "react-router-dom";
 
 interface OrganizerEvent {
-  event_id: string;
+  _id: string;
   title: string;
   date: string;
   location: string;
-  status: string;
+  status: "DRAFT" | "PUBLISHED" | "CANCELLED";
   total_bookings: number;
 }
 
@@ -33,40 +35,85 @@ export default function MyEvents() {
     return <p className="p-6 text-gray-500">No events created yet</p>;
 
   return (
-    <div className="max-w-6xl mx-auto p-6 space-y-6">
-      <h1 className="text-2xl font-bold">My Events</h1>
+    <div className="max-w-7xl mx-auto p-6">
+      <h1 className="text-3xl font-bold text-gray-800 mb-6">My Events</h1>
 
-      {events.map((e) => (
-        <div
-          key={e.event_id}
-          className="border rounded-xl p-5 shadow-sm space-y-3"
-        >
-          <div className="flex justify-between items-start">
-            <h2 className="text-lg font-semibold">{e.title}</h2>
-            <span
-              className={`px-3 py-1 text-xs rounded-full ${statusStyles[e.status]}`}
-            >
-              {e.status}
-            </span>
-          </div>
-
-          <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-            <span className="flex items-center gap-1">
-              <Calendar size={16} />{" "}
-              {new Date(e.date).toLocaleString()}
-            </span>
-
-            <span className="flex items-center gap-1">
-              <MapPin size={16} /> {e.location}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2 text-sm font-medium">
-            <Users size={16} />
-            Total Bookings: {e.total_bookings}
-          </div>
-        </div>
-      ))}
+      <div className="overflow-x-auto bg-white shadow-md rounded-lg">
+        <table className="min-w-full leading-normal">
+          <thead>
+            <tr>
+              <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Event Title
+              </th>
+              <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Date & Time
+              </th>
+              <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Location
+              </th>
+              <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Status
+              </th>
+              <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Total Bookings
+              </th>
+              <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {events.map((e) => (
+              <tr key={e._id}>
+                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                  <p className="text-gray-900 whitespace-no-wrap">{e.title}</p>
+                </td>
+                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                  <p className="text-gray-900 whitespace-no-wrap">
+                    {new Date(e.date).toLocaleString()}
+                  </p>
+                </td>
+                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                  <p className="text-gray-900 whitespace-no-wrap">{e.location}</p>
+                </td>
+                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                  <span
+                    className={`relative inline-block px-3 py-1 font-semibold leading-tight ${statusStyles[e.status]}`}
+                  >
+                    <span
+                      aria-hidden
+                      className={`absolute inset-0 opacity-50 rounded-full ${statusStyles[e.status].replace("text-", "bg-").replace("-700", "-200")}`}
+                    ></span>
+                    <span className="relative">{e.status}</span>
+                  </span>
+                </td>
+                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                  <p className="text-gray-900 whitespace-no-wrap">{e.total_bookings}</p>
+                </td>
+                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                  <div className="flex space-x-3">
+                    <Link
+                      to={`/organizer/dashboard/overview?event_id=${e._id}`}
+                      className="text-indigo-600 hover:text-indigo-900"
+                      title="Manage Event"
+                    >
+                      <FaEye size={18} />
+                    </Link>
+                    {/* Add more actions like edit if needed */}
+                    <button
+                      className="text-blue-600 hover:text-blue-900"
+                      title="Edit Event"
+                      onClick={() => console.log("Edit event", e._id)}
+                    >
+                      <FaEdit size={18} />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
