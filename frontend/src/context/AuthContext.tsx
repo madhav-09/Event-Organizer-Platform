@@ -34,13 +34,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   });
 
   const login = (data: LoginResponse) => {
-    localStorage.setItem("token", data.access_token);
+    localStorage.setItem("access_token", data.access_token);
     localStorage.setItem("user", JSON.stringify(data.user));
     setUser(data.user);
   };
 
   const logout = () => {
-    localStorage.removeItem("token");
+    localStorage.removeItem("access_token");
     localStorage.removeItem("user");
     setUser(null);
   };

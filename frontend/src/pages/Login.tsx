@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { loginUser, registerUser } from '../services/auth_api';
 import type { RegisterPayload, LoginPayload } from '../services/auth_api';
 import type { AxiosError } from 'axios';
-import { useAuth } from '../context/AuthContext'; // ⭐
+import { useAuth } from '../context/AuthContext';
 
 interface FormData {
   name: string;
@@ -13,13 +13,9 @@ interface FormData {
   password: string;
 }
 
-interface BackendError {
-  detail?: string;
-}
-
 export default function Login() {
   const navigate = useNavigate();
-  const { login } = useAuth(); // ⭐
+  const { login } = useAuth();
 
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -43,18 +39,19 @@ export default function Login() {
 
     try {
       if (isSignUp) {
-        // REGISTER
+        // 🔐 REGISTER
         const payload: RegisterPayload = {
           name: formData.name,
           email: formData.email,
           password: formData.password,
         };
+
         await registerUser(payload);
         setIsSignUp(false);
         return;
       }
 
-      // LOGIN
+      // 🔐 LOGIN
       const payload: LoginPayload = {
         email: formData.email,
         password: formData.password,
@@ -62,24 +59,29 @@ export default function Login() {
 
       const res = await loginUser(payload);
 
-      // ⭐ Store user + token in context
+      // ✅ Save token + user
       login(res.data);
-      
 
-      // ⭐ Role-based redirect
-      const role = res.data.role;
+      // 🚦 Role-based redirect
+      const role = res.data.user.role;
 
       if (role === 'ADMIN') navigate('/admin');
       else if (role === 'ORGANIZER') navigate('/organizer');
       else navigate('/');
 
     } catch (err: unknown) {
-      const axiosErr = err as AxiosError<BackendError>;
-      setError(
-        axiosErr.response?.data?.detail ||
-        axiosErr.message ||
-        'Something went wrong'
-      );
+      const axiosErr = err as AxiosError<any>;
+      const detail = axiosErr.response?.data?.detail;
+
+      if (Array.isArray(detail)) {
+        setError(detail[0]?.msg || 'Invalid input');
+      } else if (typeof detail === 'string') {
+        setError(detail);
+      } else if (axiosErr.message) {
+        setError(axiosErr.message);
+      } else {
+        setError('Login failed');
+      }
     } finally {
       setLoading(false);
     }
@@ -166,7 +168,11 @@ export default function Login() {
               disabled={loading}
               className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl disabled:opacity-50"
             >
-              {loading ? 'Please wait...' : isSignUp ? 'Create Account' : 'Sign In'}
+              {loading
+                ? 'Please wait...'
+                : isSignUp
+                ? 'Create Account'
+                : 'Sign In'}
             </button>
           </form>
 
