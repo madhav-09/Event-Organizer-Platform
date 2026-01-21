@@ -55,6 +55,7 @@ app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 async def upload_image(file: UploadFile = File(...)):
     if not file:
         return {"url": ""}
+
     file_ext = file.filename.split(".")[-1]
     filename = f"{uuid.uuid4()}.{file_ext}"
     file_path = os.path.join(UPLOAD_DIR, filename)
@@ -63,5 +64,6 @@ async def upload_image(file: UploadFile = File(...)):
         shutil.copyfileobj(file.file, buffer)
 
     return {
-        "url": f"/uploads/events/{filename}"
+        "url": f"http://127.0.0.1:8000/uploads/events/{filename}"
     }
+
