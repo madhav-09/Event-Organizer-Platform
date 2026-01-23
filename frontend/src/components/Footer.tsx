@@ -89,7 +89,7 @@ export default function Footer() {
             <ul className="space-y-3">
               <li className="flex items-start space-x-3">
                 <Mail className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
-                <span>support@townscript.com</span>
+                <span>support@swasthyachetna.com</span>
               </li>
               <li className="flex items-start space-x-3">
                 <Phone className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
@@ -97,7 +97,7 @@ export default function Footer() {
               </li>
               <li className="flex items-start space-x-3">
                 <MapPin className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
-                <span>Bengaluru, Karnataka, India</span>
+                <span>Vadodara, Gujrat, India</span>
               </li>
             </ul>
           </div>
@@ -106,7 +106,7 @@ export default function Footer() {
         <div className="border-t border-gray-800 pt-8">
           <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
             <p className="text-gray-400 text-sm">
-              © 2026 Townscript. All rights reserved.
+              © 2026 Swasthya Chetna. All rights reserved.
             </p>
             <div className="flex flex-wrap justify-center gap-6 text-sm">
               <Link to="/terms" className="hover:text-white transition-colors">
