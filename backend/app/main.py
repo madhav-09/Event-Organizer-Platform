@@ -1,5 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from app.core.config import PROJECT_NAME
+
 from app.modules.users.routes import router as user_router
 from app.modules.organizers.routes import router as organizer_router
 from app.modules.events.routes import router as event_router
@@ -8,16 +11,14 @@ from app.modules.bookings.routes import router as booking_router
 from app.modules.payments.routes import router as payment_router
 from app.modules.admin.routes import router as admin_router
 from app.modules.payments import webhook
-from fastapi.middleware.cors import CORSMiddleware
+
 import os
-from fastapi.staticfiles import StaticFiles
 import uuid
 import shutil
-from fastapi import FastAPI, UploadFile, File
 
 app = FastAPI(title=PROJECT_NAME)
 
-
+# ================= CORS =================
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -30,6 +31,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ================= ROUTES =================
 @app.get("/health")
 async def health_check():
     return {"status": "OK"}
@@ -43,22 +46,38 @@ app.include_router(payment_router)
 app.include_router(admin_router)
 app.include_router(webhook.router, prefix="/payments")
 
+# ================= FILE PATH SETUP (CRITICAL FIX) =================
 
-UPLOAD_DIR = "uploads/events"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+UPLOADS_DIR = os.path.join(BASE_DIR, "uploads")
+EVENT_UPLOAD_DIR = os.path.join(UPLOADS_DIR, "events")
 
-# Serve uploaded files
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+os.makedirs(EVENT_UPLOAD_DIR, exist_ok=True)
 
+# ================= IMAGE SERVING =================
+@app.get("/uploads/events/{filename}")
+def serve_event_image(filename: str):
+    file_path = os.path.join(EVENT_UPLOAD_DIR, filename)
 
+    if not os.path.isfile(file_path):
+        raise HTTPException(status_code=404, detail="Image not found")
+
+    return FileResponse(
+        file_path,
+        headers={
+            "Cache-Control": "public, max-age=31536000, immutable"
+        }
+    )
+
+# ================= IMAGE UPLOAD =================
 @app.post("/upload")
 async def upload_image(file: UploadFile = File(...)):
     if not file:
         return {"url": ""}
 
-    file_ext = file.filename.split(".")[-1]
-    filename = f"{uuid.uuid4()}.{file_ext}"
-    file_path = os.path.join(UPLOAD_DIR, filename)
+    ext = file.filename.split(".")[-1].lower()
+    filename = f"{uuid.uuid4()}.{ext}"
+    file_path = os.path.join(EVENT_UPLOAD_DIR, filename)
 
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
@@ -66,4 +85,3 @@ async def upload_image(file: UploadFile = File(...)):
     return {
         "url": f"http://127.0.0.1:8000/uploads/events/{filename}"
     }
-
