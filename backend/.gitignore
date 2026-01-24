@@ -15,5 +15,6 @@ dist/
 build/
 *.bak
 *.swp
-backend/uploads/
-backend/uploads/events/388da917-b5ed-4e1a-90ba-d0187143217c.png
+
+# Uploaded media (runtime only)
+backend/uploads/**
