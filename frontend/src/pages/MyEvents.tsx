@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
-import { Calendar, MapPin, Users } from "lucide-react";
-import { getMyEvents } from "../services/api"; // Assuming this API fetches organizer's events
 import { FaEye, FaEdit } from "react-icons/fa";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { getMyEvents } from "../services/api";
 
 interface OrganizerEvent {
-  _id: string;
+  event_id: string;
   title: string;
   date: string;
   location: string;
@@ -22,6 +21,7 @@ const statusStyles: Record<string, string> = {
 export default function MyEvents() {
   const [events, setEvents] = useState<OrganizerEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     getMyEvents()
@@ -30,82 +30,76 @@ export default function MyEvents() {
   }, []);
 
   if (loading) return <p className="p-6">Loading events...</p>;
-
   if (!events.length)
     return <p className="p-6 text-gray-500">No events created yet</p>;
 
   return (
     <div className="max-w-7xl mx-auto p-6">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">My Events</h1>
+      <h1 className="text-3xl font-bold mb-6">My Events</h1>
 
-      <div className="overflow-x-auto bg-white shadow-md rounded-lg">
-        <table className="min-w-full leading-normal">
-          <thead>
+      <div className="overflow-x-auto bg-white shadow rounded-lg">
+        <table className="min-w-full">
+          <thead className="bg-gray-100 text-xs uppercase">
             <tr>
-              <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Event Title
-              </th>
-              <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Date & Time
-              </th>
-              <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Location
-              </th>
-              <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Status
-              </th>
-              <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Total Bookings
-              </th>
-              <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Actions
-              </th>
+              {[
+                "Event Title",
+                "Date & Time",
+                "Location",
+                "Status",
+                "Bookings",
+                "Actions",
+              ].map((h) => (
+                <th key={h} className="px-5 py-3 text-left">
+                  {h}
+                </th>
+              ))}
             </tr>
           </thead>
+
           <tbody>
             {events.map((e) => (
-              <tr key={e._id}>
-                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                  <p className="text-gray-900 whitespace-no-wrap">{e.title}</p>
+              <tr
+                key={e.event_id}
+                className="border-b hover:bg-gray-50"
+              >
+                <td className="px-5 py-4 font-medium">{e.title}</td>
+
+                <td className="px-5 py-4">
+                  {new Date(e.date).toLocaleString()}
                 </td>
-                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                  <p className="text-gray-900 whitespace-no-wrap">
-                    {new Date(e.date).toLocaleString()}
-                  </p>
-                </td>
-                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                  <p className="text-gray-900 whitespace-no-wrap">{e.location}</p>
-                </td>
-                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+
+                <td className="px-5 py-4">{e.location}</td>
+
+                <td className="px-5 py-4">
                   <span
-                    className={`relative inline-block px-3 py-1 font-semibold leading-tight ${statusStyles[e.status]}`}
+                    className={`px-3 py-1 rounded-full text-xs font-semibold ${statusStyles[e.status]}`}
                   >
-                    <span
-                      aria-hidden
-                      className={`absolute inset-0 opacity-50 rounded-full ${statusStyles[e.status].replace("text-", "bg-").replace("-700", "-200")}`}
-                    ></span>
-                    <span className="relative">{e.status}</span>
+                    {e.status}
                   </span>
                 </td>
-                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                  <p className="text-gray-900 whitespace-no-wrap">{e.total_bookings}</p>
-                </td>
-                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                  <div className="flex space-x-3">
-                    <Link
-                      to={`/organizer/dashboard/overview?event_id=${e._id}`}
-                      className="text-indigo-600 hover:text-indigo-900"
-                      title="Manage Event"
-                    >
-                      <FaEye size={18} />
-                    </Link>
-                    {/* Add more actions like edit if needed */}
+
+                <td className="px-5 py-4">{e.total_bookings}</td>
+
+                <td className="px-5 py-4">
+                  <div className="flex gap-4">
                     <button
-                      className="text-blue-600 hover:text-blue-900"
-                      title="Edit Event"
-                      onClick={() => console.log("Edit event", e._id)}
+                      title="Manage Event"
+                      onClick={() =>
+                        navigate(`/organizer/events/${e.event_id}`)
+                      }
+                      className="text-indigo-600 hover:text-indigo-900"
                     >
-                      <FaEdit size={18} />
+                      <FaEye />
+                    </button>
+
+                    <button
+                      title="Edit Event"
+                      onClick={() =>
+                        navigate(`/organizer/events/${e.event_id}/edit`)
+                      }
+                      className="text-blue-600 hover:text-blue-900"
+                    >
+                      <FaEdit />
                     </button>
                   </div>
                 </td>
