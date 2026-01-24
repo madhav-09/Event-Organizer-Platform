@@ -29,7 +29,7 @@ function EventCard({
 }: EventCardProps) {
   const [isFavorite, setIsFavorite] = useState(false);
 
-  // ✅ memoized image source (VERY IMPORTANT)
+  // ✅ memoized image source
   const imageSrc = useMemo(() => {
     if (!image) return "/placeholder-event.jpg";
     if (image.startsWith("http")) return image;
@@ -37,8 +37,9 @@ function EventCard({
   }, [image]);
 
   return (
-    <Link to={`/event/${id}`} className="h-full">
+    <Link to={`/event/${id}`} className="h-full block">
       <div className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 group cursor-pointer h-full flex flex-col">
+        
         {/* IMAGE */}
         <div className="relative overflow-hidden h-56">
           <img
@@ -56,7 +57,7 @@ function EventCard({
           <div className="absolute top-4 right-4">
             <button
               onClick={(e) => {
-                e.preventDefault();
+                e.stopPropagation(); // ✅ allow favorite without navigation
                 setIsFavorite((prev) => !prev);
               }}
               className="p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white"
@@ -112,12 +113,15 @@ function EventCard({
               </p>
             </div>
 
-            <button
-              onClick={(e) => e.preventDefault()}
-              className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:scale-105"
+            {/* ✅ FIXED: Book Now navigates properly */}
+            <Link
+              to={`/event/${id}`}
+              onClick={(e) => e.stopPropagation()}
+              className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 
+                         text-white rounded-lg hover:scale-105 transition-transform"
             >
               Book Now
-            </button>
+            </Link>
           </div>
         </div>
       </div>
@@ -125,4 +129,4 @@ function EventCard({
   );
 }
 
-export default memo(EventCard); // ✅ prevents re-render storm
+export default memo(EventCard);

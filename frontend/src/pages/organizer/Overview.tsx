@@ -1,90 +1,113 @@
-import React from 'react';
-import { FaUsers, FaDollarSign, FaChartLine, FaAndroid, FaApple, FaTicketAlt } from "react-icons/fa";
+import { useEffect, useState } from "react";
+import {
+  FaUsers,
+  FaDollarSign,
+  FaCalendarAlt,
+  FaChartLine,
+} from "react-icons/fa";
+import api from "../../services/api";
 
-const Overview = () => {
+interface OverviewStats {
+  total_events: number;
+  total_registrations: number;
+  total_revenue: number;
+  upcoming_events: number;
+}
+
+export default function Overview() {
+  const [stats, setStats] = useState<OverviewStats | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api
+      .get("/organizers/me/overview")
+      .then((res) => setStats(res.data))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return <p className="p-6">Loading overview...</p>;
+  }
+
+  if (!stats) {
+    return <p className="p-6 text-red-500">Failed to load overview</p>;
+  }
+
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <div className="flex items-center mb-4">
-          <div className="bg-purple-100 text-purple-600 rounded-full p-3 mr-4">
-            <FaTicketAlt size={24} />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold text-gray-800">Manage your events on the go with our Organizer App</h2>
-            <p className="text-gray-600 text-sm">
-              Seamlessly check in attendees with QR scanning, access real-time event analytics, and send instant announcements to all attendees.
-            </p>
-          </div>
-        </div>
-        <div className="flex space-x-4">
-          <a
-            href="#"
-            className="flex items-center px-4 py-2 bg-gray-800 text-white rounded-md text-sm hover:bg-gray-700"
-          >
-            <FaAndroid className="mr-2" /> GET IT ON Google Play
-          </a>
-          <a
-            href="#"
-            className="flex items-center px-4 py-2 bg-gray-800 text-white rounded-md text-sm hover:bg-gray-700"
-          >
-            <FaApple className="mr-2" /> Download on the App Store
-          </a>
-        </div>
+    <div className="p-6 bg-gray-100 min-h-screen space-y-6">
+      {/* HEADER */}
+      <div className="bg-white rounded-xl shadow p-6">
+        <h2 className="text-2xl font-bold text-gray-800">
+          Organizer Dashboard
+        </h2>
+        <p className="text-gray-600 text-sm mt-1">
+          Track performance, manage events, and grow your audience
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <div className="bg-white rounded-lg shadow-md p-6 flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-500">REGISTRATIONS</p>
-            <p className="text-4xl font-bold text-gray-800">454 attendees</p>
-          </div>
-          <FaUsers className="text-purple-400 opacity-50" size={48} />
-        </div>
+      {/* KPI CARDS */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <StatCard
+          title="Total Events"
+          value={stats.total_events}
+          icon={<FaCalendarAlt />}
+        />
 
-        <div className="bg-white rounded-lg shadow-md p-6 flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-500">TICKET SALES</p>
-            <p className="text-4xl font-bold text-gray-800">₹216,814.57</p>
-          </div>
-          <FaDollarSign className="text-purple-400 opacity-50" size={48} />
-        </div>
+        <StatCard
+          title="Registrations"
+          value={stats.total_registrations}
+          icon={<FaUsers />}
+        />
 
-        <div className="bg-white rounded-lg shadow-md p-6 flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-500">TOTAL PAGEVIEWS</p>
-            <p className="text-4xl font-bold text-gray-800">6389</p>
-          </div>
-          <FaChartLine className="text-purple-400 opacity-50" size={48} />
-        </div>
+        <StatCard
+          title="Revenue"
+          value={`₹${stats.total_revenue.toLocaleString()}`}
+          icon={<FaDollarSign />}
+        />
+
+        <StatCard
+          title="Upcoming Events"
+          value={stats.upcoming_events}
+          icon={<FaChartLine />}
+        />
       </div>
 
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <h3 className="text-xl font-bold text-gray-800 mb-4">Spread the word about your event</h3>
+      {/* ANALYTICS PLACEHOLDER */}
+      <div className="bg-white rounded-xl shadow p-6">
+        <h3 className="text-xl font-semibold mb-4">Analytics</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="flex items-start">
-            <span className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 text-purple-600 font-bold text-lg mr-4">1</span>
-            <div>
-              <p className="font-semibold text-gray-800 mb-1">Interested in Boosting your Ticket Sales and revenue by increasing your reach? Try out Townscript Marketing Services</p>
-              <a href="#" className="text-blue-600 hover:underline">Try Marketing Services →</a>
-            </div>
+          <div className="h-40 bg-gray-50 rounded flex items-center justify-center text-gray-400">
+            Registrations chart (coming next)
           </div>
-          <div className="flex items-start">
-            <span className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 text-purple-600 font-bold text-lg mr-4">2</span>
-            <div>
-              <p className="font-semibold text-gray-800 mb-1">Use Townscript's Promotion Toolset to promote your event</p>
-              <a href="#" className="text-blue-600 hover:underline">Try it out →</a>
-            </div>
+          <div className="h-40 bg-gray-50 rounded flex items-center justify-center text-gray-400">
+            Revenue chart (coming next)
           </div>
         </div>
-      </div>
-
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-xl font-bold text-gray-800 mb-4">Event Configuration</h3>
-        <p className="text-gray-600">Content for event configuration settings.</p>
       </div>
     </div>
   );
-};
+}
 
-export default Overview;
+/* ================= COMPONENT ================= */
 
+function StatCard({
+  title,
+  value,
+  icon,
+}: {
+  title: string;
+  value: string | number;
+  icon: React.ReactNode;
+}) {
+  return (
+    <div className="bg-white rounded-xl shadow p-6 flex items-center justify-between">
+      <div>
+        <p className="text-sm text-gray-500">{title}</p>
+        <p className="text-3xl font-bold text-gray-800">{value}</p>
+      </div>
+      <div className="text-purple-500 text-3xl opacity-70">
+        {icon}
+      </div>
+    </div>
+  );
+}
