@@ -6,6 +6,7 @@ import { loginUser, registerUser } from '../services/auth_api';
 import type { RegisterPayload, LoginPayload } from '../services/auth_api';
 import type { AxiosError } from 'axios';
 import { useAuth } from '../context/AuthContext';
+import logo from '../assets/logo.png';
 
 interface FormData {
   name: string;
@@ -91,15 +92,12 @@ export default function Login() {
     <div className="min-h-screen bg-gradient-to-br from-blue-600 via-blue-700 to-purple-700 flex items-center justify-center px-4 py-12">
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
-          <div className="inline-block w-16 h-16 bg-white rounded-2xl flex items-center justify-center mb-4 shadow-xl">
-            <span className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              SC
-            </span>
+        <div className="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-4 shadow-xl">            <img src={logo} alt="Swasthya Chetna Logo" className="w-full h-full object-contain" />
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">
             {isSignUp ? 'Create Your Account' : 'Welcome Back'}
           </h1>
-          <p className="text-blue-100">
+          <p className="text-blue-100"> 
             {isSignUp
               ? 'Start discovering amazing events'
               : 'Sign in to continue'}

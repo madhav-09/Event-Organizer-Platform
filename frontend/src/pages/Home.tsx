@@ -38,21 +38,7 @@ export default function Home() {
 
     try {
       const res = await api.get<Event[]>("/users/search", { params });
-
-      const eventsWithTickets = await Promise.all(
-        res.data.map(async (event) => {
-          try {
-            const ticketRes = await api.get<Ticket[]>(
-              `/tickets/event/${event.id}`
-            );
-            return { ...event, tickets: ticketRes.data };
-          } catch {
-            return { ...event, tickets: [] };
-          }
-        })
-      );
-
-      setEvents(eventsWithTickets);
+      setEvents(res.data);
     } catch {
       setError("Failed to load events");
     } finally {

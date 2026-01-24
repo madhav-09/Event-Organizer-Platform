@@ -1,6 +1,6 @@
 from datetime import datetime
-from typing import Optional
-from pydantic import BaseModel
+from typing import List, Optional
+from pydantic import BaseModel, Field
 
 
 # ================= REQUEST SCHEMAS =================
@@ -57,3 +57,17 @@ class EventOut(BaseModel):
     banner_url: Optional[str]
     status: str
     created_at: datetime
+
+
+class EventTicketOut(BaseModel):
+    id: str
+    event_id: str
+    title: str
+    price: float
+    quantity: int
+    sold: int = 0
+    created_at: Optional[datetime] = None
+
+
+class EventWithTicketsOut(EventOut):
+    tickets: List[EventTicketOut] = Field(default_factory=list)

@@ -10,7 +10,7 @@ from app.common.utils.jwt import create_access_token, create_refresh_token
 from app.common.utils.dependencies import get_current_user
 from fastapi.security import OAuth2PasswordRequestForm
 
-from app.modules.events.schemas import EventOut
+from app.modules.events.schemas import EventWithTicketsOut
 
 import os
 
@@ -18,6 +18,22 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
+
+EVENT_SEARCH_PROJECTION = {
+    "_id": 1,
+    "organizer_id": 1,
+    "title": 1,
+    "description": 1,
+    "category": 1,
+    "type": 1,
+    "city": 1,
+    "venue": 1,
+    "start_date": 1,
+    "end_date": 1,
+    "banner_url": 1,
+    "status": 1,
+    "created_at": 1,
+}
 
 
 # ================= REGISTER =================
@@ -163,7 +179,7 @@ async def my_bookings(user=Depends(get_current_user())):
 
 
 # ================= SEARCH EVENTS =================
-@router.get("/search", response_model=List[EventOut])
+@router.get("/search", response_model=List[EventWithTicketsOut])
 async def search_events(
     q: Optional[str] = Query(None),
     city: Optional[str] = Query(None),
@@ -186,16 +202,45 @@ async def search_events(
     if venue and venue.strip():
         query["venue"] = {"$regex": venue.strip(), "$options": "i"}
 
-    cursor = db.events.find(query)
-    events = []
+    event_cursor = db.events.find(query, EVENT_SEARCH_PROJECTION).sort("created_at", -1)
+    events = await event_cursor.to_list(length=None)
+    if not events:
+        return []
 
-    async for e in cursor:
-        e["id"] = str(e["_id"])
-        e["organizer_id"] = str(e["organizer_id"])
-        del e["_id"]
-        events.append(e)
+    event_ids = [str(event["_id"]) for event in events]
+    ticket_cursor = db.tickets.find({"event_id": {"$in": event_ids}})
 
-    return events
+    tickets_by_event = {event_id: [] for event_id in event_ids}
+    async for ticket in ticket_cursor:
+        event_id = ticket.get("event_id")
+        if not event_id:
+            continue
+
+        tickets_by_event.setdefault(event_id, []).append(
+            {
+                "id": str(ticket["_id"]),
+                "event_id": event_id,
+                "title": ticket.get("title", ""),
+                "price": float(ticket.get("price", 0)),
+                "quantity": int(ticket.get("quantity", 0)),
+                "sold": int(ticket.get("sold", 0)),
+                "created_at": ticket.get("created_at"),
+            }
+        )
+
+    for event_id, ticket_list in tickets_by_event.items():
+        ticket_list.sort(key=lambda t: t["price"])
+
+    response = []
+    for event in events:
+        event_id = str(event["_id"])
+        event["id"] = event_id
+        event["organizer_id"] = str(event["organizer_id"])
+        del event["_id"]
+        event["tickets"] = tickets_by_event.get(event_id, [])
+        response.append(event)
+
+    return response
 
 
 # ================= CITIES (EVENTS GROUPED BY CITY) =================

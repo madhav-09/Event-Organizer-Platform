@@ -15,8 +15,11 @@ dist/
 build/
 *.bak
 *.swp
+<<<<<<< HEAD
 backend/.gitignore
 
+=======
+>>>>>>> 5bbd6b3 (chore: fully ignore uploaded media directory)
 
 # Uploaded media (runtime only)
 backend/uploads/**

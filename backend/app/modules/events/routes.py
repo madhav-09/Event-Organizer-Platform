@@ -17,6 +17,28 @@ from app.modules.events.service import (
 
 router = APIRouter(prefix="/events", tags=["events"])
 
+EVENT_PUBLIC_PROJECTION = {
+    "_id": 1,
+    "organizer_id": 1,
+    "title": 1,
+    "description": 1,
+    "category": 1,
+    "type": 1,
+    "city": 1,
+    "venue": 1,
+    "start_date": 1,
+    "end_date": 1,
+    "banner_url": 1,
+    "status": 1,
+    "created_at": 1,
+}
+
+
+def _serialize_event(event: dict) -> dict:
+    event["id"] = str(event.pop("_id"))
+    event["organizer_id"] = str(event["organizer_id"])
+    return event
+
 
 # ================= CREATE EVENT =================
 @router.post("/")
@@ -81,26 +103,24 @@ async def list_events(
     city: Optional[str] = None,
     category: Optional[str] = None,
     status: str = "PUBLISHED",
-    limit: int = Query(10, le=50),
-    skip: int = 0,
+    limit: int = Query(10, ge=1, le=50),
+    skip: int = Query(0, ge=0),
 ):
-    query = {"status": status}
+    query = {"status": status.strip().upper()}
 
-    if city:
-        query["city"] = city
-    if category:
-        query["category"] = category
+    if city and city.strip():
+        query["city"] = city.strip()
+    if category and category.strip():
+        query["category"] = category.strip()
 
-    cursor = db.events.find(query).skip(skip).limit(limit)
-    events = []
-
-    async for e in cursor:
-        e["id"] = str(e["_id"])
-        e["organizer_id"] = str(e["organizer_id"])
-        del e["_id"]
-        events.append(e)
-
-    return events
+    cursor = (
+        db.events.find(query, EVENT_PUBLIC_PROJECTION)
+        .sort("created_at", -1)
+        .skip(skip)
+        .limit(limit)
+    )
+    events = await cursor.to_list(length=limit)
+    return [_serialize_event(event) for event in events]
 
 
 # ================= GET SINGLE EVENT =================
@@ -111,12 +131,8 @@ async def get_event(event_id: str):
     except InvalidId:
         raise HTTPException(status_code=400, detail="Invalid event id")
 
-    event = await db.events.find_one({"_id": obj_id})
+    event = await db.events.find_one({"_id": obj_id}, EVENT_PUBLIC_PROJECTION)
     if not event:
         raise HTTPException(status_code=404, detail="Event not found")
 
-    event["id"] = str(event["_id"])
-    event["organizer_id"] = str(event["organizer_id"])
-    del event["_id"]
-
-    return event
+    return _serialize_event(event)
