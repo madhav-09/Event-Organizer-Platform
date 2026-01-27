@@ -46,9 +46,11 @@ async def organizer_events(
     cursor = db.events.find({"organizer_id": current_user["_id"]})
 
     async for e in cursor:
-        bookings_count = await db.bookings.count_documents(
-            {"event_id": e["_id"], "status": "CONFIRMED"}
-        )
+        bookings_count = await db.bookings.count_documents({
+            "event_id": str(e["_id"]),
+            "status": {"$in": ["CONFIRMED", "PENDING"]}
+            
+        })
 
         events.append({
             "event_id": str(e["_id"]),
@@ -107,3 +109,50 @@ async def organizer_overview(
         "total_revenue": total_revenue,
         "upcoming_events": upcoming_events,
     }
+
+# ================= EVENT BOOKINGS (ORGANIZER) =================
+@router.get("/me/events/{event_id}/bookings")
+async def event_bookings(
+    event_id: str,
+    current_user=Depends(get_current_user(required_role="ORGANIZER"))
+):
+    # 1️⃣ Validate event belongs to organizer
+    event = await db.events.find_one({
+        "_id": ObjectId(event_id),
+        "organizer_id": current_user["_id"]
+    })
+
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found or not yours")
+
+    bookings = []
+
+    cursor = db.bookings.find({
+        "event_id": event_id,
+        "status": {"$in": ["CONFIRMED", "PENDING"]}
+    })
+
+    async for b in cursor:
+        user = await db.users.find_one(
+            {"_id": ObjectId(b["user_id"])},
+            {"name": 1, "email": 1}
+        )
+
+        ticket = await db.tickets.find_one(
+            {"_id": ObjectId(b["ticket_id"])},
+            {"title": 1}
+        )
+
+        bookings.append({
+            "booking_id": str(b["_id"]),
+            "user": {
+                "name": user["name"],
+                "email": user["email"],
+            },
+            "ticket": ticket["title"],
+            "quantity": b["quantity"],
+            "status": b["status"],
+            "created_at": b["created_at"],
+        })
+
+    return bookings
