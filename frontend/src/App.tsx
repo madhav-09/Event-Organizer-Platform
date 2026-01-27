@@ -13,6 +13,7 @@ import MyEvents from "./pages/MyEvents";
 import OrganizerDashboard from "./pages/OrganizerDashboard";
 import ManageEvent from "./pages/organizer/ManageEvent";
 import EditEvent from "./pages/organizer/EditEvent";
+import EventBookings from "./pages/organizer/EventBookings";
 
 import AdminDashboard from "./pages/admin/AdminDashboard";
 
@@ -93,6 +94,12 @@ const App = () => {
           </ProtectedRoute>
         }
       />
+
+      <Route
+        path="/organizer/events/:eventId/bookings"
+        element={<EventBookings />}
+      />
+
 
       {/* ================= ADMIN ================= */}
       <Route
