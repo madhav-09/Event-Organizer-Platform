@@ -34,3 +34,19 @@ export const getMyBookings = async () => {
   const res = await api.get("/users/me/bookings");
   return res.data;
 }
+
+export const createBooking = (ticket_id: string, quantity: number) =>
+  api.post("/bookings/", { ticket_id, quantity });
+
+export const createPaymentOrder = (booking_id: string) =>
+  api.post(`/payments/create-order/${booking_id}`);
+
+export const verifyPayment = (payload: any) =>
+  api.post("/payments/verify", payload);
+
+export const getEventBookings = async (eventId: string) => {
+  const res = await api.get(
+    `/organizers/me/events/${eventId}/bookings`
+  );
+  return res.data;
+};

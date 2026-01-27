@@ -78,7 +78,16 @@ export default function MyEvents() {
                   </span>
                 </td>
 
-                <td className="px-5 py-4">{e.total_bookings}</td>
+                <td className="px-5 py-4">
+                  <button
+                    onClick={() =>
+                      navigate(`/organizer/events/${e.event_id}/bookings`)
+                    }
+                    className="text-blue-600 font-semibold hover:underline"
+                  >                    
+                    {e.total_bookings}
+                  </button>
+                </td>
 
                 <td className="px-5 py-4">
                   <div className="flex gap-4">
