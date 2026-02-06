@@ -4,14 +4,10 @@ import {
   FaTimes,
   FaTachometerAlt,
   FaUsers,
-  FaInfoCircle,
-  FaTicketAlt,
-  FaWpforms,
-  FaTags,
-  FaCog,
-  FaPlusCircle,
+  FaCalendarAlt,
   FaArrowLeft,
 } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 type Props = {
   children: ReactNode;
@@ -19,173 +15,103 @@ type Props = {
   onSelectSection: (section: string) => void;
 };
 
-const OrganizerLayout = ({ children, activeSection, onSelectSection }: Props) => {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
+const OrganizerLayout = ({
+  children,
+  activeSection,
+  onSelectSection,
+}: Props) => {
+  const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      {/* Mobile Sidebar Toggle */}
-      <div className="md:hidden p-4 bg-white shadow-md">
-        <button onClick={toggleSidebar} className="text-gray-600">
-          {isSidebarOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
+    <div className="flex h-screen bg-gray-50 text-gray-900">
+      {/* Mobile menu */}
+      <div className="md:hidden p-4 bg-white border-b">
+        <button onClick={() => setOpen(!open)}>
+          {open ? <FaTimes size={20} /> : <FaBars size={20} />}
         </button>
       </div>
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-30 w-64 bg-white shadow-md transform ${
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } md:relative md:translate-x-0 transition-transform duration-200 ease-in-out`}
+        className={`fixed md:static inset-y-0 left-0 z-30 w-64 bg-white border-r transform ${
+          open ? "translate-x-0" : "-translate-x-full"
+        } md:translate-x-0 transition-transform`}
       >
-        <div className="p-6 text-2xl font-bold text-gray-800 border-b">
-          <FaArrowLeft className="inline-block mr-2 cursor-pointer" /> Event Name
+        {/* Brand */}
+        <div className="px-6 py-5 border-b">
+          <div className="text-lg font-semibold">Swasthya Chetna</div>
+          <button
+            onClick={() => navigate("/")}
+            className="mt-2 flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800"
+          >
+            <FaArrowLeft size={12} />
+            Back to Home
+          </button>
         </div>
-        <nav className="p-4 space-y-2">
-          <div
+
+        {/* Nav */}
+        <nav className="px-3 py-4 space-y-1">
+          <SidebarItem
+            label="Overview"
+            icon={<FaTachometerAlt />}
+            active={activeSection === "overview"}
             onClick={() => {
               onSelectSection("overview");
-              setIsSidebarOpen(false);
+              setOpen(false);
             }}
-            className={`flex items-center px-4 py-2 rounded-lg cursor-pointer transition-colors duration-200 ${
-              activeSection === "overview"
-                ? "bg-indigo-600 text-white"
-                : "text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            <FaTachometerAlt className="mr-3" />
-            Overview
-          </div>
-          <div
+          />
+          <SidebarItem
+            label="My Events"
+            icon={<FaCalendarAlt />}
+            active={activeSection === "events"}
+            onClick={() => {
+              onSelectSection("events");
+              setOpen(false);
+            }}
+          />
+          <SidebarItem
+            label="Attendees"
+            icon={<FaUsers />}
+            active={activeSection === "attendees"}
             onClick={() => {
               onSelectSection("attendees");
-              setIsSidebarOpen(false);
+              setOpen(false);
             }}
-            className={`flex items-center px-4 py-2 rounded-lg cursor-pointer transition-colors duration-200 ${
-              activeSection === "attendees"
-                ? "bg-indigo-600 text-white"
-                : "text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            <FaUsers className="mr-3" />
-            Attendees
-          </div>
-          <div
-            onClick={() => {
-              onSelectSection("details");
-              setIsSidebarOpen(false);
-            }}
-            className={`flex items-center px-4 py-2 rounded-lg cursor-pointer transition-colors duration-200 ${
-              activeSection === "details"
-                ? "bg-indigo-600 text-white"
-                : "text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            <FaInfoCircle className="mr-3" />
-            Details
-          </div>
-          <div
-            onClick={() => {
-              onSelectSection("tickets");
-              setIsSidebarOpen(false);
-            }}
-            className={`flex items-center px-4 py-2 rounded-lg cursor-pointer transition-colors duration-200 ${
-              activeSection === "tickets"
-                ? "bg-indigo-600 text-white"
-                : "text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            <FaTicketAlt className="mr-3" />
-            Tickets
-          </div>
-          <div
-            onClick={() => {
-              onSelectSection("forms");
-              setIsSidebarOpen(false);
-            }}
-            className={`flex items-center px-4 py-2 rounded-lg cursor-pointer transition-colors duration-200 ${
-              activeSection === "forms"
-                ? "bg-indigo-600 text-white"
-                : "text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            <FaWpforms className="mr-3" />
-            Forms
-          </div>
-          <div
-            onClick={() => {
-              onSelectSection("discounts");
-              setIsSidebarOpen(false);
-            }}
-            className={`flex items-center px-4 py-2 rounded-lg cursor-pointer transition-colors duration-200 ${
-              activeSection === "discounts"
-                ? "bg-indigo-600 text-white"
-                : "text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            <FaTags className="mr-3" />
-            Discounts
-          </div>
-          <div
-            onClick={() => {
-              onSelectSection("settings");
-              setIsSidebarOpen(false);
-            }}
-            className={`flex items-center px-4 py-2 rounded-lg cursor-pointer transition-colors duration-200 ${
-              activeSection === "settings"
-                ? "bg-indigo-600 text-white"
-                : "text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            <FaCog className="mr-3" />
-            Settings
-          </div>
-          <div
-            onClick={() => {
-              onSelectSection("add-ons");
-              setIsSidebarOpen(false);
-            }}
-            className={`flex items-center px-4 py-2 rounded-lg cursor-pointer transition-colors duration-200 ${
-              activeSection === "add-ons"
-                ? "bg-indigo-600 text-white"
-                : "text-gray-700 hover:bg-gray-200"
-            }`}
-          >
-            <FaPlusCircle className="mr-3" />
-            Add-ons
-          </div>
+          />
         </nav>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <header className="flex items-center justify-between p-6 bg-white shadow-md">
-          <div className="flex items-center space-x-4">
-            <h1 className="text-3xl font-semibold text-gray-800">Hamstring...</h1>
-            <span className="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-red-100 text-red-800">
-              Event is Offline
-            </span>
-          </div>
-          <div className="flex items-center space-x-4">
-            <button className="flex items-center px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
-              <FaTimes className="mr-2" /> Copy Event Link
-            </button>
-            <button className="flex items-center px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">
-              <FaTimes className="mr-2" /> Preview Event
-            </button>
-            {/* Placeholder for user/event actions */}
-            <div className="text-gray-600">Actions</div>
-          </div>
-        </header>
-
-        <div className="flex-1 p-6 overflow-auto">{children}</div>
+      {/* Content */}
+      <main className="flex-1 overflow-auto">
+        <div className="max-w-7xl mx-auto px-8 py-8">{children}</div>
       </main>
     </div>
   );
 };
+
+const SidebarItem = ({
+  label,
+  icon,
+  active,
+  onClick,
+}: {
+  label: string;
+  icon: ReactNode;
+  active: boolean;
+  onClick: () => void;
+}) => (
+  <div
+    onClick={onClick}
+    className={`flex items-center gap-3 px-4 py-2 rounded-md cursor-pointer text-sm font-medium ${
+      active
+        ? "bg-blue-600 text-white"
+        : "text-gray-700 hover:bg-gray-100"
+    }`}
+  >
+    {icon}
+    {label}
+  </div>
+);
 
 export default OrganizerLayout;
