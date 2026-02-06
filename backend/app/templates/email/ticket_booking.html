@@ -1,7 +1,123 @@
-<h2>Ticket Booking Confirmation</h2>
-<p>Hi {{ name }},</p>
-<p>Your booking for event <b>{{ event_name }}</b> was successful!</p>
-<p><b>Ticket:</b> {{ ticket_title }}</p>
-<p><b>Quantity:</b> {{ quantity }}</p>
-<p><b>Total Amount:</b> ${{ total_amount }}</p>
-<p>Enjoy the event!</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Ticket Booking Confirmation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+</head>
+
+<body style="margin:0; padding:0; background:#f3f4f6; font-family:Arial, Helvetica, sans-serif;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:30px 0;">
+    <tr>
+      <td align="center">
+
+        <!-- CARD -->
+        <table width="600" cellpadding="0" cellspacing="0"
+               style="background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,0.08);">
+
+          <!-- HEADER -->
+          <tr>
+            <td style="background:#2563eb; padding:24px; color:#ffffff;">
+              <h1 style="margin:0; font-size:22px;">🎟️ Ticket Confirmed</h1>
+              <p style="margin:6px 0 0; font-size:14px; opacity:0.9;">
+                Swasthya Chetna Event Platform
+              </p>
+            </td>
+          </tr>
+
+          <!-- BODY -->
+          <tr>
+            <td style="padding:28px; color:#111827;">
+
+              <p style="font-size:16px; margin-top:0;">
+                Hi <strong>{{ user_name }}</strong>,
+              </p>
+
+              <p style="font-size:15px; line-height:1.6;">
+                Your booking for the event below has been
+                <strong style="color:#16a34a;">successfully confirmed</strong>.
+              </p>
+
+              <!-- EVENT CARD -->
+              <div style="background:#f9fafb; border-radius:10px; padding:18px; margin:20px 0;">
+                <h2 style="margin:0 0 10px; font-size:18px;">
+                  {{ event_name }}
+                </h2>
+
+                <p style="margin:4px 0; font-size:14px;">
+                  📅 <strong>Date:</strong> {{ event_date }}
+                </p>
+                <p style="margin:4px 0; font-size:14px;">
+                  ⏰ <strong>Time:</strong> {{ event_time }}
+                </p>
+                <p style="margin:4px 0; font-size:14px;">
+                  📍 <strong>Venue:</strong> {{ venue }}
+                </p>
+              </div>
+
+              <!-- TICKET DETAILS -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:10px;">
+                <tr>
+                  <td style="padding:6px 0; font-size:14px;">
+                    🎫 <strong>Ticket:</strong> {{ ticket_title }}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0; font-size:14px;">
+                    🔢 <strong>Quantity:</strong> {{ quantity }}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0; font-size:14px;">
+                    💰 <strong>Total Amount:</strong> ₹{{ total_amount }}
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0; font-size:13px; color:#6b7280;">
+                    🆔 <strong>Booking ID:</strong> {{ booking_id }}
+                  </td>
+                </tr>
+              </table>
+
+              <!-- DOWNLOAD NOTE -->
+              <div style="margin:22px 0; padding:14px; background:#eff6ff; border-left:4px solid #2563eb;">
+                <p style="margin:0; font-size:14px;">
+                  📎 Your <strong>event ticket (PDF)</strong> is attached with this email.
+                  Please download it and keep it handy — the QR code will be scanned at entry.
+                </p>
+              </div>
+
+              <p style="font-size:14px; line-height:1.6;">
+                We’re excited to have you join us.  
+                If you have any questions, feel free to reach out.
+              </p>
+
+              <p style="margin-top:24px; font-size:14px;">
+                Warm regards,<br/>
+                <strong>Swasthya Chetna Team</strong>
+              </p>
+
+            </td>
+          </tr>
+
+          <!-- FOOTER -->
+          <tr>
+            <td style="background:#f9fafb; padding:18px; text-align:center; font-size:12px; color:#6b7280;">
+              This ticket is valid only with QR verification.<br/>
+              Need help? Contact us at
+              <a href="mailto:support@swasthyachetna.in" style="color:#2563eb; text-decoration:none;">
+                support@swasthyachetna.in
+              </a>
+            </td>
+          </tr>
+
+        </table>
+        <!-- /CARD -->
+
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>
