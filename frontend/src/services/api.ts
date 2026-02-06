@@ -50,3 +50,7 @@ export const getEventBookings = async (eventId: string) => {
   );
   return res.data;
 };
+
+export const scanBookingQR = (payload: any) =>
+  api.post("/bookings/scan", payload);
+
