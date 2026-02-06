@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from app.common.utils.dependencies import get_current_user
 from app.core.database import db
 from app.modules.organizers.models import Organizer
@@ -151,6 +151,246 @@ async def event_bookings(
             },
             "ticket": ticket["title"],
             "quantity": b["quantity"],
+            "status": b["status"],
+            "checked_in": b.get("checked_in", False),
+            "created_at": b["created_at"],
+        })
+
+    return bookings
+
+@router.get("/me/analytics/overview")
+async def organizer_analytics_overview(
+    event_id: str = Query("ALL"),
+    current_user=Depends(get_current_user(required_role="ORGANIZER"))
+):
+    # Determine event filter
+    if event_id == "ALL":
+        event_ids = await db.events.distinct(
+            "_id", {"organizer_id": current_user["_id"]}
+        )
+    else:
+        event = await db.events.find_one({
+            "_id": ObjectId(event_id),
+            "organizer_id": current_user["_id"]
+        })
+        if not event:
+            raise HTTPException(404, "Event not found")
+        event_ids = [ObjectId(event_id)]
+
+    # KPIs
+    total_events = len(event_ids)
+
+    registrations = await db.bookings.count_documents({
+        "event_id": {"$in": [str(eid) for eid in event_ids]},
+        "status": "CONFIRMED"
+    })
+
+    revenue_cursor = db.bookings.aggregate([
+        {
+            "$match": {
+                "event_id": {"$in": [str(eid) for eid in event_ids]},
+                "status": "CONFIRMED"
+            }
+        },
+        {
+            "$group": {
+                "_id": None,
+                "total": {"$sum": "$total_amount"}
+            }
+        }
+    ])
+
+    revenue_result = await revenue_cursor.to_list(1)
+    revenue = revenue_result[0]["total"] if revenue_result else 0
+
+    checked_in = await db.bookings.count_documents({
+        "event_id": {"$in": [str(eid) for eid in event_ids]},
+        "checked_in": True
+    })
+
+    not_checked_in = await db.bookings.count_documents({
+        "event_id": {"$in": [str(eid) for eid in event_ids]},
+        "checked_in": {"$ne": True}
+    })
+
+    return {
+        "total_events": total_events if event_id == "ALL" else 1,
+        "registrations": registrations,
+        "revenue": revenue,
+        "checked_in": checked_in,
+        "not_checked_in": not_checked_in
+    }
+
+@router.get("/me/analytics/registrations")
+async def registrations_trend(
+    event_id: str = Query("ALL"),
+    current_user=Depends(get_current_user(required_role="ORGANIZER"))
+):
+    match = {
+        "status": "CONFIRMED"
+    }
+
+    if event_id != "ALL":
+        match["event_id"] = event_id
+    else:
+        event_ids = await db.events.distinct(
+            "_id", {"organizer_id": current_user["_id"]}
+        )
+        match["event_id"] = {"$in": [str(eid) for eid in event_ids]}
+
+    pipeline = [
+        {"$match": match},
+        {
+            "$group": {
+                "_id": {
+                    "$dateToString": {"format": "%Y-%m-%d", "date": "$created_at"}
+                },
+                "count": {"$sum": 1}
+            }
+        },
+        {"$sort": {"_id": 1}}
+    ]
+
+    data = await db.bookings.aggregate(pipeline).to_list(None)
+    return data
+
+@router.get("/me/analytics/revenue")
+async def revenue_trend(
+    event_id: str = Query("ALL"),
+    current_user=Depends(get_current_user(required_role="ORGANIZER"))
+):
+    match = {"status": "CONFIRMED"}
+
+    if event_id != "ALL":
+        match["event_id"] = event_id
+    else:
+        event_ids = await db.events.distinct(
+            "_id", {"organizer_id": current_user["_id"]}
+        )
+        match["event_id"] = {"$in": [str(eid) for eid in event_ids]}
+
+    pipeline = [
+        {"$match": match},
+        {
+            "$group": {
+                "_id": {
+                    "$dateToString": {"format": "%Y-%m-%d", "date": "$created_at"}
+                },
+                "revenue": {"$sum": "$total_amount"}
+            }
+        },
+        {"$sort": {"_id": 1}}
+    ]
+
+    data = await db.bookings.aggregate(pipeline).to_list(None)
+    return data
+
+@router.get("/me/analytics/tickets")
+async def ticket_distribution(
+    event_id: str = Query("ALL"),
+    current_user=Depends(get_current_user(required_role="ORGANIZER"))
+):
+    match = {"status": "CONFIRMED"}
+
+    if event_id != "ALL":
+        match["event_id"] = event_id
+    else:
+        event_ids = await db.events.distinct(
+            "_id", {"organizer_id": current_user["_id"]}
+        )
+        match["event_id"] = {"$in": [str(eid) for eid in event_ids]}
+
+    pipeline = [
+        {"$match": match},
+        {
+            "$lookup": {
+                "from": "tickets",
+                "localField": "ticket_id",
+                "foreignField": "_id",
+                "as": "ticket"
+            }
+        },
+        {"$unwind": "$ticket"},
+        {
+            "$group": {
+                "_id": "$ticket.title",
+                "count": {"$sum": "$quantity"}
+            }
+        }
+    ]
+
+    data = await db.bookings.aggregate(pipeline).to_list(None)
+    return data
+
+@router.get("/me/analytics/checkin")
+async def checkin_distribution(
+    event_id: str = Query("ALL"),
+    current_user=Depends(get_current_user(required_role="ORGANIZER"))
+):
+    match = {}
+
+    if event_id != "ALL":
+        match["event_id"] = event_id
+    else:
+        event_ids = await db.events.distinct(
+            "_id", {"organizer_id": current_user["_id"]}
+        )
+        match["event_id"] = {"$in": [str(eid) for eid in event_ids]}
+
+    checked_in = await db.bookings.count_documents({**match, "checked_in": True})
+    not_checked_in = await db.bookings.count_documents({**match, "checked_in": {"$ne": True}})
+
+    return {
+        "checked_in": checked_in,
+        "not_checked_in": not_checked_in
+    }
+
+@router.get("/me/analytics/recent-bookings")
+async def recent_bookings(
+    current_user=Depends(get_current_user(required_role="ORGANIZER"))
+):
+    pipeline = [
+        # 🔑 Convert string event_id → ObjectId
+        {
+            "$addFields": {
+                "eventObjectId": { "$toObjectId": "$event_id" }
+            }
+        },
+        {
+            "$lookup": {
+                "from": "events",
+                "localField": "eventObjectId",
+                "foreignField": "_id",
+                "as": "event"
+            }
+        },
+        {"$unwind": "$event"},
+        {
+            "$match": {
+                "event.organizer_id": current_user["_id"]
+            }
+        },
+        {"$sort": {"created_at": -1}},
+        {"$limit": 10}
+    ]
+
+    bookings = []
+    cursor = db.bookings.aggregate(pipeline)
+
+    async for b in cursor:
+        user = await db.users.find_one(
+            {"_id": ObjectId(b["user_id"])},
+            {"name": 1, "email": 1}
+        )
+
+        bookings.append({
+            "user": {
+                "name": user["name"],
+                "email": user["email"],
+            },
+            "event": b["event"]["title"],
+            "quantity": b["quantity"],
+            "amount": b["total_amount"],
             "status": b["status"],
             "created_at": b["created_at"],
         })

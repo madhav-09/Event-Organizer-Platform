@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from bson import ObjectId
+from datetime import datetime
 from app.core.database import db
 from app.modules.bookings.models import Booking
 from app.common.utils.dependencies import get_current_user
@@ -19,59 +20,65 @@ async def create_booking(
     if not ticket:
         raise HTTPException(status_code=404, detail="Ticket not found")
 
+    event = await db.events.find_one({"_id": ObjectId(ticket["event_id"])})
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+
     available = ticket["quantity"] - ticket["sold"]
     if available < data.quantity:
         raise HTTPException(status_code=400, detail="Not enough tickets")
 
     total = ticket["price"] * data.quantity
 
-    booking = data.dict()
-    booking.update({
+    booking_doc = data.dict()
+    booking_doc.update({
         "user_id": current_user["_id"],
-        "event_id": ticket["event_id"],
+        "event_id": str(event["_id"]),
         "total_amount": total,
         "status": "PENDING"
     })
 
-    # Atomic stock update
     await db.tickets.update_one(
         {"_id": ObjectId(data.ticket_id)},
         {"$inc": {"sold": data.quantity}}
     )
 
-    result = await db.bookings.insert_one(booking)
+    result = await db.bookings.insert_one(booking_doc)
+    booking_id = str(result.inserted_id)
 
-    # ---------------- PDF + EMAIL (UPDATED PART) ----------------
-
-    pdf_bytes = generate_ticket_pdf({
+    # ---------- BUILD SHARED DATA ----------
+    ticket_payload = {
+        "booking_id": booking_id,
+        "event_id": str(event["_id"]),
+        "ticket_id": str(ticket["_id"]),
+        "event_name": event["title"],
+        "event_date": event["start_date"].strftime("%d %b %Y"),
+        "event_time": event["start_date"].strftime("%I:%M %p"),
+        "venue": event.get("venue") or event.get("city"),
         "user_name": current_user["name"],
-        # "event_name": ticket["event_name"],
         "ticket_title": ticket["title"],
         "quantity": data.quantity,
-        "total_amount": total
-    })
+        "total_amount": total,
+    }
 
+    # ---------- PDF ----------
+    pdf_bytes = generate_ticket_pdf(ticket_payload)
+
+    # ---------- EMAIL ----------
     await send_email(
         to_email=current_user["email"],
-        subject="Your Event Ticket",
+        subject=f"🎟️ Ticket Confirmed: {event['title']}",
         template_name="ticket_booking.html",
-        context={
-            "name": current_user["name"],
-            # "event_name": ticket["event_name"],
-            "ticket_title": ticket["title"],
-            "quantity": data.quantity,
-            "total_amount": total,
-        },
+        context=ticket_payload,
         pdf_bytes=pdf_bytes,
-        pdf_filename=f"{ticket['title']}_ticket.pdf"
+        pdf_filename=f"{event['title']}_ticket.pdf"
     )
-
-    # ------------------------------------------------------------
 
     return {
         "message": "Booking created",
-        "booking_id": str(result.inserted_id)
+        "booking_id": booking_id
     }
+
 
 
 @router.post("/{booking_id}/cancel")
@@ -120,4 +127,39 @@ def confirm_booking(order_id: str):
     return {"message": "Booking confirmed"}
 
 
-    
+
+@router.post("/scan")
+async def scan_ticket(
+    payload: dict,
+    current_user=Depends(get_current_user(required_role="ORGANIZER"))
+):
+    booking_id = payload.get("booking_id")
+    event_id = payload.get("event_id")
+
+    if not booking_id or not event_id:
+        raise HTTPException(400, "Invalid QR data")
+
+    booking = await db.bookings.find_one({
+        "_id": ObjectId(booking_id),
+        "event_id": event_id,
+        "status": "CONFIRMED"
+    })
+
+    if not booking:
+        raise HTTPException(404, "Invalid or unpaid ticket")
+
+    if booking.get("checked_in"):
+        raise HTTPException(400, "Already checked in")
+
+    await db.bookings.update_one(
+        {"_id": booking["_id"]},
+        {"$set": {
+            "checked_in": True,
+            "checked_in_at": datetime.utcnow()
+        }}
+    )
+
+    return {
+        "message": "Check-in successful",
+        "booking_id": booking_id
+    }
