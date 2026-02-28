@@ -245,32 +245,38 @@ export default function AdminEvents() {
       ) : (
         <>
           <div className="overflow-x-auto bg-white shadow-md rounded-xl border border-gray-200">
-            <table className="min-w-full">
-              <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
-                    Event
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
-                    Organizer
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
-                    Date / Location
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
-                    Status
-                  </th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">
-                    Bookings
-                  </th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold text-gray-600 uppercase">
-                    Revenue
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
+          <table className="min-w-full table-fixed">
+              <thead className="bg-gray-50">
+  <tr>
+    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+      Event
+    </th>
+
+    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+      Date
+    </th>
+
+    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+      Location
+    </th>
+
+    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+      Status
+    </th>
+
+    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+      Bookings
+    </th>
+
+    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+      Revenue
+    </th>
+
+    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase w-[220px]">
+      Actions
+    </th>
+  </tr>
+</thead>
               <tbody>
                 {events.map((e) => (
                   <tr
@@ -293,7 +299,9 @@ export default function AdminEvents() {
                           </div>
                         )}
                         <div>
-                          <p className="font-medium text-gray-900">{e.title}</p>
+                        <p className="font-medium text-gray-900 truncate max-w-[180px]">
+  {e.title}
+</p>
                           {e.category && (
                             <p className="text-xs text-gray-500">{e.category}</p>
                           )}
@@ -335,7 +343,7 @@ export default function AdminEvents() {
                       {formatCurrency(e.revenue)}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex items-center gap-2 flex-nowrap overflow-x-auto">
                         <Link
                           to={`/event/${e._id}`}
                           target="_blank"

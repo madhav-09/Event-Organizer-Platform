@@ -1,4 +1,4 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useMemo } from "react";
 import {
   FaCalendarAlt,
   FaUsers,
@@ -20,6 +20,36 @@ const AdminLayout = ({ children, activeSection, onSelectSection }: Props) => {
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
+
+  const currentSection = useMemo(() => {
+    switch (activeSection) {
+      case "events":
+        return {
+          title: "Events",
+          subtitle: "Review, publish, and manage all events on the platform.",
+        };
+      case "organizers":
+        return {
+          title: "Organizers",
+          subtitle: "Verify organizer applications and manage organizer accounts.",
+        };
+      case "users":
+        return {
+          title: "Users",
+          subtitle: "View and control user access, roles, and organizer status.",
+        };
+      case "analytics":
+        return {
+          title: "Analytics",
+          subtitle: "Track platform performance, revenue, and engagement.",
+        };
+      default:
+        return {
+          title: "Dashboard",
+          subtitle: "Overview of your admin tools and activity.",
+        };
+    }
+  }, [activeSection]);
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -102,13 +132,25 @@ const AdminLayout = ({ children, activeSection, onSelectSection }: Props) => {
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="flex items-center justify-between p-6 bg-white shadow-md">
-          <h1 className="text-3xl font-semibold text-gray-800">Dashboard</h1>
-          {/* User Profile/Logout - Can add more here */}
-          <div className="text-gray-600">Admin User</div>
+        <header className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200">
+          <div>
+            <h1 className="text-2xl font-semibold text-gray-800">
+              {currentSection.title}
+            </h1>
+            <p className="text-sm text-gray-500 mt-0.5">
+              {currentSection.subtitle}
+            </p>
+          </div>
+          <div className="text-sm text-gray-600">
+            Admin
+          </div>
         </header>
 
-        <div className="flex-1 p-6 overflow-auto">{children}</div>
+        <div className="flex-1 overflow-auto">
+          <div className="max-w-7xl mx-auto px-4 py-6">
+            {children}
+          </div>
+        </div>
       </main>
     </div>
   );
