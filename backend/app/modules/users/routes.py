@@ -177,6 +177,41 @@ async def search_events(
     return events
 
 
+# ================= CITIES (EVENTS GROUPED BY CITY) =================
+@router.get("/cities")
+async def events_by_city():
+    """Return list of cities with published event counts and optional banner image."""
+    pipeline = [
+        {"$match": {"status": "PUBLISHED"}},
+        {
+            "$group": {
+                "_id": "$city",
+                "count": {"$sum": 1},
+                "banner_url": {"$first": "$banner_url"},
+            }
+        },
+        {"$match": {"_id": {"$nin": [None, ""]}}},
+        {"$sort": {"count": -1}},
+        {
+            "$project": {
+                "_id": 0,
+                "name": "$_id",
+                "events": "$count",
+                "image": "$banner_url",
+            }
+        },
+    ]
+    cursor = db.events.aggregate(pipeline)
+    result = []
+    async for doc in cursor:
+        result.append({
+            "name": doc["name"],
+            "events": doc["events"],
+            "image": doc.get("image") or None,
+        })
+    return result
+
+
 # ================= SUGGESTIONS =================
 @router.get("/suggestions", response_model=List[str])
 async def event_suggestions(q: Optional[str] = Query(None)):
