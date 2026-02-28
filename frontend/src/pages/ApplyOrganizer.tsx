@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
-// import { User } from "lucide-react";
+import toast from "react-hot-toast";
 
 export default function ApplyOrganizer() {
   const [brandName, setBrandName] = useState("");
@@ -22,7 +22,7 @@ export default function ApplyOrganizer() {
 
       navigate("/"); // or dashboard
     } catch {
-      alert("You have already applied");
+      toast.error("You have already applied as an organizer");
     } finally {
       setLoading(false);
     }

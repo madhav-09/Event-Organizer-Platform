@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import api from "../../services/api";
 import { FaSave, FaTrash } from "react-icons/fa";
 import Breadcrumbs from "../../components/Breadcrumbs";
+import toast from "react-hot-toast";
 
 interface EventForm {
   title: string;
@@ -40,7 +41,7 @@ export default function EditEvent() {
     setSaving(true);
     await api.put(`/events/${id}`, event);
     setSaving(false);
-    alert("Event updated");
+    toast.success("Event updated successfully");
   };
 
   const del = async () => {

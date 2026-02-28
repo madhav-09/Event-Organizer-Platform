@@ -1,5 +1,6 @@
 import { useState } from "react";
 import api from "../services/api";
+import toast from "react-hot-toast";
 
 interface Ticket {
   id: string;
@@ -55,7 +56,7 @@ export default function BookingModal({ ticket, eventId, onClose }: Props) {
             signature: response.razorpay_signature,
           });
 
-          alert("Booking confirmed 🎉");
+          toast.success("Booking confirmed! Check your email for tickets.");
           onClose();
         },
       };
@@ -64,7 +65,7 @@ export default function BookingModal({ ticket, eventId, onClose }: Props) {
       new window.Razorpay(options).open();
     } catch (err) {
       console.error(err);
-      alert("Booking failed");
+      toast.error("Booking failed. Please try again.");
     } finally {
       setLoading(false);
     }

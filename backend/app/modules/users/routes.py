@@ -6,7 +6,7 @@ import re
 from app.core.database import db
 from app.modules.users.models import User
 from app.common.utils.security import hash_password, verify_password
-from app.common.utils.jwt import create_access_token
+from app.common.utils.jwt import create_access_token, create_refresh_token
 from app.common.utils.dependencies import get_current_user
 from fastapi.security import OAuth2PasswordRequestForm
 
@@ -56,9 +56,13 @@ async def login_user(
     access_token = create_access_token(
         {"sub": str(user["_id"]), "role": user["role"]}
     )
+    refresh_token = create_refresh_token(
+        {"sub": str(user["_id"]), "role": user["role"]}
+    )
 
     return {
         "access_token": access_token,
+        "refresh_token": refresh_token,
         "token_type": "bearer",
         "user": {
             "id": str(user["_id"]),
@@ -72,18 +76,28 @@ async def login_user(
 
 # ================= REFRESH =================
 @router.post("/refresh")
-async def refresh_token(refresh_token: str = Body(...)):
+async def refresh_token_route(
+    payload: dict = Body(...),
+):
     from jose import jwt, JWTError
 
+    token = payload.get("refresh_token")
+    if not token:
+        raise HTTPException(status_code=400, detail="refresh_token required")
+
     try:
-        payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id = payload.get("sub")
-        role = payload.get("role")
+        decoded = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        if decoded.get("type") != "refresh":
+            raise HTTPException(status_code=401, detail="Invalid refresh token")
+        user_id = decoded.get("sub")
+        role = decoded.get("role")
+        if not user_id or not role:
+            raise HTTPException(status_code=401, detail="Invalid refresh token")
 
         new_access = create_access_token({"sub": user_id, "role": role})
         return {"access_token": new_access, "token_type": "bearer"}
     except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid refresh token")
+        raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
 
 
 # ================= MY BOOKINGS =================

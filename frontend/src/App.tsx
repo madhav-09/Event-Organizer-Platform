@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from "react-router-dom";
+import { Toaster } from "react-hot-toast";
 import { useAuth } from "./context/AuthContext";
 
 import Home from "./pages/Home";
@@ -24,6 +25,26 @@ const App = () => {
   const { user } = useAuth();
 
   return (
+    <>
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            background: "#1e293b",
+            color: "#f1f5f9",
+            borderRadius: "12px",
+            padding: "14px 18px",
+            boxShadow: "0 10px 40px rgba(0,0,0,0.2)",
+          },
+          success: {
+            iconTheme: { primary: "#22c55e", secondary: "#f1f5f9" },
+          },
+          error: {
+            iconTheme: { primary: "#ef4444", secondary: "#f1f5f9" },
+          },
+        }}
+      />
     <Routes>
       {/* ================= AUTH ================= */}
       <Route
@@ -114,6 +135,7 @@ const App = () => {
       {/* ================= FALLBACK ================= */}
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
+    </>
   );
 };
 

@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Html5QrcodeScanner } from "html5-qrcode";
 import { scanBookingQR } from "../../../services/api";
+import toast from "react-hot-toast";
 
 type Props = {
   bookingId: string;
@@ -27,7 +28,7 @@ export default function QrScannerModal({
         const payload = JSON.parse(decodedText);
 
         if (payload.booking_id !== bookingId) {
-          alert("QR does not match selected attendee");
+          toast.error("QR code does not match selected attendee");
           return;
         }
 

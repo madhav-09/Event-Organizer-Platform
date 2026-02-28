@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import api from "../services/api";
+import toast from "react-hot-toast";
 
 declare global {
   interface Window {
@@ -139,7 +140,7 @@ export default function EventDetail() {
             signature: response.razorpay_signature,
           });
 
-          alert("🎉 Payment successful! Ticket sent to your email.");
+          toast.success("Payment successful! Ticket sent to your email.");
         },
         theme: { color: "#2563eb" },
       };
@@ -148,7 +149,7 @@ export default function EventDetail() {
       rzp.open();
     } catch (err) {
       console.error(err);
-      alert("Payment failed. Please try again.");
+      toast.error("Payment failed. Please try again.");
     } finally {
       setProcessing(false);
     }

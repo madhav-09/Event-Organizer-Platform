@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 
 export type Role = "ADMIN" | "USER" | "ORGANIZER";
 
@@ -11,6 +11,7 @@ export type User = {
 
 type LoginResponse = {
   access_token: string;
+  refresh_token?: string;
   user: User;
 };
 
@@ -35,15 +36,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const login = (data: LoginResponse) => {
     localStorage.setItem("access_token", data.access_token);
+    if (data.refresh_token) {
+      localStorage.setItem("refresh_token", data.refresh_token);
+    }
     localStorage.setItem("user", JSON.stringify(data.user));
     setUser(data.user);
   };
 
   const logout = () => {
     localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
     localStorage.removeItem("user");
     setUser(null);
   };
+
+  useEffect(() => {
+    const onSessionExpired = () => setUser(null);
+    window.addEventListener("auth:session-expired", onSessionExpired);
+    return () => window.removeEventListener("auth:session-expired", onSessionExpired);
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, login, logout }}>

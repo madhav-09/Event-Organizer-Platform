@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { FaCog, FaEye, FaBell, FaGlobe } from 'react-icons/fa';
+import toast from 'react-hot-toast';
 
 interface EventSettingsData {
   visibility: 'Public' | 'Private';
@@ -32,7 +33,7 @@ const Settings = () => {
     e.preventDefault();
     console.log('Settings Saved:', settings);
     // Here you would typically send this data to your backend API
-    alert('Settings saved successfully!');
+    toast.success('Settings saved successfully!');
   };
 
   return (
