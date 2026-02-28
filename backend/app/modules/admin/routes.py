@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from bson import ObjectId
 from app.core.database import db
 from app.common.utils.dependencies import get_current_user
@@ -129,6 +129,183 @@ async def revenue_analytics(current_user=Depends(get_current_user())):
 
     result = await db.bookings.aggregate(pipeline).to_list(length=1)
     return result[0] if result else {"total_revenue": 0}
+
+
+@router.get("/analytics/overview")
+async def analytics_overview(current_user=Depends(get_current_user())):
+    admin_only(current_user)
+
+    total_events = await db.events.count_documents({})
+    total_users = await db.users.count_documents({"is_blocked": {"$ne": True}})
+    total_organizers = await db.organizers.count_documents({})
+
+    bookings_cursor = db.bookings.aggregate([
+        {
+            "$group": {
+                "_id": "$status",
+                "count": {"$sum": 1},
+                "revenue": {"$sum": "$total_amount"}
+            }
+        }
+    ])
+    status_counts = {"PENDING": 0, "CONFIRMED": 0, "CANCELLED": 0}
+    total_revenue = 0
+    total_bookings = 0
+    async for doc in bookings_cursor:
+        status_counts[doc["_id"]] = doc["count"]
+        total_bookings += doc["count"]
+        if doc["_id"] == "CONFIRMED":
+            total_revenue = doc["revenue"]
+
+    return {
+        "total_events": total_events,
+        "total_users": total_users,
+        "total_organizers": total_organizers,
+        "total_bookings": total_bookings,
+        "total_revenue": round(total_revenue, 2),
+        "pending_bookings": status_counts.get("PENDING", 0),
+        "confirmed_bookings": status_counts.get("CONFIRMED", 0),
+        "cancelled_bookings": status_counts.get("CANCELLED", 0),
+    }
+
+
+@router.get("/analytics/revenue-trend")
+async def revenue_trend(
+    current_user=Depends(get_current_user()),
+    days: int = Query(30, ge=1, le=90),
+):
+    admin_only(current_user)
+    from datetime import datetime, timedelta
+
+    start = datetime.utcnow() - timedelta(days=days)
+    pipeline = [
+        {"$match": {"status": "CONFIRMED", "created_at": {"$gte": start}}},
+        {
+            "$group": {
+                "_id": {"$dateToString": {"format": "%Y-%m-%d", "date": "$created_at"}},
+                "revenue": {"$sum": "$total_amount"},
+                "count": {"$sum": 1},
+            }
+        },
+        {"$sort": {"_id": 1}},
+        {"$project": {"date": "$_id", "revenue": 1, "count": 1, "_id": 0}},
+    ]
+    result = await db.bookings.aggregate(pipeline).to_list(None)
+    return result
+
+
+@router.get("/analytics/top-events")
+async def top_events(
+    current_user=Depends(get_current_user()),
+    limit: int = Query(10, ge=1, le=50),
+):
+    admin_only(current_user)
+
+    pipeline = [
+        {"$match": {"status": "CONFIRMED"}},
+        {
+            "$group": {
+                "_id": "$event_id",
+                "tickets_sold": {"$sum": "$quantity"},
+                "revenue": {"$sum": "$total_amount"},
+                "bookings_count": {"$sum": 1},
+            }
+        },
+        {"$sort": {"revenue": -1}},
+        {"$limit": limit},
+        {
+            "$lookup": {
+                "from": "events",
+                "localField": "_id",
+                "foreignField": "_id",
+                "as": "event",
+            }
+        },
+        {"$unwind": {"path": "$event", "preserveNullAndEmptyArrays": True}},
+        {
+            "$project": {
+                "event_id": {"$toString": "$_id"},
+                "title": "$event.title",
+                "city": "$event.city",
+                "tickets_sold": 1,
+                "revenue": {"$round": ["$revenue", 2]},
+                "bookings_count": 1,
+            }
+        },
+    ]
+    pipeline = [
+        {"$match": {"status": "CONFIRMED"}},
+        {
+            "$group": {
+                "_id": "$event_id",
+                "tickets_sold": {"$sum": "$quantity"},
+                "revenue": {"$sum": "$total_amount"},
+                "bookings_count": {"$sum": 1},
+            }
+        },
+        {"$sort": {"revenue": -1}},
+        {"$limit": limit},
+    ]
+    results = await db.bookings.aggregate(pipeline).to_list(None)
+    out = []
+    for r in results:
+        eid = r["_id"]
+        try:
+            event = await db.events.find_one({"_id": ObjectId(eid)}, {"title": 1, "city": 1})
+        except Exception:
+            event = None
+        out.append({
+            "event_id": eid,
+            "title": (event or {}).get("title", "Unknown"),
+            "city": (event or {}).get("city", ""),
+            "tickets_sold": r["tickets_sold"],
+            "revenue": round(r["revenue"], 2),
+            "bookings_count": r["bookings_count"],
+        })
+    return out
+
+
+@router.get("/analytics/recent-activity")
+async def recent_activity(
+    current_user=Depends(get_current_user()),
+    limit: int = Query(15, ge=1, le=50),
+):
+    admin_only(current_user)
+
+    cursor = db.bookings.find().sort("created_at", -1).limit(limit)
+    out = []
+    async for b in cursor:
+        event = await db.events.find_one(
+            {"_id": ObjectId(b["event_id"])},
+            {"title": 1},
+        ) if b.get("event_id") else None
+        user = await db.users.find_one(
+            {"_id": b["user_id"]},
+            {"name": 1, "email": 1},
+        ) if b.get("user_id") else None
+        out.append({
+            "booking_id": str(b["_id"]),
+            "event_title": (event or {}).get("title", "Unknown"),
+            "user_name": (user or {}).get("name", "—"),
+            "user_email": (user or {}).get("email", "—"),
+            "quantity": b.get("quantity", 0),
+            "amount": b.get("total_amount", 0),
+            "status": b.get("status", "PENDING"),
+            "created_at": b["created_at"].isoformat() if b.get("created_at") and hasattr(b["created_at"], "isoformat") else str(b.get("created_at", "")),
+        })
+    return out
+
+
+@router.get("/analytics/bookings-by-status")
+async def bookings_by_status(current_user=Depends(get_current_user())):
+    admin_only(current_user)
+
+    pipeline = [
+        {"$group": {"_id": "$status", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+    ]
+    result = await db.bookings.aggregate(pipeline).to_list(None)
+    return [{"status": r["_id"], "count": r["count"]} for r in result]
 
 
 @router.get("/analytics/events")
