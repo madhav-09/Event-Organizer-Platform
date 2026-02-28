@@ -103,40 +103,58 @@ async def refresh_token_route(
 # ================= MY BOOKINGS =================
 @router.get("/me/bookings")
 async def my_bookings(user=Depends(get_current_user())):
-    cursor = db.bookings.find({"user_id": ObjectId(user["_id"])})
+    user_id = user["_id"]
+    # Support both ObjectId and string user_id in bookings
+    try:
+        uid = ObjectId(user_id) if not isinstance(user_id, ObjectId) else user_id
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid user")
+
+    cursor = db.bookings.find({"user_id": uid}).sort("created_at", -1)
     bookings = []
 
     async for b in cursor:
-        ticket = await db.tickets.find_one(
-            {"_id": ObjectId(b["ticket_id"])},
-            {"title": 1, "price": 1},
-        )
+        try:
+            ticket = await db.tickets.find_one(
+                {"_id": ObjectId(b["ticket_id"])},
+                {"title": 1, "price": 1},
+            )
+            event = await db.events.find_one(
+                {"_id": ObjectId(b["event_id"])},
+                {"title": 1, "start_date": 1, "city": 1, "venue": 1, "banner_url": 1},
+            )
+        except Exception:
+            continue
 
-        event = await db.events.find_one(
-            {"_id": ObjectId(b["event_id"])},
-            {"title": 1, "start_date": 1, "city": 1},
-        )
+        if not event or not ticket:
+            continue
 
-        bookings.append(
-            {
-                "booking_id": str(b["_id"]),
-                "event": {
-                    "id": str(event["_id"]),
-                    "title": event["title"],
-                    "date": event["start_date"],
-                    "location": event["city"],
-                },
-                "ticket": {
-                    "id": str(ticket["_id"]),
-                    "title": ticket["title"],
-                    "price": ticket["price"],
-                },
-                "quantity": b["quantity"],
-                "total_amount": b["total_amount"],
-                "status": b["status"],
-                "created_at": b["created_at"],
-            }
-        )
+        start_date = event.get("start_date")
+        date_iso = start_date.isoformat() if hasattr(start_date, "isoformat") else str(start_date)
+        location = event.get("venue") or event.get("city") or ""
+        if event.get("city") and location != event.get("city"):
+            location = f"{location}, {event['city']}" if location else event["city"]
+
+        bookings.append({
+            "booking_id": str(b["_id"]),
+            "event": {
+                "id": str(event["_id"]),
+                "title": event["title"],
+                "date": date_iso,
+                "location": location,
+                "city": event.get("city", ""),
+                "banner_url": event.get("banner_url"),
+            },
+            "ticket": {
+                "id": str(ticket["_id"]),
+                "title": ticket["title"],
+                "price": float(ticket["price"]),
+            },
+            "quantity": int(b["quantity"]),
+            "total_amount": float(b["total_amount"]),
+            "status": b.get("status", "PENDING"),
+            "created_at": b.get("created_at").isoformat() if b.get("created_at") and hasattr(b["created_at"], "isoformat") else (str(b.get("created_at")) if b.get("created_at") else ""),
+        })
 
     return bookings
 
