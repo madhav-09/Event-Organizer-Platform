@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from app.common.utils.dependencies import get_current_user
 from app.core.database import db
-from app.modules.organizers.models import Organizer
+from app.modules.organizers.models import Organizer, OrganizerApply
 from bson import ObjectId
 from datetime import datetime
 
@@ -11,15 +11,18 @@ router = APIRouter(prefix="/organizers", tags=["organizers"])
 # ================= APPLY AS ORGANIZER =================
 @router.post("/apply")
 async def apply_organizer(
-    data: Organizer,
+    data: OrganizerApply,
     current_user=Depends(get_current_user(required_role="USER"))
 ):
     existing = await db.organizers.find_one({"user_id": current_user["_id"]})
     if existing:
         raise HTTPException(status_code=400, detail="Already applied")
 
-    data.user_id = current_user["_id"]
-    result = await db.organizers.insert_one(data.dict())
+    doc = data.model_dump()
+    doc["user_id"] = current_user["_id"]
+    doc["kyc_status"] = "PENDING"
+    doc["created_at"] = datetime.utcnow()
+    result = await db.organizers.insert_one(doc)
     return {
         "message": "Organizer application submitted",
         "organizer_id": str(result.inserted_id),
