@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends, Body, Query
 from typing import List, Optional
 from bson import ObjectId
+import re
 
 from app.core.database import db
 from app.modules.users.models import User
@@ -136,7 +137,8 @@ async def search_events(
     query = {"status": "PUBLISHED"}
 
     if q and q.strip():
-        regex = {"$regex": q.strip(), "$options": "i"}
+        search_term = re.escape(q.strip())
+        regex = {"$regex": search_term, "$options": "i"}
         query["$or"] = [
             {"title": regex},
             {"city": regex},
@@ -163,8 +165,14 @@ async def search_events(
 
 # ================= SUGGESTIONS =================
 @router.get("/suggestions", response_model=List[str])
-async def event_suggestions(q: str = Query(..., min_length=1)):
-    regex = {"$regex": q, "$options": "i"}
+async def event_suggestions(q: Optional[str] = Query(None)):
+    if not q or not q.strip():
+        return []
+
+    search_term = q.strip()
+    # Escape regex special chars so user input doesn't break the query
+    escaped = re.escape(search_term)
+    regex = {"$regex": escaped, "$options": "i"}
 
     cursor = db.events.find(
         {
@@ -176,13 +184,15 @@ async def event_suggestions(q: str = Query(..., min_length=1)):
             ],
         },
         {"_id": 0, "title": 1, "city": 1, "venue": 1},
-    ).limit(8)
+    ).limit(12)
 
     suggestions = set()
-
     async for doc in cursor:
-        suggestions.update(
-            filter(None, [doc.get("title"), doc.get("city"), doc.get("venue")])
-        )
+        for val in (doc.get("title"), doc.get("city"), doc.get("venue")):
+            if val and isinstance(val, str) and val.strip():
+                suggestions.add(val.strip())
 
-    return list(suggestions)
+    # Return as list, sorted so matching prefix appears first
+    result = list(suggestions)
+    result.sort(key=lambda s: (not s.lower().startswith(search_term.lower()), s.lower()))
+    return result[:10]

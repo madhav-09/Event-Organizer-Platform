@@ -63,6 +63,7 @@ export default function EventDetail() {
   const [event, setEvent] = useState<Event | null>(null);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+  const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -95,21 +96,21 @@ export default function EventDetail() {
     minute: "2-digit",
   });
 
-  // ================= CHECKOUT =================
   const handleCheckout = async () => {
     if (!selectedTicket) return;
+
+    const available = selectedTicket.quantity - selectedTicket.sold;
+    if (quantity < 1 || quantity > available) return;
 
     try {
       setProcessing(true);
 
-      // ✅ REQUIRED FIELDS – EXACT MATCH
       const bookingPayload = {
         event_id: String(event._id),
         ticket_id: String(selectedTicket._id),
-        quantity: 1,
+        quantity,
       };
 
-      // ✅ Correct endpoint
       const bookingRes = await api.post(
         "/bookings/",
         bookingPayload
@@ -117,7 +118,6 @@ export default function EventDetail() {
 
       const bookingId = bookingRes.data.booking_id;
 
-      // ✅ Backend calculates amount
       const orderRes = await api.post(
         `/payments/create-order/${bookingId}`
       );
@@ -153,6 +153,15 @@ export default function EventDetail() {
       setProcessing(false);
     }
   };
+
+  const handleSelectTicket = (ticket: Ticket) => {
+    setSelectedTicket(ticket);
+    const available = ticket.quantity - ticket.sold;
+    setQuantity((q) => (q > available ? Math.max(1, available) : q));
+  };
+
+  const available = selectedTicket ? selectedTicket.quantity - selectedTicket.sold : 0;
+  const totalPrice = selectedTicket ? selectedTicket.price * quantity : 0;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -203,12 +212,12 @@ export default function EventDetail() {
 
           <div className="space-y-3">
             {tickets.map((ticket) => {
-              const available = ticket.quantity - ticket.sold;
+              const avail = ticket.quantity - ticket.sold;
 
               return (
                 <div
                   key={ticket._id}
-                  onClick={() => setSelectedTicket(ticket)}
+                  onClick={() => handleSelectTicket(ticket)}
                   className={`p-4 border rounded-xl cursor-pointer ${
                     selectedTicket?._id === ticket._id
                       ? "border-blue-600 bg-blue-50"
@@ -220,8 +229,8 @@ export default function EventDetail() {
                     <span className="font-bold">₹{ticket.price}</span>
                   </div>
                   <div className="text-sm mt-1">
-                    {available} available
-                    {available < 50 && (
+                    {avail} available
+                    {avail < 50 && (
                       <span className="text-red-600 ml-2">
                         <Tag className="inline w-4 h-4" /> Selling fast
                       </span>
@@ -232,16 +241,61 @@ export default function EventDetail() {
             })}
           </div>
 
+          {selectedTicket && (
+            <div className="mt-4 p-4 bg-gray-50 rounded-xl space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="font-medium">Quantity</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                    disabled={quantity <= 1}
+                    className="w-9 h-9 rounded-lg border border-gray-300 bg-white font-bold text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+                  >
+                    −
+                  </button>
+                  <input
+                    type="number"
+                    min={1}
+                    max={available}
+                    value={quantity}
+                    aria-label="Number of tickets"
+                    onChange={(e) => {
+                      const v = parseInt(e.target.value, 10);
+                      if (!isNaN(v)) setQuantity(Math.max(1, Math.min(available, v)));
+                    }}
+                    className="w-14 text-center border border-gray-300 rounded-lg py-1.5 font-medium"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setQuantity((q) => Math.min(available, q + 1))}
+                    disabled={quantity >= available}
+                    className="w-9 h-9 rounded-lg border border-gray-300 bg-white font-bold text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+              <p className="text-sm text-gray-500">
+                {available} tickets left
+              </p>
+              <div className="flex justify-between text-lg font-bold pt-2 border-t border-gray-200">
+                <span>Total</span>
+                <span>₹{totalPrice}</span>
+              </div>
+            </div>
+          )}
+
           <button
-            disabled={!selectedTicket || processing}
+            disabled={!selectedTicket || processing || quantity < 1 || quantity > available}
             onClick={handleCheckout}
             className={`w-full mt-6 py-4 rounded-xl font-bold ${
-              selectedTicket
+              selectedTicket && quantity >= 1 && quantity <= available
                 ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white"
                 : "bg-gray-200 text-gray-400"
             }`}
           >
-            {processing ? "Processing..." : "Proceed to Checkout"}
+            {processing ? "Processing..." : quantity > 1 ? `Proceed to Pay ₹${totalPrice}` : "Proceed to Checkout"}
           </button>
 
           <div className="mt-4 flex space-x-2 text-sm text-blue-600">

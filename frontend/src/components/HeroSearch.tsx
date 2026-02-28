@@ -1,5 +1,5 @@
 import { Search } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import api from "../services/api";
 
 export default function HeroSearch({
@@ -9,32 +9,65 @@ export default function HeroSearch({
 }) {
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
+  const queryRef = useRef(query);
+  queryRef.current = query;
 
   useEffect(() => {
     if (!query.trim()) {
       setSuggestions([]);
+      setLoading(false);
       return;
     }
 
+    if (abortRef.current) {
+      abortRef.current.abort();
+    }
+    abortRef.current = new AbortController();
+    const signal = abortRef.current.signal;
+    const currentQuery = query.trim();
+
+    setLoading(true);
     const timer = setTimeout(async () => {
       try {
         const res = await api.get("/users/suggestions", {
-          params: { q: query },
+          params: { q: currentQuery },
+          signal,
         });
-        setSuggestions(res.data);
-      } catch {
-        setSuggestions([]);
+        // Only apply suggestions if this response is still for the current query (avoid race)
+        if (queryRef.current.trim() === currentQuery) {
+          const data = Array.isArray(res.data) ? res.data : [];
+          setSuggestions(data);
+        }
+      } catch (err: unknown) {
+        const isCancel =
+          err instanceof Error &&
+          (err.name === "CanceledError" || err.name === "AbortError") ||
+          (typeof err === "object" && err !== null && "code" in err && (err as { code: string }).code === "ERR_CANCELED");
+        if (!isCancel && queryRef.current.trim() === currentQuery) {
+          setSuggestions([]);
+        }
+      } finally {
+        if (queryRef.current.trim() === currentQuery) {
+          setLoading(false);
+        }
       }
     }, 300);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      if (abortRef.current) {
+        abortRef.current.abort();
+      }
+    };
   }, [query]);
 
   const handleSearch = (value?: string) => {
     const q = value ?? query;
     if (!q.trim()) return;
-
-    onSearch({ q });
+    setQuery(q);
+    onSearch({ q: q.trim() });
     setSuggestions([]);
   };
 
@@ -54,6 +87,7 @@ export default function HeroSearch({
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               placeholder="Search events, venues, cities..."
               className="flex-1 px-4 py-3 outline-none"
+              autoComplete="off"
             />
             <button
               onClick={() => handleSearch()}
@@ -64,12 +98,15 @@ export default function HeroSearch({
           </div>
 
           {suggestions.length > 0 && (
-            <div className="absolute w-full bg-white mt-2 rounded-xl shadow-md z-50">
+            <div
+              className="absolute left-4 right-4 top-full mt-1 bg-white rounded-xl shadow-md z-50 border border-gray-200 max-h-60 overflow-auto"
+            >
               {suggestions.map((item, i) => (
                 <button
-                  key={i}
+                  key={`${item}-${i}`}
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => handleSearch(item)}
-                  className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                  className="block w-full text-left px-4 py-2.5 hover:bg-gray-100 first:rounded-t-xl last:rounded-b-xl"
                 >
                   {item}
                 </button>

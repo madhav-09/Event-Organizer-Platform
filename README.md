@@ -117,56 +117,135 @@ A full-scale **Online Event Management Platform** inspired by **Townscript**, bu
 
 ## 📁 Project Structure
 
-### Frontend
-
-```bash
-frontend/
-├── src/
-│   ├── app/
-│   │   ├── routes/
-│   │   ├── providers/
-│   │   └── layout/
-│   ├── features/
-│   │   ├── auth/
-│   │   ├── events/
-│   │   ├── bookings/
-│   │   ├── payments/
-│   │   ├── organizer/
-│   │   └── admin/
-│   ├── shared/
-│   │   ├── ui/
-│   │   ├── hooks/
-│   │   ├── utils/
-│   │   └── services/
-│   └── main.jsx
 ```
-
-### Backend
-
-```bash
-backend/
-├── app/
-│   ├── main.py
-│   ├── core/
-│   │   ├── config.py
-│   │   ├── database.py
-│   │   └── security.py
-│   ├── modules/
-│   │   ├── auth/
-│   │   ├── users/
-│   │   ├── events/
-│   │   ├── tickets/
-│   │   ├── bookings/
-│   │   ├── payments/
-│   │   ├── reviews/
-│   │   └── admin/
-│   ├── common/
-│   │   ├── middleware/
-│   │   ├── utils/
-│   │   └── services/
-│   └── jobs/
-│       ├── email_jobs.py
-│       └── payout_jobs.py
+Event-Organizer-Platform/
+├── docker-compose.yml
+├── README.md
+│
+├── frontend/
+│   ├── index.html
+│   ├── package.json
+│   ├── vite.config.ts
+│   ├── tsconfig.json
+│   ├── tsconfig.app.json
+│   ├── tsconfig.node.json
+│   ├── tailwind.config.js
+│   ├── postcss.config.js
+│   ├── eslint.config.js
+│   ├── Dockerfile
+│   ├── .gitignore
+│   ├── .dockerignore
+│   └── src/
+│       ├── main.tsx
+│       ├── App.tsx
+│       ├── App.css
+│       ├── index.css
+│       ├── assets/
+│       │   └── react.svg
+│       ├── components/
+│       │   ├── Navbar.tsx
+│       │   ├── Footer.tsx
+│       │   ├── EventCard.tsx
+│       │   ├── HeroSearch.tsx
+│       │   ├── CityGrid.tsx
+│       │   ├── Categoryfilter.tsx
+│       │   ├── Breadcrumbs.tsx
+│       │   ├── BookingModal.tsx
+│       │   └── ProtectedRoute.tsx
+│       ├── context/
+│       │   └── AuthContext.tsx
+│       ├── layout/
+│       │   ├── PublicLayout.tsx
+│       │   └── OrganizerLayout.tsx
+│       ├── pages/
+│       │   ├── Home.tsx
+│       │   ├── Login.tsx
+│       │   ├── EventDetail.tsx
+│       │   ├── CreateEvent.tsx
+│       │   ├── MyBookings.tsx
+│       │   ├── MyEvents.tsx
+│       │   ├── ApplyOrganizer.tsx
+│       │   ├── OrganizerDashboard.tsx
+│       │   ├── admin/
+│       │   │   ├── AdminLayout.tsx
+│       │   │   ├── AdminDashboard.tsx
+│       │   │   ├── UsersList.tsx
+│       │   │   ├── Organizers.tsx
+│       │   │   ├── Events.tsx
+│       │   │   └── Analytics.tsx
+│       │   └── organizer/
+│       │       ├── ManageEvent.tsx
+│       │       ├── EditEvent.tsx
+│       │       ├── Overview.tsx
+│       │       ├── Details.tsx
+│       │       ├── Forms.tsx
+│       │       ├── Tickets.tsx
+│       │       ├── Addons.tsx
+│       │       ├── Discounts.tsx
+│       │       ├── EventBookings.tsx
+│       │       ├── Settings.tsx
+│       │       └── attendees/
+│       │           ├── AttendeesPage.tsx
+│       │           ├── AttendeesTable.tsx
+│       │           ├── EventSelector.tsx
+│       │           └── QrScannerModal.tsx
+│       └── services/
+│           ├── api.ts
+│           ├── auth_api.ts
+│           └── organizerAnalytics.ts
+│
+└── backend/
+    ├── requirements.txt
+    ├── test_email.py
+    ├── Dockerfile
+    ├── .gitignore
+    ├── .dockerignore
+    ├── tickets/                    # Generated ticket PDFs
+    └── app/
+        ├── main.py
+        ├── core/
+        │   ├── config.py
+        │   ├── database.py
+        │   └── payment.py
+        ├── common/
+        │   ├── razorpay_client.py
+        │   └── utils/
+        │       ├── security.py
+        │       ├── jwt.py
+        │       ├── email.py
+        │       ├── pdf.py
+        │       ├── qr.py
+        │       └── dependencies.py
+        ├── modules/
+        │   ├── users/
+        │   │   ├── models.py
+        │   │   └── routes.py
+        │   ├── events/
+        │   │   ├── models.py
+        │   │   ├── routes.py
+        │   │   ├── schemas.py
+        │   │   └── service.py
+        │   ├── tickets/
+        │   │   ├── models.py
+        │   │   ├── routes.py
+        │   │   └── service.py
+        │   ├── bookings/
+        │   │   ├── models.py
+        │   │   ├── routes.py
+        │   │   └── service.py
+        │   ├── payments/
+        │   │   ├── models.py
+        │   │   ├── routes.py
+        │   │   └── webhook.py
+        │   ├── organizers/
+        │   │   ├── models.py
+        │   │   └── routes.py
+        │   └── admin/
+        │       └── routes.py
+        └── templates/
+            └── email/
+                ├── ticket_booking.html
+                └── event_created.html
 ```
 
 ---

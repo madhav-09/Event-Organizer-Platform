@@ -72,7 +72,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <HeroSearch onSearch={(q) => fetchEvents({ q, city })} />
+      <HeroSearch onSearch={(params) => fetchEvents({ q: params?.q, city })} />
 
       <CategoryFilter selected={selectedCategory} onSelect={setSelectedCategory} />
 
