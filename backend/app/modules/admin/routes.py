@@ -168,32 +168,64 @@ async def organizer_stats(current_user=Depends(get_current_user())):
 
 
 @router.get("/users")
-async def get_users(current_user=Depends(get_current_user("ADMIN"))):
-    users = await db.users.find({}).to_list(None)
+async def get_users(current_user=Depends(get_current_user())):
+    admin_only(current_user)
+
+    cursor = db.users.find({})
     result = []
 
-    for user in users:
+    async for user in cursor:
         user_id = user.get("_id")
-
-        # SAFETY CHECK
         if not user_id:
-            continue  # skip broken records
+            continue
 
-        organizer = await db.organizers.find_one({
-            "user_id": user_id  # <-- DO NOT ObjectId() AGAIN
-        })
+        organizer = await db.organizers.find_one({"user_id": user_id})
 
         result.append({
+            "_id": str(user_id),
             "id": str(user_id),
-            "name": user.get("name"),
-            "email": user.get("email"),
-            "role": user.get("role"),
+            "name": user.get("name", ""),
+            "email": user.get("email", ""),
+            "role": user.get("role", "USER"),
+            "is_blocked": bool(user.get("is_blocked", False)),
             "organizer": {
-                "id": str(organizer["_id"]),
-                "brand_name": organizer.get("brand_name"),
-                "status": organizer.get("status")
-            } if organizer else None
+                "_id": str(organizer["_id"]),
+                "brand_name": organizer.get("brand_name", ""),
+                "kyc_status": organizer.get("kyc_status", "PENDING"),
+            } if organizer else None,
         })
 
     return result
+
+
+@router.put("/users/{user_id}/block")
+async def block_user(user_id: str, current_user=Depends(get_current_user())):
+    admin_only(current_user)
+    if user_id == str(current_user["_id"]):
+        raise HTTPException(status_code=400, detail="Cannot block yourself")
+
+    u = await db.users.find_one({"_id": ObjectId(user_id)})
+    if not u:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    await db.users.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {"is_blocked": True}},
+    )
+    return {"message": "User blocked"}
+
+
+@router.put("/users/{user_id}/unblock")
+async def unblock_user(user_id: str, current_user=Depends(get_current_user())):
+    admin_only(current_user)
+
+    u = await db.users.find_one({"_id": ObjectId(user_id)})
+    if not u:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    await db.users.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {"is_blocked": False}},
+    )
+    return {"message": "User unblocked"}
 

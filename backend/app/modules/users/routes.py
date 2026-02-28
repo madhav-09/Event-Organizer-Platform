@@ -53,6 +53,9 @@ async def login_user(
     if not user or not verify_password(password, user["password"]):
         raise HTTPException(status_code=400, detail="Invalid credentials")
 
+    if user.get("is_blocked"):
+        raise HTTPException(status_code=403, detail="Account is blocked. Contact support.")
+
     access_token = create_access_token(
         {"sub": str(user["_id"]), "role": user["role"]}
     )
