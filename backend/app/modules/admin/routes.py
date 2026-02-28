@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
+from typing import Optional
 from bson import ObjectId
 from app.core.database import db
 from app.common.utils.dependencies import get_current_user
@@ -86,12 +87,122 @@ async def reject_organizer(
 async def publish_event(event_id: str, current_user=Depends(get_current_user())):
     admin_only(current_user)
 
+    event = await db.events.find_one({"_id": ObjectId(event_id)})
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+
     await db.events.update_one(
         {"_id": ObjectId(event_id)},
         {"$set": {"status": "PUBLISHED"}}
     )
 
     return {"message": "Event published"}
+
+
+@router.put("/events/{event_id}/unpublish")
+async def unpublish_event(event_id: str, current_user=Depends(get_current_user())):
+    admin_only(current_user)
+
+    event = await db.events.find_one({"_id": ObjectId(event_id)})
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    await db.events.update_one(
+        {"_id": ObjectId(event_id)},
+        {"$set": {"status": "DRAFT"}}
+    )
+
+    return {"message": "Event unpublished"}
+
+
+@router.put("/events/{event_id}/cancel")
+async def cancel_event(event_id: str, current_user=Depends(get_current_user())):
+    admin_only(current_user)
+
+    event = await db.events.find_one({"_id": ObjectId(event_id)})
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    await db.events.update_one(
+        {"_id": ObjectId(event_id)},
+        {"$set": {"status": "CANCELLED"}}
+    )
+
+    return {"message": "Event cancelled"}
+
+
+@router.get("/events")
+async def admin_list_events(
+    current_user=Depends(get_current_user()),
+    status: Optional[str] = Query(None, description="Filter: DRAFT, PUBLISHED, CANCELLED"),
+    q: Optional[str] = Query(None, description="Search by title, city, or category"),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
+):
+    admin_only(current_user)
+
+    query = {}
+    if status and status.strip():
+        query["status"] = status.strip().upper()
+    if q and q.strip():
+        import re
+        term = re.escape(q.strip())
+        regex = {"$regex": term, "$options": "i"}
+        query["$or"] = [
+            {"title": regex},
+            {"city": regex},
+            {"category": regex},
+            {"venue": regex},
+        ]
+
+    cursor = db.events.find(query).sort("created_at", -1).skip(skip).limit(limit)
+    events = []
+    async for e in cursor:
+        eid = str(e["_id"])
+        organizer = await db.organizers.find_one(
+            {"user_id": e["organizer_id"]},
+            {"brand_name": 1},
+        ) if e.get("organizer_id") else None
+
+        # Bookings stats for this event
+        agg = await db.bookings.aggregate([
+            {"$match": {"event_id": eid}},
+            {
+                "$group": {
+                    "_id": None,
+                    "bookings_count": {"$sum": 1},
+                    "revenue": {"$sum": "$total_amount"},
+                    "confirmed_revenue": {"$sum": {"$cond": [{"$eq": ["$status", "CONFIRMED"]}, "$total_amount", 0]}},
+                }
+            },
+        ]).to_list(1)
+
+        stats = agg[0] if agg else {"bookings_count": 0, "revenue": 0, "confirmed_revenue": 0}
+
+        start = e.get("start_date")
+        start_iso = start.isoformat() if start and hasattr(start, "isoformat") else str(start or "")
+
+        events.append({
+            "_id": eid,
+            "id": eid,
+            "title": e.get("title", ""),
+            "description": e.get("description", ""),
+            "category": e.get("category", ""),
+            "city": e.get("city", ""),
+            "venue": e.get("venue", ""),
+            "start_date": start_iso,
+            "end_date": e.get("end_date").isoformat() if e.get("end_date") and hasattr(e["end_date"], "isoformat") else str(e.get("end_date", "")),
+            "banner_url": e.get("banner_url"),
+            "status": e.get("status", "DRAFT"),
+            "organizer_id": str(e["organizer_id"]) if e.get("organizer_id") else "",
+            "organizer_name": (organizer or {}).get("brand_name", "—"),
+            "bookings_count": stats.get("bookings_count", 0),
+            "revenue": round(stats.get("confirmed_revenue", 0), 2),
+            "created_at": e.get("created_at").isoformat() if e.get("created_at") and hasattr(e["created_at"], "isoformat") else str(e.get("created_at", "")),
+        })
+
+    total = await db.events.count_documents(query)
+    return {"events": events, "total": total}
 
 
 
