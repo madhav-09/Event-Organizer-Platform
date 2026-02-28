@@ -1,6 +1,6 @@
 import { Facebook, Twitter, Instagram, Linkedin, Mail, Phone, MapPin } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
+import logo from "../assets/logo.png";
 export default function Footer() {
   return (
     <footer className="bg-gray-900 text-gray-300">
@@ -9,7 +9,7 @@ export default function Footer() {
           <div>
             <div className="flex items-center space-x-2 mb-4">
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xl">SC</span>
+                <img src={logo} alt="Swasthya Chetna Logo" className="w-full h-full object-contain" />
               </div>
               <span className="text-2xl font-bold text-white">Swasthya Chetna</span>
             </div>

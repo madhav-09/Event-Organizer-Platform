@@ -14,7 +14,7 @@ router = APIRouter(prefix="/bookings", tags=["bookings"])
 @router.post("/")
 async def create_booking(
     data: Booking,
-    current_user=Depends(get_current_user(required_role="USER"))
+    current_user=Depends(get_current_user())
 ):
     ticket = await db.tickets.find_one({"_id": ObjectId(data.ticket_id)})
     if not ticket:
