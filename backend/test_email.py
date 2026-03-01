@@ -1,12 +1,13 @@
-import asyncio
-from app.common.utils.email import send_email  # your fixed file
+import os
+import resend
 
-async def main():
-    await send_email(
-        to_email="rahuljangir4368@gmail.com",
-        subject="Your Event Ticket",
-        template_name="ticket_booking.html",
-        context={"name": "Rahul", "event": "Music Concert", "date": "10 Jan 2026"}
-    )
+resend.api_key = os.getenv("RESEND_API_KEY")
 
-asyncio.run(main())
+response = resend.Emails.send({
+    "from": "onboarding@resend.dev",
+    "to": "rahuljangir5368@gmail.com",
+    "subject": "Resend Test Email",
+    "html": "<h1>It Works 🎉</h1>"
+})
+
+print(response)

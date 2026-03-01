@@ -1,20 +1,20 @@
 import os
 from pathlib import Path
 from typing import Optional
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from email.mime.application import MIMEApplication
-import aiosmtplib
 from jinja2 import Environment, FileSystemLoader
 from dotenv import load_dotenv
+import resend
+import base64
 
 load_dotenv()
 
-SMTP_HOST = "smtp.gmail.com"
-SMTP_PORT = 587
-SMTP_USER = os.getenv("EMAIL_USER")
-SMTP_PASS = os.getenv("EMAIL_PASS")
+# ================= RESEND CONFIG =================
+resend.api_key = os.getenv("RESEND_API_KEY")
 
+if not resend.api_key:
+    raise ValueError("RESEND_API_KEY is not set in environment variables")
+
+# ================= TEMPLATE CONFIG =================
 BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
 TEMPLATES_DIR = BASE_DIR / "app" / "templates" / "email"
 
@@ -29,31 +29,31 @@ async def send_email(
     pdf_bytes: Optional[bytes] = None,
     pdf_filename: str = "ticket.pdf",
 ):
-    template = env.get_template(template_name)
-    html_content = template.render(**context)
+    try:
+        template = env.get_template(template_name)
+        html_content = template.render(**context)
 
-    msg = MIMEMultipart("mixed")
-    msg["From"] = SMTP_USER
-    msg["To"] = to_email
-    msg["Subject"] = subject
+        email_data = {
+            "from": "onboarding@resend.dev",
+            "to": to_email,
+            "subject": subject,
+            "html": html_content,
+        }
 
-    msg.attach(MIMEText(html_content, "html"))
+        if pdf_bytes:
+            encoded_pdf = base64.b64encode(pdf_bytes).decode("utf-8")
+            email_data["attachments"] = [
+                {
+                    "filename": pdf_filename,
+                    "content": encoded_pdf,
+                    "type": "application/pdf",
+                }
+            ]
 
-    if pdf_bytes:
-        pdf_part = MIMEApplication(pdf_bytes, _subtype="pdf")
-        pdf_part.add_header(
-            "Content-Disposition",
-            f'attachment; filename="{pdf_filename}"'
-        )
-        msg.attach(pdf_part)
+        response = resend.Emails.send(email_data)
 
-    await aiosmtplib.send(
-        msg,
-        hostname=SMTP_HOST,
-        port=SMTP_PORT,
-        start_tls=True,
-        username=SMTP_USER,
-        password=SMTP_PASS,
-    )
+        print(f"Email sent to {to_email} successfully!")
+        return response
 
-    print(f"Email sent to {to_email} successfully!")
+    except Exception as e:
+        print("Email sending failed:", e)
