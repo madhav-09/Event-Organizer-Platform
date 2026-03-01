@@ -22,7 +22,7 @@ const Organizers = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get("http://127.0.0.1:8000/admin/organizers")
+    api.get("https://event-organizer-platform.onrender.com/admin/organizers")
       .then(res => {
         setOrganizers(res.data);
         setLoading(false);
@@ -31,7 +31,7 @@ const Organizers = () => {
   }, []);
 
   const approve = async (id: string) => {
-    await api.put(`http://127.0.0.1:8000/admin/organizers/${id}/approve`);
+    await api.put(`https://event-organizer-platform.onrender.com/admin/organizers/${id}/approve`);
     setOrganizers(prev =>
       prev.map(o =>
         o._id === id ? { ...o, kyc_status: "APPROVED" } : o
@@ -40,7 +40,7 @@ const Organizers = () => {
   };
 
   const reject = async (id: string) => {
-    await api.put(`http://127.0.0.1:8000/admin/organizers/${id}/reject`);
+    await api.put(`https://event-organizer-platform.onrender.com/admin/organizers/${id}/reject`);
     setOrganizers(prev =>
       prev.map(o =>
         o._id === id ? { ...o, kyc_status: "REJECTED" } : o
