@@ -19,17 +19,19 @@ import shutil
 app = FastAPI(title=PROJECT_NAME)
 
 # ================= CORS =================
+origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+
+    # ✅ Production domain (if you set one later)
+    "https://event-organizer-platform.vercel.app",
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-
-        # ✅ Production frontend
-        "https://event-organizer-platform-dpjvn09e7-rahuls-projects-8a367406.vercel.app"
-    ],
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
