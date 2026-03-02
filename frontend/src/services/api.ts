@@ -3,6 +3,7 @@ import type { InternalAxiosRequestConfig } from 'axios';
 
 const api = axios.create({
   baseURL: 'https://event-organizer-platform.onrender.com',
+  // baseURL: 'http://localhost:8000',
 });
 
 api.interceptors.request.use(
@@ -123,3 +124,24 @@ export const getEventBookings = async (eventId: string) => {
 export const scanBookingQR = (payload: any) =>
   api.post("/bookings/scan", payload);
 
+// ─── Event Management ────────────────────────────────────────────────────────
+export const updateEvent = (eventId: string, payload: any) =>
+  api.put(`/events/${eventId}`, payload);
+
+export const deleteEvent = (eventId: string) =>
+  api.delete(`/events/${eventId}`);
+
+// ─── Ticket Management ───────────────────────────────────────────────────────
+export const getEventTickets = async (eventId: string) => {
+  const res = await api.get(`/tickets/event/${eventId}`);
+  return res.data;
+};
+
+export const createTicket = (payload: any) =>
+  api.post("/tickets/", payload);
+
+export const updateTicket = (ticketId: string, payload: any) =>
+  api.put(`/tickets/${ticketId}`, payload);
+
+export const deleteTicket = (ticketId: string) =>
+  api.delete(`/tickets/${ticketId}`);
