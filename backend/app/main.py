@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from app.core.config import PROJECT_NAME
@@ -32,6 +32,7 @@ origins = [
 app.add_middleware(
     CORSMiddleware,
     allow_origin_regex=r"https://.*\.vercel\.app",
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -51,42 +52,30 @@ app.include_router(payment_router)
 app.include_router(admin_router)
 app.include_router(webhook.router, prefix="/payments")
 
-# ================= FILE PATH SETUP (CRITICAL FIX) =================
+# ================= CLOUDINARY SETUP =================
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+from dotenv import load_dotenv
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-UPLOADS_DIR = os.path.join(BASE_DIR, "uploads")
-EVENT_UPLOAD_DIR = os.path.join(UPLOADS_DIR, "events")
+load_dotenv()
 
-os.makedirs(EVENT_UPLOAD_DIR, exist_ok=True)
-
-# ================= IMAGE SERVING =================
-@app.get("/uploads/events/{filename}")
-def serve_event_image(filename: str):
-    file_path = os.path.join(EVENT_UPLOAD_DIR, filename)
-
-    if not os.path.isfile(file_path):
-        raise HTTPException(status_code=404, detail="Image not found")
-
-    return FileResponse(
-        file_path,
-        headers={
-            "Cache-Control": "public, max-age=31536000, immutable"
-        }
-    )
+cloudinary.config(
+    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.getenv("CLOUDINARY_API_KEY"),
+    api_secret=os.getenv("CLOUDINARY_API_SECRET"),
+    secure=True
+)
 
 # ================= IMAGE UPLOAD =================
 @app.post("/upload")
-async def upload_image(file: UploadFile = File(...)):
+async def upload_image(request: Request, file: UploadFile = File(...)):
     if not file:
         return {"url": ""}
 
-    ext = file.filename.split(".")[-1].lower()
-    filename = f"{uuid.uuid4()}.{ext}"
-    file_path = os.path.join(EVENT_UPLOAD_DIR, filename)
-
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
-
-    return {
-        "url": f"http://127.0.0.1:8000/uploads/events/{filename}"
-    }
+    try:
+        result = cloudinary.uploader.upload(file.file, folder="event_platform")
+        return {"url": result.get("secure_url")}
+    except Exception as e:
+        print("Cloudinary upload failed:", e)
+        raise HTTPException(status_code=500, detail="Image upload failed")
