@@ -8,6 +8,7 @@ import Login from "./pages/Login";
 import CreateEvent from "./pages/CreateEvent";
 import ApplyOrganizer from "./pages/ApplyOrganizer";
 
+import UserProfile from "./pages/UserProfile";
 import MyBookings from "./pages/MyBookings";
 import MyEvents from "./pages/MyEvents";
 
@@ -45,96 +46,104 @@ const App = () => {
           },
         }}
       />
-    <Routes>
-      {/* ================= AUTH ================= */}
-      <Route
-        path="/login"
-        element={user ? <Navigate to="/" /> : <Login />}
-      />
-
-      {/* ================= PUBLIC ================= */}
-      <Route element={<PublicLayout />}>
-        <Route path="/" element={<Home />} />
-        <Route path="/event/:id" element={<EventDetail />} />
-
+      <Routes>
+        {/* ================= AUTH ================= */}
         <Route
-          path="/create-event"
+          path="/login"
+          element={user ? <Navigate to="/" /> : <Login />}
+        />
+
+        {/* ================= PUBLIC ================= */}
+        <Route element={<PublicLayout />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/event/:id" element={<EventDetail />} />
+
+          <Route
+            path="/create-event"
+            element={
+              <ProtectedRoute>
+                <CreateEvent />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* ================= USER ================= */}
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <UserProfile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/my-bookings"
+            element={
+              <ProtectedRoute>
+                <MyBookings />
+              </ProtectedRoute>
+            }
+          />
+        </Route>
+
+        <Route path="/apply-organizer" element={<ApplyOrganizer />} />
+
+        {/* ================= ORGANIZER ================= */}
+        <Route
+          path="/organizer/events"
           element={
-            <ProtectedRoute>
-              <CreateEvent />
+            <ProtectedRoute role="ORGANIZER">
+              <MyEvents />
             </ProtectedRoute>
           }
         />
-      </Route>
 
-      <Route path="/apply-organizer" element={<ApplyOrganizer />} />
+        <Route
+          path="/organizer/events/:id"
+          element={
+            <ProtectedRoute role="ORGANIZER">
+              <ManageEvent />
+            </ProtectedRoute>
+          }
+        />
 
-      {/* ================= USER ================= */}
-      <Route
-        path="/my-bookings"
-        element={
-          <ProtectedRoute>
-            <MyBookings />
-          </ProtectedRoute>
-        }
-      />
+        <Route
+          path="/organizer/events/:id/edit"
+          element={
+            <ProtectedRoute role="ORGANIZER">
+              <EditEvent />
+            </ProtectedRoute>
+          }
+        />
 
-      {/* ================= ORGANIZER ================= */}
-      <Route
-        path="/organizer/events"
-        element={
-          <ProtectedRoute role="ORGANIZER">
-            <MyEvents />
-          </ProtectedRoute>
-        }
-      />
+        <Route
+          path="/organizer/dashboard/*"
+          element={
+            <ProtectedRoute role="ORGANIZER">
+              <OrganizerDashboard />
+            </ProtectedRoute>
+          }
+        />
 
-      <Route
-        path="/organizer/events/:id"
-        element={
-          <ProtectedRoute role="ORGANIZER">
-            <ManageEvent />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/organizer/events/:id/edit"
-        element={
-          <ProtectedRoute role="ORGANIZER">
-            <EditEvent />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/organizer/dashboard/*"
-        element={
-          <ProtectedRoute role="ORGANIZER">
-            <OrganizerDashboard />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/organizer/events/:eventId/bookings"
-        element={<EventBookings />}
-      />
+        <Route
+          path="/organizer/events/:eventId/bookings"
+          element={<EventBookings />}
+        />
 
 
-      {/* ================= ADMIN ================= */}
-      <Route
-        path="/admin/*"
-        element={
-          <ProtectedRoute role="ADMIN">
-            <AdminDashboard />
-          </ProtectedRoute>
-        }
-      />
+        {/* ================= ADMIN ================= */}
+        <Route
+          path="/admin/*"
+          element={
+            <ProtectedRoute role="ADMIN">
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
 
-      {/* ================= FALLBACK ================= */}
-      <Route path="*" element={<Navigate to="/" />} />
-    </Routes>
+        {/* ================= FALLBACK ================= */}
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
     </>
   );
 };

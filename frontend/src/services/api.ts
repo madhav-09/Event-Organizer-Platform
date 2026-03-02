@@ -145,3 +145,24 @@ export const updateTicket = (ticketId: string, payload: any) =>
 
 export const deleteTicket = (ticketId: string) =>
   api.delete(`/tickets/${ticketId}`);
+
+// ================= PROFILE MANAGEMENT =================
+export const getUserProfile = async () => {
+  const response = await api.get("/users/me");
+  return response.data;
+};
+
+export const updateUserProfile = async (data: Record<string, any>) => {
+  const response = await api.put("/users/me", data);
+  return response.data;
+};
+
+export const getOrganizerProfile = async () => {
+  const response = await api.get("/organizers/me");
+  return response.data;
+};
+
+export const updateOrganizerProfile = async (data: Record<string, any>) => {
+  const response = await api.put("/organizers/me", data);
+  return response.data;
+};

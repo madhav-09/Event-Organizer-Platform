@@ -149,16 +149,32 @@ export default function Navbar() {
                   {showProfileDropdown && (
                     <div className="absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-lg z-50">
                       {user.role === "USER" && (
-                        <Link
-                          to="/my-bookings"
-                          onClick={() => setShowProfileDropdown(false)}
-                          className="block px-4 py-2 hover:bg-gray-100"
-                        >
-                          My Bookings
-                        </Link>
+                        <>
+                          <Link
+                            to="/profile"
+                            onClick={() => setShowProfileDropdown(false)}
+                            className="block px-4 py-2 hover:bg-bg-gray-100"
+                          >
+                            My Profile
+                          </Link>
+                          <Link
+                            to="/my-bookings"
+                            onClick={() => setShowProfileDropdown(false)}
+                            className="block px-4 py-2 hover:bg-gray-100"
+                          >
+                            My Bookings
+                          </Link>
+                        </>
                       )}
                       {user.role === "ORGANIZER" && (
                         <>
+                          <Link
+                            to="/organizer/dashboard/profile"
+                            onClick={() => setShowProfileDropdown(false)}
+                            className="block px-4 py-2 hover:bg-gray-100"
+                          >
+                            My Profile
+                          </Link>
                           <Link
                             to="/organizer/dashboard/overview"
                             onClick={() => setShowProfileDropdown(false)}
@@ -210,8 +226,8 @@ export default function Navbar() {
                     key={city}
                     onClick={() => handleCitySelect(city)}
                     className={`px-3 py-1 rounded-full text-sm border ${selectedCity === city
-                        ? "bg-blue-600 text-white border-blue-600"
-                        : "text-gray-700 border-gray-300 hover:bg-gray-100"
+                      ? "bg-blue-600 text-white border-blue-600"
+                      : "text-gray-700 border-gray-300 hover:bg-gray-100"
                       }`}
                   >
                     {city}
@@ -257,16 +273,32 @@ export default function Navbar() {
                   </Link>
                 )}
                 {user.role === "USER" && (
-                  <Link
-                    to="/my-bookings"
-                    onClick={closeMobile}
-                    className="block px-4 py-2.5 text-gray-700 hover:bg-gray-50"
-                  >
-                    My Bookings
-                  </Link>
+                  <>
+                    <Link
+                      to="/profile"
+                      onClick={closeMobile}
+                      className="block px-4 py-2.5 text-gray-700 hover:bg-gray-50"
+                    >
+                      My Profile
+                    </Link>
+                    <Link
+                      to="/my-bookings"
+                      onClick={closeMobile}
+                      className="block px-4 py-2.5 text-gray-700 hover:bg-gray-50"
+                    >
+                      My Bookings
+                    </Link>
+                  </>
                 )}
                 {user.role === "ORGANIZER" && (
                   <>
+                    <Link
+                      to="/organizer/dashboard/profile"
+                      onClick={closeMobile}
+                      className="block px-4 py-2.5 text-gray-700 hover:bg-gray-50"
+                    >
+                      My Profile
+                    </Link>
                     <Link
                       to="/organizer/dashboard/overview"
                       onClick={closeMobile}

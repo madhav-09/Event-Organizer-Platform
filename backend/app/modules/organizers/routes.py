@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Body
 from app.common.utils.dependencies import get_current_user
 from app.core.database import db
 from app.modules.organizers.models import Organizer, OrganizerApply
@@ -34,10 +34,54 @@ async def apply_organizer(
 async def get_organizer(
     current_user=Depends(get_current_user(required_role="ORGANIZER"))
 ):
-    organizer = await db.organizers.find_one({"user_id": current_user["_id"]})
+    # Depending on how apply_organizer inserted, user_id might be ObjectId or string
+    organizer = await db.organizers.find_one({
+        "$or": [
+            {"user_id": current_user["_id"]},
+            {"user_id": str(current_user["_id"])}
+        ]
+    })
+    
     if not organizer:
         raise HTTPException(status_code=404, detail="Organizer profile not found")
+        
+    organizer["_id"] = str(organizer["_id"])
+    organizer["user_id"] = str(organizer["user_id"])
     return organizer
+
+@router.put("/me")
+async def update_organizer(
+    payload: dict = Body(...),
+    current_user=Depends(get_current_user(required_role="ORGANIZER"))
+):
+    update_data = {}
+    allowed_fields = [
+        "brand_name", "contact_name", "contact_email", "contact_phone",
+        "address_line1", "address_line2", "city", "state", "pincode",
+        "country", "description", "website"
+    ]
+    
+    for field in allowed_fields:
+        if field in payload:
+            update_data[field] = payload[field]
+            
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No valid fields to update")
+        
+    result = await db.organizers.update_one(
+        {
+            "$or": [
+                {"user_id": current_user["_id"]},
+                {"user_id": str(current_user["_id"])}
+            ]
+        },
+        {"$set": update_data}
+    )
+    
+    if result.modified_count == 0:
+        return {"message": "No changes made"}
+        
+    return {"message": "Organizer profile updated successfully"}
 
 
 # ================= ORGANIZER EVENTS =================

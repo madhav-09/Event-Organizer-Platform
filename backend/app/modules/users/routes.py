@@ -119,6 +119,48 @@ async def refresh_token_route(
         raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
 
 
+# ================= USER PROFILE =================
+@router.get("/me")
+async def get_my_profile(current_user=Depends(get_current_user())):
+    user = await db.users.find_one({"_id": current_user["_id"]})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {
+        "id": str(user["_id"]),
+        "name": user.get("name"),
+        "email": user.get("email"),
+        "role": user.get("role"),
+    }
+
+@router.put("/me")
+async def update_my_profile(
+    payload: dict = Body(...),
+    current_user=Depends(get_current_user())
+):
+    update_data = {}
+    if "name" in payload and payload["name"].strip():
+        update_data["name"] = payload["name"].strip()
+    if "email" in payload and payload["email"].strip():
+        # Check if email is being taken by someone else
+        existing = await db.users.find_one({"email": payload["email"].strip()})
+        if existing and str(existing["_id"]) != str(current_user["_id"]):
+            raise HTTPException(status_code=400, detail="Email already in use")
+        update_data["email"] = payload["email"].strip()
+
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No valid fields to update")
+
+    result = await db.users.update_one(
+        {"_id": current_user["_id"]},
+        {"$set": update_data}
+    )
+
+    if result.modified_count == 0:
+        return {"message": "No changes made"}
+
+    return {"message": "Profile updated successfully"}
+
+
 # ================= MY BOOKINGS =================
 @router.get("/me/bookings")
 async def my_bookings(user=Depends(get_current_user())):

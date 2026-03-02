@@ -6,6 +6,7 @@ import {
   FaUsers,
   FaCalendarAlt,
   FaArrowLeft,
+  FaUserCircle,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
@@ -85,6 +86,15 @@ const OrganizerLayout = ({
             active={activeSection === "attendees"}
             onClick={() => {
               onSelectSection("attendees");
+              setOpen(false);
+            }}
+          />
+          <SidebarItem
+            label="My Profile"
+            icon={<FaUserCircle />}
+            active={activeSection === "profile"}
+            onClick={() => {
+              onSelectSection("profile");
               setOpen(false);
             }}
           />
