@@ -151,9 +151,9 @@ export default function CreateEvent() {
   /* ================= UI ================= */
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="max-w-4xl mx-auto px-4">
-        <h1 className="text-4xl font-bold text-center mb-6">
+    <div className="min-h-screen bg-gray-50 py-6 sm:py-12">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6">
+        <h1 className="text-2xl sm:text-4xl font-bold text-center mb-4 sm:mb-6">
           Create Event
         </h1>
 
@@ -301,11 +301,10 @@ export default function CreateEvent() {
                 <button
                   key={t}
                   onClick={() => setIsFree(t === "Free")}
-                  className={`flex-1 py-2 rounded-lg font-medium ${
-                    (t === "Free") === isFree
+                  className={`flex-1 py-2 rounded-lg font-medium ${(t === "Free") === isFree
                       ? "bg-blue-600 text-white"
                       : "border bg-white"
-                  }`}
+                    }`}
                 >
                   {t}
                 </button>
@@ -380,11 +379,11 @@ export default function CreateEvent() {
         )}
 
         {/* ACTIONS */}
-        <div className="flex justify-between mt-8">
+        <div className="flex flex-col sm:flex-row justify-between gap-3 mt-6 sm:mt-8">
           {step > 1 && (
             <button
               onClick={() => setStep(step - 1)}
-              className="px-6 py-3 border rounded-lg"
+              className="w-full sm:w-auto px-6 py-3 border rounded-lg"
             >
               Back
             </button>
@@ -394,7 +393,7 @@ export default function CreateEvent() {
             <button
               onClick={() => setStep(step + 1)}
               disabled={!canGoNext}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg disabled:opacity-50"
+              className="w-full sm:w-auto ml-auto px-6 py-3 bg-blue-600 text-white rounded-lg disabled:opacity-50"
             >
               Continue
             </button>
@@ -402,7 +401,7 @@ export default function CreateEvent() {
             <button
               onClick={handlePublish}
               disabled={loading || !canGoNext}
-              className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg"
+              className="w-full sm:w-auto ml-auto px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg"
             >
               {loading ? "Publishing..." : "Publish Event"}
             </button>
@@ -416,19 +415,18 @@ export default function CreateEvent() {
 /* ================= UI HELPERS ================= */
 
 function Stepper({ step }: { step: number }) {
-  const steps = ["Basics", "Date & Location", "Tickets", "Media"];
+  const steps = ["Basics", "Location", "Tickets", "Media"];
   return (
-    <div className="flex justify-between mb-10 text-sm">
+    <div className="flex justify-between mb-8 sm:mb-10 text-xs sm:text-sm overflow-x-auto">
       {steps.map((s, i) => (
         <div
           key={s}
-          className={`flex-1 text-center ${
-            step === i + 1
+          className={`flex-1 text-center min-w-0 px-1 ${step === i + 1
               ? "font-semibold text-blue-600"
               : "text-gray-400"
-          }`}
+            }`}
         >
-          {i + 1}. {s}
+          <span className="hidden xs:inline">{i + 1}. </span>{s}
         </div>
       ))}
     </div>

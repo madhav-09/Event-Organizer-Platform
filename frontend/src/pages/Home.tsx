@@ -62,10 +62,10 @@ export default function Home() {
 
       <CategoryFilter selected={selectedCategory} onSelect={setSelectedCategory} />
 
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="flex items-center space-x-3 mb-8">
-          <TrendingUp className="w-8 h-8 text-blue-600" />
-          <h2 className="text-3xl font-bold">Trending Events</h2>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        <div className="flex items-center space-x-3 mb-6 sm:mb-8">
+          <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
+          <h2 className="text-2xl sm:text-3xl font-bold">Trending Events</h2>
         </div>
 
         {loading ? (
@@ -73,7 +73,7 @@ export default function Home() {
         ) : error ? (
           <p className="text-center text-red-500 py-16">{error}</p>
         ) : filteredEvents.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
             {filteredEvents.map((event) => {
               const price =
                 event.tickets?.length
@@ -100,9 +100,9 @@ export default function Home() {
             })}
           </div>
         ) : (
-          <div className="text-center py-16">
-            <Calendar className="w-14 h-14 mx-auto text-gray-400 mb-4" />
-            <p>No events found</p>
+          <div className="text-center py-10 sm:py-16">
+            <Calendar className="w-10 h-10 sm:w-14 sm:h-14 mx-auto text-gray-400 mb-4" />
+            <p className="text-gray-500 text-sm sm:text-base">No events found</p>
           </div>
         )}
       </div>

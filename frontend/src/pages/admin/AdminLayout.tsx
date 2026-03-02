@@ -1,4 +1,4 @@
-import { ReactNode, useState, useMemo } from "react";
+import { type ReactNode, useState, useMemo } from "react";
 import {
   FaCalendarAlt,
   FaUsers,
@@ -52,22 +52,28 @@ const AdminLayout = ({ children, activeSection, onSelectSection }: Props) => {
   }, [activeSection]);
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      {/* Mobile Sidebar Toggle */}
-      <div className="md:hidden p-4">
-        <button onClick={toggleSidebar} className="text-gray-600">
-          {isSidebarOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
-        </button>
-      </div>
+    <div className="flex h-screen bg-gray-100 overflow-hidden">
+      {/* Dark backdrop on mobile */}
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 z-20 bg-black/40 md:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-30 w-64 bg-white shadow-md transform ${
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } md:relative md:translate-x-0 transition-transform duration-200 ease-in-out`}
+        className={`fixed inset-y-0 left-0 z-30 w-64 bg-white shadow-md flex flex-col transform ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+          } md:relative md:translate-x-0 transition-transform duration-200 ease-in-out`}
       >
-        <div className="p-6 text-2xl font-bold text-gray-800 border-b">
+        <div className="p-6 text-2xl font-bold text-gray-800 border-b flex items-center justify-between">
           Admin Panel
+          <button
+            onClick={() => setIsSidebarOpen(false)}
+            className="md:hidden text-gray-500 hover:text-gray-800"
+          >
+            <FaTimes size={20} />
+          </button>
         </div>
         <nav className="p-4 space-y-2">
           <div
@@ -75,11 +81,10 @@ const AdminLayout = ({ children, activeSection, onSelectSection }: Props) => {
               onSelectSection("events");
               setIsSidebarOpen(false);
             }}
-            className={`flex items-center px-4 py-2 rounded-lg cursor-pointer transition-colors duration-200 ${
-              activeSection === "events"
-                ? "bg-indigo-600 text-white"
-                : "text-gray-700 hover:bg-gray-200"
-            }`}
+            className={`flex items-center px-4 py-2 rounded-lg cursor-pointer transition-colors duration-200 ${activeSection === "events"
+              ? "bg-indigo-600 text-white"
+              : "text-gray-700 hover:bg-gray-200"
+              }`}
           >
             <FaCalendarAlt className="mr-3" />
             Events
@@ -89,11 +94,10 @@ const AdminLayout = ({ children, activeSection, onSelectSection }: Props) => {
               onSelectSection("organizers");
               setIsSidebarOpen(false);
             }}
-            className={`flex items-center px-4 py-2 rounded-lg cursor-pointer transition-colors duration-200 ${
-              activeSection === "organizers"
-                ? "bg-indigo-600 text-white"
-                : "text-gray-700 hover:bg-gray-200"
-            }`}
+            className={`flex items-center px-4 py-2 rounded-lg cursor-pointer transition-colors duration-200 ${activeSection === "organizers"
+              ? "bg-indigo-600 text-white"
+              : "text-gray-700 hover:bg-gray-200"
+              }`}
           >
             <FaUserTie className="mr-3" />
             Organizers
@@ -103,11 +107,10 @@ const AdminLayout = ({ children, activeSection, onSelectSection }: Props) => {
               onSelectSection("users");
               setIsSidebarOpen(false);
             }}
-            className={`flex items-center px-4 py-2 rounded-lg cursor-pointer transition-colors duration-200 ${
-              activeSection === "users"
-                ? "bg-indigo-600 text-white"
-                : "text-gray-700 hover:bg-gray-200"
-            }`}
+            className={`flex items-center px-4 py-2 rounded-lg cursor-pointer transition-colors duration-200 ${activeSection === "users"
+              ? "bg-indigo-600 text-white"
+              : "text-gray-700 hover:bg-gray-200"
+              }`}
           >
             <FaUsers className="mr-3" />
             Users
@@ -117,11 +120,10 @@ const AdminLayout = ({ children, activeSection, onSelectSection }: Props) => {
               onSelectSection("analytics");
               setIsSidebarOpen(false);
             }}
-            className={`flex items-center px-4 py-2 rounded-lg cursor-pointer transition-colors duration-200 ${
-              activeSection === "analytics"
-                ? "bg-indigo-600 text-white"
-                : "text-gray-700 hover:bg-gray-200"
-            }`}
+            className={`flex items-center px-4 py-2 rounded-lg cursor-pointer transition-colors duration-200 ${activeSection === "analytics"
+              ? "bg-indigo-600 text-white"
+              : "text-gray-700 hover:bg-gray-200"
+              }`}
           >
             <FaChartBar className="mr-3" />
             Analytics
@@ -131,8 +133,16 @@ const AdminLayout = ({ children, activeSection, onSelectSection }: Props) => {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <header className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200">
+        {/* Mobile header bar */}
+        <div className="md:hidden flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-200">
+          <button onClick={toggleSidebar} className="text-gray-600">
+            <FaBars size={22} />
+          </button>
+          <span className="font-semibold text-gray-800">{currentSection.title}</span>
+        </div>
+
+        {/* Desktop Header */}
+        <header className="hidden md:flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200">
           <div>
             <h1 className="text-2xl font-semibold text-gray-800">
               {currentSection.title}
@@ -145,9 +155,8 @@ const AdminLayout = ({ children, activeSection, onSelectSection }: Props) => {
             Admin
           </div>
         </header>
-
         <div className="flex-1 overflow-auto">
-          <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
             {children}
           </div>
         </div>

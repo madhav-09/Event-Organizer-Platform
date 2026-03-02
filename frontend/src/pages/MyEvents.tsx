@@ -34,8 +34,8 @@ export default function MyEvents() {
     return <p className="p-6 text-gray-500">No events created yet</p>;
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">My Events</h1>
+    <div className="max-w-7xl mx-auto p-4 sm:p-6">
+      <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6">My Events</h1>
 
       <div className="overflow-x-auto bg-white shadow rounded-lg">
         <table className="min-w-full">
@@ -62,15 +62,15 @@ export default function MyEvents() {
                 key={e.event_id}
                 className="border-b hover:bg-gray-50"
               >
-                <td className="px-5 py-4 font-medium">{e.title}</td>
+                <td className="px-5 py-4 font-medium whitespace-nowrap">{e.title}</td>
 
-                <td className="px-5 py-4">
+                <td className="px-5 py-4 whitespace-nowrap">
                   {new Date(e.date).toLocaleString()}
                 </td>
 
-                <td className="px-5 py-4">{e.location}</td>
+                <td className="px-5 py-4 whitespace-nowrap">{e.location}</td>
 
-                <td className="px-5 py-4">
+                <td className="px-5 py-4 whitespace-nowrap">
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-semibold ${statusStyles[e.status]}`}
                   >
@@ -78,18 +78,18 @@ export default function MyEvents() {
                   </span>
                 </td>
 
-                <td className="px-5 py-4">
+                <td className="px-5 py-4 whitespace-nowrap">
                   <button
                     onClick={() =>
                       navigate(`/organizer/events/${e.event_id}/bookings`)
                     }
                     className="text-blue-600 font-semibold hover:underline"
-                  >                    
+                  >
                     {e.total_bookings}
                   </button>
                 </td>
 
-                <td className="px-5 py-4">
+                <td className="px-5 py-4 whitespace-nowrap">
                   <div className="flex gap-4">
                     <button
                       title="Manage Event"

@@ -167,16 +167,16 @@ export default function EventDetail() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Banner */}
-      <div className="relative h-[400px]">
+      <div className="relative h-48 sm:h-64 md:h-[400px]">
         <img src={event.banner_url} className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-black/60" />
-        <div className="absolute bottom-8 left-8 text-white">
-          <span className="bg-blue-600 px-4 py-2 rounded-full">
+        <div className="absolute bottom-4 left-4 sm:bottom-8 sm:left-8 text-white">
+          <span className="bg-blue-600 px-3 py-1 sm:px-4 sm:py-2 rounded-full text-sm sm:text-base">
             {event.category}
           </span>
-          <h1 className="text-4xl font-bold mt-4">{event.title}</h1>
-          <div className="flex items-center mt-3 space-x-2">
-            <Users />
+          <h1 className="text-xl sm:text-3xl md:text-4xl font-bold mt-2 sm:mt-4 leading-tight">{event.title}</h1>
+          <div className="flex items-center mt-2 sm:mt-3 space-x-2 text-sm sm:text-base">
+            <Users className="w-4 h-4 sm:w-5 sm:h-5" />
             <span>
               {tickets.reduce((a, b) => a + b.sold, 0)} attending
             </span>
@@ -184,10 +184,10 @@ export default function EventDetail() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto grid lg:grid-cols-3 gap-8 px-6 py-10">
+      <div className="max-w-7xl mx-auto grid lg:grid-cols-3 gap-6 lg:gap-8 px-4 sm:px-6 py-6 sm:py-10">
         {/* Left */}
-        <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow">
-          <h2 className="text-2xl font-bold mb-4">Event Details</h2>
+        <div className="lg:col-span-2 bg-white p-4 sm:p-6 rounded-xl shadow">
+          <h2 className="text-xl sm:text-2xl font-bold mb-4">Event Details</h2>
 
           <div className="space-y-4">
             <div className="flex space-x-3">
@@ -208,7 +208,7 @@ export default function EventDetail() {
         </div>
 
         {/* Right */}
-        <div className="bg-white p-6 rounded-xl shadow sticky top-24">
+        <div className="bg-white p-4 sm:p-6 rounded-xl shadow lg:sticky lg:top-24">
           <h3 className="text-xl font-bold mb-4">Select Ticket</h3>
 
           <div className="space-y-3">
@@ -219,11 +219,10 @@ export default function EventDetail() {
                 <div
                   key={ticket._id}
                   onClick={() => handleSelectTicket(ticket)}
-                  className={`p-4 border rounded-xl cursor-pointer ${
-                    selectedTicket?._id === ticket._id
+                  className={`p-4 border rounded-xl cursor-pointer ${selectedTicket?._id === ticket._id
                       ? "border-blue-600 bg-blue-50"
                       : "border-gray-200"
-                  }`}
+                    }`}
                 >
                   <div className="flex justify-between">
                     <span>{ticket.title}</span>
@@ -290,11 +289,10 @@ export default function EventDetail() {
           <button
             disabled={!selectedTicket || processing || quantity < 1 || quantity > available}
             onClick={handleCheckout}
-            className={`w-full mt-6 py-4 rounded-xl font-bold ${
-              selectedTicket && quantity >= 1 && quantity <= available
+            className={`w-full mt-6 py-4 rounded-xl font-bold ${selectedTicket && quantity >= 1 && quantity <= available
                 ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white"
                 : "bg-gray-200 text-gray-400"
-            }`}
+              }`}
           >
             {processing ? "Processing..." : quantity > 1 ? `Proceed to Pay ₹${totalPrice}` : "Proceed to Checkout"}
           </button>

@@ -45,13 +45,13 @@ function EventCard(props: EventCardProps) {
     >
       <div className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all h-full flex flex-col">
         {/* IMAGE */}
-        <div className="relative h-56">
+        <div className="relative h-44 sm:h-56">
           <img
             src={imageSrc}
             alt={title}
             onError={(e) =>
-              ((e.target as HTMLImageElement).src =
-                "/placeholder-event.jpg")
+            ((e.target as HTMLImageElement).src =
+              "/placeholder-event.jpg")
             }
             className="w-full h-full object-cover"
           />
@@ -65,11 +65,10 @@ function EventCard(props: EventCardProps) {
             className="absolute top-4 right-4 p-2 bg-white rounded-full"
           >
             <Heart
-              className={`w-5 h-5 ${
-                isFavorite
+              className={`w-5 h-5 ${isFavorite
                   ? "fill-red-500 text-red-500"
                   : "text-gray-600"
-              }`}
+                }`}
             />
           </button>
 
@@ -80,7 +79,7 @@ function EventCard(props: EventCardProps) {
 
         {/* CONTENT */}
         <div className="p-5 flex flex-col flex-grow">
-          <h3 className="text-xl font-bold mb-3">{title}</h3>
+          <h3 className="text-lg sm:text-xl font-bold mb-3 line-clamp-2">{title}</h3>
 
           <div className="text-sm text-gray-600 space-y-2 mb-4">
             <div className="flex items-center">
@@ -97,7 +96,7 @@ function EventCard(props: EventCardProps) {
           </div>
 
           <div className="mt-auto flex justify-between items-center pt-4 border-t">
-            <p className="text-2xl font-bold text-blue-600">
+            <p className="text-xl sm:text-2xl font-bold text-blue-600">
               {price}
             </p>
 
@@ -106,7 +105,7 @@ function EventCard(props: EventCardProps) {
                 e.stopPropagation();
                 navigate(`/event/${id}`);
               }}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg"
+              className="px-4 sm:px-6 py-2 bg-blue-600 text-white rounded-lg text-sm sm:text-base whitespace-nowrap"
             >
               Book Now
             </button>

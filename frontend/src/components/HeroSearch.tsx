@@ -72,26 +72,28 @@ export default function HeroSearch({
   };
 
   return (
-    <div className="bg-gradient-to-br from-blue-600 to-purple-700 py-16">
-      <div className="max-w-4xl mx-auto px-4">
-        <h1 className="text-4xl font-bold text-white text-center mb-8">
+    <div className="bg-gradient-to-br from-blue-600 to-purple-700 py-10 sm:py-16">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6">
+        <h1 className="text-2xl sm:text-4xl font-bold text-white text-center mb-6 sm:mb-8 leading-tight">
           Discover Events Near You
         </h1>
 
         <div className="relative bg-white rounded-2xl shadow-lg p-4">
-          <div className="flex">
-            <Search className="w-5 h-5 text-gray-400 mt-4 ml-2" />
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              placeholder="Search events, venues, cities..."
-              className="flex-1 px-4 py-3 outline-none"
-              autoComplete="off"
-            />
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-0">
+            <div className="flex items-center flex-1">
+              <Search className="w-5 h-5 text-gray-400 mt-0 ml-2 flex-shrink-0" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                placeholder="Search events, venues, cities..."
+                className="flex-1 px-4 py-3 outline-none text-sm sm:text-base"
+                autoComplete="off"
+              />
+            </div>
             <button
               onClick={() => handleSearch()}
-              className="px-6 py-3 bg-blue-600 text-white rounded-xl"
+              className="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white rounded-xl sm:rounded-l-none sm:rounded-r-xl font-medium"
             >
               Search
             </button>
