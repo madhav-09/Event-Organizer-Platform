@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Html5QrcodeScanner } from "html5-qrcode";
 import { scanBookingQR } from "../../../services/api";
 import toast from "react-hot-toast";
-import { FiCheckCircle, FiAlertCircle, FiCamera } from "react-icons/fi";
+import { CheckCircle, AlertCircle, Camera } from "lucide-react";
 
 type Props = {
   eventId: string;
@@ -61,47 +61,48 @@ export default function UnifiedQrScanner({ eventId, onSuccess }: Props) {
     );
 
     scannerRef.current = scanner;
-
-    return () => {
-      scanner.clear().catch(() => { });
-    };
+    return () => { scanner.clear().catch(() => { }); };
   }, [eventId]);
 
   return (
-    <div className="bg-white rounded-2xl shadow-md border border-gray-100 overflow-hidden">
+    <div className="glass-card rounded-2xl overflow-hidden">
       {/* Header */}
-      <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-white">
-        <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
-          <FiCamera size={18} />
+      <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)', background: 'rgba(108,71,236,0.08)' }}>
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center"
+          style={{ background: 'rgba(108,71,236,0.2)', border: '1px solid rgba(108,71,236,0.3)' }}>
+          <Camera className="w-4 h-4 text-brand-400" />
         </div>
         <div>
-          <h3 className="font-semibold text-gray-800 text-sm">QR Scanner</h3>
-          <p className="text-xs text-gray-500">Point camera at any attendee's ticket QR code</p>
+          <h3 className="font-heading font-semibold text-white text-sm">QR Scanner</h3>
+          <p className="text-xs text-slate-500">Point camera at attendee's ticket QR</p>
         </div>
 
         {/* Live status pill */}
         <div className="ml-auto">
           {scanStatus === "success" && (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 animate-pulse">
-              <FiCheckCircle size={13} /> {lastScannedName ?? "Checked In"}
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-semibold text-emerald-400 border border-emerald-500/30 animate-pulse"
+              style={{ background: 'rgba(16,185,129,0.1)' }}>
+              <CheckCircle className="w-3.5 h-3.5" /> {lastScannedName ?? "Checked In"}
             </span>
           )}
           {scanStatus === "error" && (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
-              <FiAlertCircle size={13} /> Scan Failed
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-semibold text-red-400 border border-red-500/30"
+              style={{ background: 'rgba(239,68,68,0.1)' }}>
+              <AlertCircle className="w-3.5 h-3.5" /> Scan Failed
             </span>
           )}
           {scanStatus === "idle" && (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
-              <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse inline-block" />
-              Ready to scan
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-medium text-slate-400 border border-white/10"
+              style={{ background: 'rgba(255,255,255,0.05)' }}>
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse inline-block" />
+              Ready
             </span>
           )}
         </div>
       </div>
 
       {/* Scanner viewport */}
-      <div className="px-5 py-4 flex justify-center">
+      <div className="px-5 py-4 flex justify-center [&_#unified-qr-reader]:rounded-xl [&_select]:input-glass [&_button]:btn-secondary" style={{ background: 'rgba(0,0,0,0.2)' }}>
         <div
           id="unified-qr-reader"
           className="w-full max-w-xs rounded-xl overflow-hidden"

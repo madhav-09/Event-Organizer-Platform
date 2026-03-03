@@ -3,9 +3,9 @@ import HeroSearch from "../components/HeroSearch";
 import CategoryFilter from "../components/Categoryfilter";
 import EventCard from "../components/EventCard";
 import CityGrid from "../components/CityGrid";
-import { TrendingUp, Calendar } from "lucide-react";
+import { TrendingUp, Calendar, ArrowRight } from "lucide-react";
 import api from "../services/api";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getMyWishlist, addToWishlist, removeFromWishlist } from "../services/api";
 import toast from "react-hot-toast";
@@ -26,10 +26,23 @@ interface Event {
   tickets?: Ticket[];
 }
 
+function EventCardSkeleton() {
+  return (
+    <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid rgba(255,255,255,0.06)' }}>
+      <div className="h-48 shimmer" style={{ background: 'rgba(255,255,255,0.04)' }} />
+      <div className="p-4 space-y-3">
+        <div className="h-4 rounded-lg shimmer" style={{ background: 'rgba(255,255,255,0.04)', width: '70%' }} />
+        <div className="h-3 rounded-lg shimmer" style={{ background: 'rgba(255,255,255,0.04)', width: '50%' }} />
+        <div className="h-3 rounded-lg shimmer" style={{ background: 'rgba(255,255,255,0.04)', width: '60%' }} />
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
   const [events, setEvents] = useState<Event[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
   const [wishlistIds, setWishlistIds] = useState<Set<string>>(new Set());
@@ -40,7 +53,6 @@ export default function Home() {
   const fetchEvents = async (params?: { q?: string; city?: string | null }) => {
     setLoading(true);
     setError(null);
-
     try {
       const res = await api.get<Event[]>("/users/search", { params });
       setEvents(res.data);
@@ -59,41 +71,34 @@ export default function Home() {
   useEffect(() => {
     if (user) {
       getMyWishlist()
-        .then((data) => {
-          setWishlistIds(new Set(data.map((e: any) => e.id)));
-        })
+        .then((data) => setWishlistIds(new Set(data.map((e: any) => e.id))))
         .catch(console.error);
     } else {
       setWishlistIds(new Set());
     }
   }, [user]);
 
-  const handleToggleWishlist = async (e: React.MouseEvent, eventId: string) => {
+  const handleToggleWishlist = async (_e: React.MouseEvent, eventId: string) => {
     if (!user) {
       toast.error("Please login to save events");
       return;
     }
-
     const isWishlisted = wishlistIds.has(eventId);
-
-    // Optimistic
     setWishlistIds((prev) => {
       const next = new Set(prev);
       if (isWishlisted) next.delete(eventId);
       else next.add(eventId);
       return next;
     });
-
     try {
       if (isWishlisted) {
         await removeFromWishlist(eventId);
         toast.success("Removed from wishlist");
       } else {
         await addToWishlist(eventId);
-        toast.success("Added to wishlist");
+        toast.success("Saved to wishlist");
       }
-    } catch (err) {
-      // Revert
+    } catch {
       setWishlistIds((prev) => {
         const next = new Set(prev);
         if (isWishlisted) next.add(eventId);
@@ -110,57 +115,76 @@ export default function Home() {
       : events.filter((e) => e.category === selectedCategory);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
       <HeroSearch onSearch={(params) => fetchEvents({ q: params?.q, city })} />
-
       <CategoryFilter selected={selectedCategory} onSelect={setSelectedCategory} />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        <div className="flex items-center space-x-3 mb-6 sm:mb-8">
-          <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
-          <h2 className="text-2xl sm:text-3xl font-bold">Trending Events</h2>
+      {/* Events section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Section header */}
+        <div className="flex items-center justify-between mb-10">
+          <div>
+            <div className="flex items-center gap-2.5 mb-2">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center"
+                style={{ background: 'rgba(108,71,236,0.15)', border: '1px solid rgba(108,71,236,0.25)' }}>
+                <TrendingUp className="w-4 h-4 text-brand-400" />
+              </div>
+              <span className="text-brand-400 text-sm font-semibold uppercase tracking-widest">Live Events</span>
+            </div>
+            <h2 className="font-heading font-black text-3xl sm:text-4xl text-white">
+              Trending <span className="gradient-text">Now</span>
+            </h2>
+          </div>
+          {!loading && filteredEvents.length > 0 && (
+            <Link to="/" className="hidden sm:flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition-colors group">
+              View all <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+            </Link>
+          )}
         </div>
 
         {loading ? (
-          <p className="text-center py-16">Loading events...</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => <EventCardSkeleton key={i} />)}
+          </div>
         ) : error ? (
-          <p className="text-center text-red-500 py-16">{error}</p>
+          <div className="text-center py-20">
+            <p className="text-red-400">{error}</p>
+          </div>
         ) : filteredEvents.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-            {filteredEvents.map((event) => {
-              const price =
-                event.tickets?.length
-                  ? `₹${event.tickets[0].price}`
-                  : "Free";
-
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {filteredEvents.map((event, i) => {
+              const price = event.tickets?.length ? `₹${event.tickets[0].price}` : "Free";
               return (
-                <EventCard
+                <div
                   key={event.id}
-                  id={event.id}
-                  title={event.title}
-                  date={new Date(event.start_date).toDateString()}
-                  time={new Date(event.start_date).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                  location={event.venue}
-                  city={event.city}
-                  price={price}
-                  image={event.banner_url}
-                  category={event.category}
-                  isWishlisted={wishlistIds.has(event.id)}
-                  onToggleWishlist={(e) => handleToggleWishlist(e, event.id)}
-                />
+                  className="animate-fade-up"
+                  style={{ animationDelay: `${i * 60}ms`, animationFillMode: 'both' }}
+                >
+                  <EventCard
+                    id={event.id}
+                    title={event.title}
+                    date={new Date(event.start_date).toDateString()}
+                    time={new Date(event.start_date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    location={event.venue}
+                    city={event.city}
+                    price={price}
+                    image={event.banner_url}
+                    category={event.category}
+                    isWishlisted={wishlistIds.has(event.id)}
+                    onToggleWishlist={(e) => handleToggleWishlist(e, event.id)}
+                  />
+                </div>
               );
             })}
           </div>
         ) : (
-          <div className="text-center py-10 sm:py-16">
-            <Calendar className="w-10 h-10 sm:w-14 sm:h-14 mx-auto text-gray-400 mb-4" />
-            <p className="text-gray-500 text-sm sm:text-base">No events found</p>
+          <div className="text-center py-20 glass-card rounded-2xl">
+            <Calendar className="w-16 h-16 mx-auto text-slate-700 mb-4" />
+            <h3 className="text-white font-heading font-bold text-xl mb-2">No events found</h3>
+            <p className="text-slate-500 text-sm">Try a different category or city</p>
           </div>
         )}
-      </div>
+      </section>
 
       <CityGrid />
     </div>

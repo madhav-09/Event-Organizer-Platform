@@ -1,31 +1,75 @@
 import { useState, useEffect } from "react";
 import { getOrganizerProfile, updateOrganizerProfile } from "../../services/api";
 import toast from "react-hot-toast";
-import { FiSave, FiCheckCircle, FiAlertCircle } from "react-icons/fi";
+import { Save, CheckCircle, AlertCircle, Loader2, Building2, User, MapPin, Globe } from "lucide-react";
+
+type Section = { title: string; icon: React.ElementType; fields: FieldDef[]; accent: string };
+type FieldDef = {
+    key: keyof typeof EMPTY_FORM;
+    label: string;
+    type?: string;
+    placeholder?: string;
+    required?: boolean;
+    span?: boolean;
+    textarea?: boolean;
+};
+
+const EMPTY_FORM = {
+    brand_name: "",
+    contact_name: "",
+    contact_email: "",
+    contact_phone: "",
+    address_line1: "",
+    address_line2: "",
+    city: "",
+    state: "",
+    pincode: "",
+    website: "",
+    description: "",
+};
+
+const SECTIONS: Section[] = [
+    {
+        title: "Brand Information",
+        icon: Building2,
+        accent: "rgba(108,71,236,0.15)",
+        fields: [
+            { key: "brand_name", label: "Brand / Organization Name", required: true },
+            { key: "website", label: "Website", type: "url", placeholder: "https://" },
+            { key: "description", label: "Brand Description", placeholder: "Tell attendees about your organization...", span: true, textarea: true },
+        ],
+    },
+    {
+        title: "Primary Contact",
+        icon: User,
+        accent: "rgba(59,130,246,0.1)",
+        fields: [
+            { key: "contact_name", label: "Contact Name", required: true },
+            { key: "contact_email", label: "Contact Email", type: "email", required: true },
+            { key: "contact_phone", label: "Contact Phone", type: "tel", required: true },
+        ],
+    },
+    {
+        title: "Address",
+        icon: MapPin,
+        accent: "rgba(16,185,129,0.1)",
+        fields: [
+            { key: "address_line1", label: "Address Line 1", required: true, span: true },
+            { key: "address_line2", label: "Address Line 2", span: true },
+            { key: "city", label: "City", required: true },
+            { key: "state", label: "State", required: true },
+            { key: "pincode", label: "Pincode", required: true },
+        ],
+    },
+];
 
 export default function OrganizerProfile() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-
-    const [form, setForm] = useState({
-        brand_name: "",
-        contact_name: "",
-        contact_email: "",
-        contact_phone: "",
-        address_line1: "",
-        address_line2: "",
-        city: "",
-        state: "",
-        pincode: "",
-        website: "",
-        description: "",
-    });
-
+    const [form, setForm] = useState(EMPTY_FORM);
     const [kycStatus, setKycStatus] = useState("PENDING");
 
-    useEffect(() => {
-        loadProfile();
-    }, []);
+    useEffect(() => { loadProfile(); }, []);
 
     const loadProfile = async () => {
         try {
@@ -65,119 +109,93 @@ export default function OrganizerProfile() {
         }
     };
 
-    const set = (k: keyof typeof form, v: string) => setForm((p) => ({ ...p, [k]: v }));
-
-    const inputCls =
-        "w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-gray-50 hover:bg-white transition-colors";
-    const labelCls = "block text-xs font-semibold text-gray-600 mb-1.5 uppercase tracking-wider";
+    const set = (k: keyof typeof EMPTY_FORM, v: string) => setForm(p => ({ ...p, [k]: v }));
 
     if (loading) {
         return (
             <div className="flex items-center justify-center py-24">
-                <div className="animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full" />
+                <Loader2 className="w-8 h-8 animate-spin text-brand-400" />
             </div>
         );
     }
 
+    const kycApproved = kycStatus === "APPROVED";
+
     return (
-        <div className="max-w-4xl mx-auto p-4 sm:p-6 space-y-6">
+        <div className="max-w-4xl mx-auto space-y-6 animate-fade-up">
+            {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Organizer Profile</h1>
-                    <p className="text-gray-500 mt-1 text-sm">Update your brand and contact details.</p>
+                    <h1 className="font-heading font-black text-2xl text-white">Organizer Profile</h1>
+                    <p className="text-slate-500 mt-1 text-sm">Update your brand and contact details.</p>
                 </div>
-
-                {/* KYC Badge */}
-                <div className="flex items-center gap-2">
-                    {kycStatus === "APPROVED" ? (
-                        <span className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 rounded-lg text-sm font-semibold border border-green-200">
-                            <FiCheckCircle /> KYC Approved
+                <div>
+                    {kycApproved ? (
+                        <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold text-emerald-400 border border-emerald-500/30"
+                            style={{ background: 'rgba(16,185,129,0.1)' }}>
+                            <CheckCircle className="w-4 h-4" /> KYC Approved
                         </span>
                     ) : (
-                        <span className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 text-amber-700 rounded-lg text-sm font-semibold border border-amber-200">
-                            <FiAlertCircle /> KYC Pending
+                        <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold text-amber-400 border border-amber-500/30"
+                            style={{ background: 'rgba(245,158,11,0.1)' }}>
+                            <AlertCircle className="w-4 h-4" /> KYC Pending
                         </span>
                     )}
                 </div>
             </div>
 
-            <form onSubmit={handleSave} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                {/* Basic Brand Info */}
-                <div className="p-6 md:p-8 space-y-6 border-b border-gray-100">
-                    <h2 className="text-lg font-bold text-gray-800">Brand Information</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label className={labelCls}>Brand / Organization Name *</label>
-                            <input type="text" required value={form.brand_name} onChange={(e) => set("brand_name", e.target.value)} className={inputCls} />
+            {/* Form */}
+            <form onSubmit={handleSave} className="space-y-4">
+                {SECTIONS.map(({ title, icon: Icon, accent, fields }) => (
+                    <div key={title} className="glass-card rounded-2xl overflow-hidden">
+                        <div className="px-6 py-4 border-b flex items-center gap-3"
+                            style={{ borderColor: 'rgba(255,255,255,0.07)', background: accent }}>
+                            <Icon className="w-4 h-4 text-brand-400" />
+                            <h2 className="font-heading font-bold text-white text-sm">{title}</h2>
                         </div>
-                        <div>
-                            <label className={labelCls}>Website</label>
-                            <input type="url" placeholder="https://" value={form.website} onChange={(e) => set("website", e.target.value)} className={inputCls} />
-                        </div>
-                        <div className="md:col-span-2">
-                            <label className={labelCls}>Brand Description</label>
-                            <textarea rows={3} value={form.description} onChange={(e) => set("description", e.target.value)} className={`${inputCls} resize-none`} placeholder="Tell attendees about your organization..." />
-                        </div>
-                    </div>
-                </div>
-
-                {/* Contact info */}
-                <div className="p-6 md:p-8 space-y-6 border-b border-gray-100 bg-gray-50/50">
-                    <h2 className="text-lg font-bold text-gray-800">Primary Contact</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div>
-                            <label className={labelCls}>Contact Name *</label>
-                            <input type="text" required value={form.contact_name} onChange={(e) => set("contact_name", e.target.value)} className={inputCls} />
-                        </div>
-                        <div>
-                            <label className={labelCls}>Contact Email *</label>
-                            <input type="email" required value={form.contact_email} onChange={(e) => set("contact_email", e.target.value)} className={inputCls} />
-                        </div>
-                        <div>
-                            <label className={labelCls}>Contact Phone *</label>
-                            <input type="tel" required value={form.contact_phone} onChange={(e) => set("contact_phone", e.target.value)} className={inputCls} />
-                        </div>
-                    </div>
-                </div>
-
-                {/* Address */}
-                <div className="p-6 md:p-8 space-y-6 border-b border-gray-100">
-                    <h2 className="text-lg font-bold text-gray-800">Address</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="md:col-span-2">
-                            <label className={labelCls}>Address Line 1 *</label>
-                            <input type="text" required value={form.address_line1} onChange={(e) => set("address_line1", e.target.value)} className={inputCls} />
-                        </div>
-                        <div className="md:col-span-2">
-                            <label className={labelCls}>Address Line 2</label>
-                            <input type="text" value={form.address_line2} onChange={(e) => set("address_line2", e.target.value)} className={inputCls} />
-                        </div>
-                        <div>
-                            <label className={labelCls}>City *</label>
-                            <input type="text" required value={form.city} onChange={(e) => set("city", e.target.value)} className={inputCls} />
-                        </div>
-                        <div>
-                            <label className={labelCls}>State *</label>
-                            <input type="text" required value={form.state} onChange={(e) => set("state", e.target.value)} className={inputCls} />
-                        </div>
-                        <div>
-                            <label className={labelCls}>Pincode *</label>
-                            <input type="text" required value={form.pincode} onChange={(e) => set("pincode", e.target.value)} className={inputCls} />
+                        <div className="p-6 md:p-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                {fields.map((field) => (
+                                    <div key={field.key} className={field.span ? "md:col-span-2" : ""}>
+                                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                                            {field.label} {field.required && <span className="text-brand-400">*</span>}
+                                        </label>
+                                        {field.textarea ? (
+                                            <textarea
+                                                rows={3}
+                                                value={form[field.key]}
+                                                onChange={e => set(field.key, e.target.value)}
+                                                placeholder={field.placeholder}
+                                                className="input-glass w-full resize-none text-sm py-3"
+                                            />
+                                        ) : (
+                                            <input
+                                                type={field.type || "text"}
+                                                required={field.required}
+                                                placeholder={field.placeholder}
+                                                value={form[field.key]}
+                                                onChange={e => set(field.key, e.target.value)}
+                                                className="input-glass w-full text-sm py-3"
+                                            />
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     </div>
-                </div>
+                ))}
 
-                {/* Footer */}
-                <div className="p-6 bg-gray-50 flex items-center justify-end">
+                {/* Save button */}
+                <div className="flex justify-end pt-2">
                     <button
                         type="submit"
                         disabled={saving}
-                        className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-100 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                        className="btn-primary px-8 py-3 text-sm disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
                     >
                         {saving ? (
-                            <span className="animate-spin w-4 h-4 border-2 border-white/40 border-t-white rounded-full" />
+                            <Loader2 className="w-4 h-4 animate-spin" />
                         ) : (
-                            <FiSave size={18} />
+                            <Save className="w-4 h-4" />
                         )}
                         {saving ? "Saving..." : "Save Profile"}
                     </button>

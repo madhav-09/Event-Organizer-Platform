@@ -1,15 +1,9 @@
 import { type ReactNode, useState } from "react";
 import {
-  FaBars,
-  FaTimes,
-  FaTachometerAlt,
-  FaUsers,
-  FaCalendarAlt,
-  FaArrowLeft,
-  FaUserCircle,
-  FaTicketAlt,
-} from "react-icons/fa";
+  LayoutDashboard, Users, Calendar, UserCircle2, Ticket, ArrowLeft, Menu, X, Zap
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import logo from "../assets/logo.png";
 
 type Props = {
   children: ReactNode;
@@ -17,112 +11,131 @@ type Props = {
   onSelectSection: (section: string) => void;
 };
 
-const OrganizerLayout = ({
-  children,
-  activeSection,
-  onSelectSection,
-}: Props) => {
+const NAV_ITEMS = [
+  { key: "overview", label: "Overview", icon: LayoutDashboard },
+  { key: "events", label: "My Events", icon: Calendar },
+  { key: "attendees", label: "Attendees", icon: Users },
+  { key: "profile", label: "My Profile", icon: UserCircle2 },
+];
+
+const OrganizerLayout = ({ children, activeSection, onSelectSection }: Props) => {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
 
+  const handleSectionClick = (key: string) => {
+    onSelectSection(key);
+    setOpen(false);
+  };
+
   return (
-    <div className="flex h-screen bg-gray-50 text-gray-900 overflow-hidden">
-      {/* Dark backdrop on mobile when sidebar is open */}
+    <div className="flex h-screen overflow-hidden" style={{ background: 'var(--bg-primary)' }}>
+      {/* Overlay */}
       {open && (
         <div
-          className="fixed inset-0 z-20 bg-black/40 md:hidden"
+          className="fixed inset-0 z-20 bg-black/60 md:hidden"
           onClick={() => setOpen(false)}
+          style={{ backdropFilter: 'blur(4px)' }}
         />
       )}
 
       {/* Sidebar */}
       <aside
-        className={`fixed md:static inset-y-0 left-0 z-30 w-64 bg-white border-r flex flex-col transform ${open ? "translate-x-0" : "-translate-x-full"
-          } md:translate-x-0 transition-transform duration-200`}
+        className={`fixed md:static inset-y-0 left-0 z-30 flex flex-col transform ${open ? "translate-x-0" : "-translate-x-full"
+          } md:translate-x-0 transition-transform duration-300`}
+        style={{
+          width: 'var(--sidebar-width)',
+          background: 'var(--bg-secondary)',
+          borderRight: '1px solid rgba(255,255,255,0.07)',
+        }}
       >
-        {/* Brand */}
-        <div className="px-6 py-5 border-b flex items-center justify-between">
-          <div>
-            <div className="text-lg font-semibold">Swasthya Chetna</div>
+        {/* Brand header */}
+        <div className="px-5 py-5 border-b" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl overflow-hidden border border-white/10">
+                <img src={logo} alt="Logo" className="w-full h-full object-contain" />
+              </div>
+              <div>
+                <p className="text-white font-heading font-bold text-sm">Swasthya Chetna</p>
+                <p className="text-slate-500 text-xs">Organizer</p>
+              </div>
+            </div>
             <button
-              onClick={() => navigate("/")}
-              className="mt-1 flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800"
+              onClick={() => setOpen(false)}
+              className="md:hidden w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-white/5"
             >
-              <FaArrowLeft size={12} />
-              Back to Home
+              <X className="w-4 h-4" />
             </button>
           </div>
-          {/* Close button inside sidebar (mobile) */}
           <button
-            onClick={() => setOpen(false)}
-            className="md:hidden p-1 text-gray-500 hover:text-gray-800"
+            onClick={() => navigate("/")}
+            className="flex items-center gap-2 text-xs text-slate-500 hover:text-slate-300 transition-colors"
           >
-            <FaTimes size={18} />
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Back to Home
           </button>
         </div>
 
-        {/* Nav */}
-        <nav className="px-3 py-4 space-y-1 flex-1 overflow-y-auto">
-          <SidebarItem
-            label="Overview"
-            icon={<FaTachometerAlt />}
-            active={activeSection === "overview"}
-            onClick={() => {
-              onSelectSection("overview");
-              setOpen(false);
-            }}
-          />
-          <SidebarItem
-            label="My Events"
-            icon={<FaCalendarAlt />}
-            active={activeSection === "events"}
-            onClick={() => {
-              onSelectSection("events");
-              setOpen(false);
-            }}
-          />
-          <SidebarItem
-            label="Attendees"
-            icon={<FaUsers />}
-            active={activeSection === "attendees"}
-            onClick={() => {
-              onSelectSection("attendees");
-              setOpen(false);
-            }}
-          />
-          <SidebarItem
-            label="My Profile"
-            icon={<FaUserCircle />}
-            active={activeSection === "profile"}
-            onClick={() => {
-              onSelectSection("profile");
-              setOpen(false);
-            }}
-          />
-          <SidebarItem
-            label="My Bookings"
-            icon={<FaTicketAlt />}
-            active={false}
-            onClick={() => {
-              navigate("/my-bookings");
-              setOpen(false);
-            }}
-          />
+        {/* Navigation */}
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+          <p className="text-xs font-semibold text-slate-600 uppercase tracking-widest px-3 mb-3">
+            Dashboard
+          </p>
+          {NAV_ITEMS.map(({ key, label, icon: Icon }) => (
+            <button
+              key={key}
+              onClick={() => handleSectionClick(key)}
+              className={`sidebar-item w-full text-left ${activeSection === key ? "active" : ""}`}
+            >
+              <Icon className="w-4 h-4 flex-shrink-0" />
+              {label}
+            </button>
+          ))}
+
+          <div className="h-px my-3" style={{ background: 'rgba(255,255,255,0.06)' }} />
+          <p className="text-xs font-semibold text-slate-600 uppercase tracking-widest px-3 mb-3">
+            Quick Links
+          </p>
+          <button
+            onClick={() => { navigate("/my-bookings"); setOpen(false); }}
+            className="sidebar-item w-full text-left"
+          >
+            <Ticket className="w-4 h-4 flex-shrink-0" />
+            My Bookings
+          </button>
         </nav>
+
+        {/* Create Event CTA */}
+        <div className="p-3 border-t" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+          <button
+            onClick={() => navigate("/create-event")}
+            className="btn-primary w-full justify-center text-sm py-2.5"
+          >
+            <Zap className="w-4 h-4" />
+            Create Event
+          </button>
+        </div>
       </aside>
 
-      {/* Content */}
-      <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Mobile top bar */}
-        <div className="md:hidden flex items-center gap-3 px-4 py-3 bg-white border-b">
-          <button onClick={() => setOpen(true)} aria-label="Open menu">
-            <FaBars size={20} />
+      {/* Main content */}
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+        {/* Mobile topbar */}
+        <div
+          className="md:hidden flex items-center gap-3 px-4 py-3 border-b flex-shrink-0"
+          style={{ background: 'var(--bg-secondary)', borderColor: 'rgba(255,255,255,0.07)', height: 'var(--navbar-height)' }}
+        >
+          <button
+            onClick={() => setOpen(true)}
+            className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+          >
+            <Menu className="w-5 h-5" />
           </button>
-          <span className="font-semibold text-gray-800">Organizer Dashboard</span>
+          <span className="font-heading font-bold text-white text-sm">Organizer Dashboard</span>
         </div>
 
+        {/* Page content */}
         <div className="flex-1 overflow-auto">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             {children}
           </div>
         </div>
@@ -130,28 +143,5 @@ const OrganizerLayout = ({
     </div>
   );
 };
-
-const SidebarItem = ({
-  label,
-  icon,
-  active,
-  onClick,
-}: {
-  label: string;
-  icon: ReactNode;
-  active: boolean;
-  onClick: () => void;
-}) => (
-  <div
-    onClick={onClick}
-    className={`flex items-center gap-3 px-4 py-2.5 rounded-md cursor-pointer text-sm font-medium transition-colors ${active
-      ? "bg-blue-600 text-white"
-      : "text-gray-700 hover:bg-gray-100"
-      }`}
-  >
-    {icon}
-    {label}
-  </div>
-);
 
 export default OrganizerLayout;

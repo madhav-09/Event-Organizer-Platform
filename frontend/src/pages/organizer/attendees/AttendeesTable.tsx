@@ -1,4 +1,4 @@
-import { FiCheckCircle, FiClock, FiUsers } from "react-icons/fi";
+import { CheckCircle, Clock, Users } from "lucide-react";
 
 type Props = {
   attendees: any[];
@@ -12,8 +12,8 @@ export default function AttendeesTable({ attendees, filter }: Props) {
 
   if (!attendees.length) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-gray-400">
-        <FiUsers size={40} className="mb-3 opacity-40" />
+      <div className="flex flex-col items-center justify-center py-16 text-slate-600">
+        <Users className="w-10 h-10 mb-3 opacity-30" />
         <p className="text-sm">No attendees for this event yet.</p>
       </div>
     );
@@ -21,16 +21,16 @@ export default function AttendeesTable({ attendees, filter }: Props) {
 
   if (!filtered.length) {
     return (
-      <div className="flex flex-col items-center justify-center py-14 text-gray-400">
+      <div className="flex flex-col items-center justify-center py-14 text-slate-500">
         {filter === "checked_in" ? (
           <>
-            <FiCheckCircle size={36} className="mb-3 opacity-30" />
+            <Clock className="w-9 h-9 mb-3 opacity-30" />
             <p className="text-sm">No one has checked in yet.</p>
           </>
         ) : (
           <>
-            <FiCheckCircle size={36} className="mb-3 text-green-400 opacity-60" />
-            <p className="text-sm font-medium text-green-600">All attendees have checked in! 🎉</p>
+            <CheckCircle className="w-9 h-9 mb-3 text-emerald-500 opacity-60" />
+            <p className="text-sm font-medium text-emerald-400">All attendees have checked in! 🎉</p>
           </>
         )}
       </div>
@@ -41,32 +41,36 @@ export default function AttendeesTable({ attendees, filter }: Props) {
     <div className="overflow-x-auto">
       <table className="min-w-full text-sm">
         <thead>
-          <tr className="bg-gray-50 text-xs uppercase text-gray-500 tracking-wider">
-            <th className="px-5 py-3 text-left font-semibold">Name</th>
-            <th className="px-5 py-3 text-left font-semibold">Email</th>
-            <th className="px-5 py-3 text-left font-semibold">Ticket</th>
-            <th className="px-5 py-3 text-center font-semibold">Qty</th>
-            <th className="px-5 py-3 text-center font-semibold">Status</th>
+          <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+            {["Name", "Email", "Ticket", "Qty", "Status"].map((h, i) => (
+              <th key={h}
+                className={`px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider ${i >= 3 ? "text-center" : "text-left"}`}>
+                {h}
+              </th>
+            ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-100">
-          {filtered.map((a) => (
+        <tbody>
+          {filtered.map((a, i) => (
             <tr
               key={a.booking_id}
-              className="hover:bg-gray-50 transition-colors"
+              className="transition-colors hover:bg-white/3"
+              style={{ borderBottom: i < filtered.length - 1 ? '1px solid rgba(255,255,255,0.05)' : undefined }}
             >
-              <td className="px-5 py-3 font-medium text-gray-800">{a.user?.name ?? "—"}</td>
-              <td className="px-5 py-3 text-gray-500">{a.user?.email ?? "—"}</td>
-              <td className="px-5 py-3 text-gray-700">{a.ticket ?? "—"}</td>
-              <td className="px-5 py-3 text-center text-gray-700">{a.quantity}</td>
-              <td className="px-5 py-3 text-center">
+              <td className="px-5 py-3.5 font-medium text-white">{a.user?.name ?? "—"}</td>
+              <td className="px-5 py-3.5 text-slate-400">{a.user?.email ?? "—"}</td>
+              <td className="px-5 py-3.5 text-slate-300">{a.ticket ?? "—"}</td>
+              <td className="px-5 py-3.5 text-center text-slate-300">{a.quantity}</td>
+              <td className="px-5 py-3.5 text-center">
                 {a.checked_in ? (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
-                    <FiCheckCircle size={12} /> Checked In
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-emerald-400 border border-emerald-500/30"
+                    style={{ background: 'rgba(16,185,129,0.08)' }}>
+                    <CheckCircle className="w-3 h-3" /> Checked In
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">
-                    <FiClock size={12} /> Pending
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-amber-400 border border-amber-500/30"
+                    style={{ background: 'rgba(245,158,11,0.08)' }}>
+                    <Clock className="w-3 h-3" /> Pending
                   </span>
                 )}
               </td>

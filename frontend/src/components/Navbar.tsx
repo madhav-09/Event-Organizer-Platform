@@ -1,45 +1,72 @@
-import { MapPin, User, Menu, X } from "lucide-react";
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { MapPin, User, Menu, X, ChevronDown, Zap, Heart, Ticket, Settings, LogOut, LayoutDashboard, Calendar } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { useSearchParams } from "react-router-dom";
 import logo from "../assets/logo.png";
 
-const roleStyles: Record<string, string> = {
-  ADMIN: "bg-red-100 text-red-700",
-  ORGANIZER: "bg-purple-100 text-purple-700",
-  USER: "bg-blue-100 text-blue-700",
+const POPULAR_CITIES = ["Pune", "Mumbai", "Delhi", "Bangalore", "Hyderabad", "Chennai", "Ahmedabad"];
+
+const ROLE_BADGE: Record<string, { label: string; color: string }> = {
+  ADMIN: { label: "Admin", color: "bg-red-500/20 text-red-400 border-red-500/30" },
+  ORGANIZER: { label: "Organizer", color: "bg-purple-500/20 text-purple-400 border-purple-500/30" },
+  USER: { label: "User", color: "bg-brand-500/20 text-brand-300 border-brand-500/30" },
 };
-const popularCities = [
-  "Pune",
-  "Mumbai",
-  "Delhi",
-  "Bangalore",
-  "Hyderabad",
-  "Chennai",
-  "Ahmedabad",
-];
+
+function NavLink({ to, children, onClick }: { to: string; children: React.ReactNode; onClick?: () => void }) {
+  return (
+    <Link
+      to={to}
+      onClick={onClick}
+      className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-slate-300 hover:text-white hover:bg-white/6 transition-all duration-150 group"
+    >
+      {children}
+    </Link>
+  );
+}
 
 export default function Navbar() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showCityDropdown, setShowCityDropdown] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  const profileRef = useRef<HTMLDivElement>(null);
+  const cityRef = useRef<HTMLDivElement>(null);
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const selectedCity = searchParams.get("city") || "Pune";
+  const selectedCity = searchParams.get("city") || "City";
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  // Scroll detection for glass effect
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setShowProfileDropdown(false);
+      }
+      if (cityRef.current && !cityRef.current.contains(e.target as Node)) {
+        setShowCityDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const closeMobile = () => setShowMobileMenu(false);
 
   const handleCitySelect = (city: string) => {
-    setSearchParams((prev) => {
-      prev.set("city", city);
-      return prev;
-    });
+    setSearchParams((prev) => { prev.set("city", city); return prev; });
     setShowCityDropdown(false);
     setShowMobileMenu(false);
     navigate(`/?city=${city}`);
   };
-
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
@@ -49,225 +76,262 @@ export default function Navbar() {
 
   const handleCreateEvent = () => {
     setShowMobileMenu(false);
-    if (!user) {
-      navigate("/login");
-      return;
-    }
-    if (user.role === "USER") {
-      navigate("/apply-organizer");
-      return;
-    }
+    if (!user) { navigate("/login"); return; }
+    if (user.role === "USER") { navigate("/apply-organizer"); return; }
     navigate("/create-event");
   };
 
-  const closeMobile = () => setShowMobileMenu(false);
+  const roleInfo = user ? ROLE_BADGE[user.role] ?? ROLE_BADGE["USER"] : null;
 
   return (
-    <nav className="bg-white shadow-sm sticky top-0 z-50 border-b border-gray-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+    <>
+      <header
+        className="fixed inset-x-0 top-0 z-50 transition-all duration-300"
+        style={{
+          height: 'var(--navbar-height)',
+          background: scrolled
+            ? 'rgba(11, 15, 26, 0.92)'
+            : 'rgba(11, 15, 26, 0.75)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          borderBottom: scrolled ? '1px solid rgba(255,255,255,0.08)' : '1px solid transparent',
+        }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-full flex items-center justify-between gap-4">
 
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2 sm:space-x-3">
-            <img
-              src={logo}
-              alt="Swasthya Chetna Logo"
-              className="w-9 h-9 sm:w-10 sm:h-10 object-contain"
-            />
-            <span className="text-lg sm:text-2xl font-bold text-gray-900 hidden xs:block sm:block">
-              Swasthya Chetna
+          <Link to="/" className="flex items-center gap-2.5 flex-shrink-0">
+            <div className="w-8 h-8 rounded-xl overflow-hidden border border-white/10">
+              <img src={logo} alt="Logo" className="w-full h-full object-contain" />
+            </div>
+            <span className="font-heading font-bold text-white text-base hidden sm:block">
+              Swasthya <span className="gradient-text">Chetna</span>
             </span>
           </Link>
 
-          {/* Desktop nav */}
-          <div className="hidden md:flex items-center space-x-4">
-            {/* City dropdown */}
-            <div className="relative">
+          {/* Desktop Nav */}
+          <nav className="hidden md:flex items-center gap-1 flex-1 justify-center">
+            {/* City selector */}
+            <div className="relative" ref={cityRef}>
               <button
                 onClick={() => setShowCityDropdown(!showCityDropdown)}
-                className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm text-slate-300 hover:text-white hover:bg-white/6 transition-all duration-150"
               >
-                <MapPin className="w-5 h-5 text-blue-600" />
+                <MapPin className="w-4 h-4 text-brand-400" />
                 <span>{selectedCity}</span>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${showCityDropdown ? "rotate-180" : ""}`} />
               </button>
+
               {showCityDropdown && (
-                <div className="absolute mt-2 w-48 bg-white border rounded-lg shadow-lg z-50">
-                  {popularCities.map((city) => (
-                    <button
-                      key={city}
-                      onClick={() => handleCitySelect(city)}
-                      className="block w-full text-left px-4 py-2 hover:bg-gray-100"
-                    >
-                      {city}
-                    </button>
-                  ))}
+                <div className="absolute left-0 top-full mt-2 w-48 rounded-2xl overflow-hidden animate-slide-down z-50"
+                  style={{
+                    background: 'rgba(18, 24, 39, 0.98)',
+                    border: '1px solid rgba(255,255,255,0.10)',
+                    backdropFilter: 'blur(20px)',
+                    boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+                  }}>
+                  <div className="p-2">
+                    {POPULAR_CITIES.map((city) => (
+                      <button
+                        key={city}
+                        onClick={() => handleCitySelect(city)}
+                        className={`w-full text-left px-3 py-2 rounded-xl text-sm transition-colors duration-150 ${selectedCity === city
+                          ? "text-brand-300 bg-brand-500/10"
+                          : "text-slate-300 hover:text-white hover:bg-white/5"
+                          }`}
+                      >
+                        {city}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
 
             <button
               onClick={handleCreateEvent}
-              className="px-5 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg text-sm font-medium"
+              className="btn-primary px-4 py-2 text-sm"
             >
+              <Zap className="w-3.5 h-3.5" />
               Create Event
             </button>
 
-            {/* Auth */}
-            {!user ? (
-              <Link
-                to="/login"
-                className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg"
-              >
-                <User className="w-5 h-5" />
-                <span>Login</span>
-              </Link>
-            ) : (
-              <div className="flex items-center space-x-3">
-                <span
-                  className={`px-3 py-1 text-xs font-semibold rounded-full ${roleStyles[user.role]}`}
+          </nav>
+
+          {/* Desktop Right */}
+          <div className="hidden md:flex items-center gap-3">
+            {user ? (
+              <div className="relative" ref={profileRef}>
+                <button
+                  onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all duration-150 hover:bg-white/6"
+                  style={{ border: '1px solid rgba(255,255,255,0.08)' }}
                 >
-                  {user.role}
-                </span>
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center bg-gradient-to-br from-brand-500 to-indigo-500 text-white text-xs font-bold flex-shrink-0">
+                    {user.name?.[0]?.toUpperCase() ?? "U"}
+                  </div>
+                  <span className="text-sm text-slate-300 max-w-[100px] truncate">{user.name}</span>
+                  {roleInfo && (
+                    <span className={`hidden lg:inline-flex text-xs px-2 py-0.5 rounded-full border ${roleInfo.color}`}>
+                      {roleInfo.label}
+                    </span>
+                  )}
+                  <ChevronDown className={`w-3.5 h-3.5 text-slate-500 transition-transform duration-200 ${showProfileDropdown ? "rotate-180" : ""}`} />
+                </button>
 
-                {user.role === "ADMIN" && (
-                  <Link
-                    to="/admin/events"
-                    className="px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg"
-                  >
-                    Admin Panel
-                  </Link>
-                )}
+                {showProfileDropdown && (
+                  <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl overflow-hidden animate-slide-down z-50"
+                    style={{
+                      background: 'rgba(18, 24, 39, 0.98)',
+                      border: '1px solid rgba(255,255,255,0.10)',
+                      backdropFilter: 'blur(20px)',
+                      boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+                    }}>
+                    {/* Header */}
+                    <div className="px-4 py-3 border-b border-white/5">
+                      <p className="text-white font-medium text-sm truncate">{user.name}</p>
+                      <p className="text-slate-500 text-xs truncate">{user.email ?? user.role}</p>
+                    </div>
 
-                <div className="relative">
-                  <button
-                    onClick={() => setShowProfileDropdown(!showProfileDropdown)}
-                    className="flex items-center space-x-2 px-3 py-2 hover:bg-gray-100 rounded-lg"
-                  >
-                    <User className="w-5 h-5" />
-                  </button>
-
-                  {showProfileDropdown && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-lg z-50">
+                    <div className="p-2">
+                      {/* USER links */}
                       {user.role === "USER" && (
                         <>
-                          <Link
-                            to="/profile"
-                            onClick={() => setShowProfileDropdown(false)}
-                            className="block px-4 py-2 hover:bg-bg-gray-100"
-                          >
-                            My Profile
-                          </Link>
-                          <Link
-                            to="/my-bookings"
-                            onClick={() => setShowProfileDropdown(false)}
-                            className="block px-4 py-2 hover:bg-gray-100"
-                          >
-                            My Bookings
-                          </Link>
-                          <Link
-                            to="/wishlist"
-                            onClick={() => setShowProfileDropdown(false)}
-                            className="block px-4 py-2 hover:bg-gray-100"
-                          >
-                            My Wishlist
-                          </Link>
+                          <NavLink to="/profile" onClick={() => setShowProfileDropdown(false)}>
+                            <User className="w-4 h-4 text-slate-400" />My Profile
+                          </NavLink>
+                          <NavLink to="/my-bookings" onClick={() => setShowProfileDropdown(false)}>
+                            <Ticket className="w-4 h-4 text-slate-400" />My Bookings
+                          </NavLink>
+                          <NavLink to="/wishlist" onClick={() => setShowProfileDropdown(false)}>
+                            <Heart className="w-4 h-4 text-slate-400" />My Wishlist
+                          </NavLink>
                         </>
                       )}
-                      {user.role === "ADMIN" && (
-                        <>
-                          <Link
-                            to="/my-bookings"
-                            onClick={() => setShowProfileDropdown(false)}
-                            className="block px-4 py-2 hover:bg-gray-100"
-                          >
-                            My Bookings
-                          </Link>
-                          <Link
-                            to="/wishlist"
-                            onClick={() => setShowProfileDropdown(false)}
-                            className="block px-4 py-2 hover:bg-gray-100"
-                          >
-                            My Wishlist
-                          </Link>
-                        </>
-                      )}
+
+                      {/* ORGANIZER links */}
                       {user.role === "ORGANIZER" && (
                         <>
-                          <Link
-                            to="/organizer/dashboard/profile"
-                            onClick={() => setShowProfileDropdown(false)}
-                            className="block px-4 py-2 hover:bg-gray-100"
-                          >
-                            My Profile
-                          </Link>
-                          <Link
-                            to="/organizer/dashboard/overview"
-                            onClick={() => setShowProfileDropdown(false)}
-                            className="block px-4 py-2 hover:bg-gray-100"
-                          >
-                            Organizer Dashboard
-                          </Link>
-                          <Link
-                            to="/organizer/events"
-                            onClick={() => setShowProfileDropdown(false)}
-                            className="block px-4 py-2 hover:bg-gray-100"
-                          >
-                            My Events
-                          </Link>
-                          <Link
-                            to="/my-bookings"
-                            onClick={() => setShowProfileDropdown(false)}
-                            className="block px-4 py-2 hover:bg-gray-100"
-                          >
-                            My Bookings
-                          </Link>
-                          <Link
-                            to="/wishlist"
-                            onClick={() => setShowProfileDropdown(false)}
-                            className="block px-4 py-2 hover:bg-gray-100"
-                          >
-                            My Wishlist
-                          </Link>
+                          <NavLink to="/organizer/dashboard/profile" onClick={() => setShowProfileDropdown(false)}>
+                            <User className="w-4 h-4 text-slate-400" />My Profile
+                          </NavLink>
+                          <NavLink to="/organizer/dashboard/overview" onClick={() => setShowProfileDropdown(false)}>
+                            <LayoutDashboard className="w-4 h-4 text-slate-400" />Dashboard
+                          </NavLink>
+                          <NavLink to="/organizer/events" onClick={() => setShowProfileDropdown(false)}>
+                            <Calendar className="w-4 h-4 text-slate-400" />My Events
+                          </NavLink>
+                          <NavLink to="/my-bookings" onClick={() => setShowProfileDropdown(false)}>
+                            <Ticket className="w-4 h-4 text-slate-400" />My Bookings
+                          </NavLink>
+                          <NavLink to="/wishlist" onClick={() => setShowProfileDropdown(false)}>
+                            <Heart className="w-4 h-4 text-slate-400" />My Wishlist
+                          </NavLink>
                         </>
                       )}
+
+                      {/* ADMIN links */}
+                      {user.role === "ADMIN" && (
+                        <>
+                          <NavLink to="/admin" onClick={() => setShowProfileDropdown(false)}>
+                            <Settings className="w-4 h-4 text-slate-400" />Admin Panel
+                          </NavLink>
+                          <NavLink to="/my-bookings" onClick={() => setShowProfileDropdown(false)}>
+                            <Ticket className="w-4 h-4 text-slate-400" />My Bookings
+                          </NavLink>
+                          <NavLink to="/wishlist" onClick={() => setShowProfileDropdown(false)}>
+                            <Heart className="w-4 h-4 text-slate-400" />My Wishlist
+                          </NavLink>
+                        </>
+                      )}
+
+                      {/* Divider + Logout */}
+                      <div className="h-px bg-white/5 my-1" />
                       <button
                         onClick={handleLogout}
-                        className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"
+                        className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-xl text-sm text-red-400 hover:text-red-300 hover:bg-red-500/8 transition-all duration-150"
                       >
-                        Logout
+                        <LogOut className="w-4 h-4" />
+                        Sign Out
                       </button>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
+            ) : (
+              <Link
+                to="/login"
+                className="btn-primary text-sm px-5 py-2.5"
+              >
+                Sign In
+              </Link>
             )}
           </div>
 
-          {/* Mobile toggle */}
+          {/* Mobile menu button */}
           <button
             onClick={() => setShowMobileMenu(!showMobileMenu)}
-            className="md:hidden p-2 rounded-lg text-gray-700 hover:bg-gray-100"
-            aria-label="Toggle menu"
+            className="md:hidden w-9 h-9 rounded-xl flex items-center justify-center text-slate-300 hover:text-white transition-colors"
+            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}
           >
-            {showMobileMenu ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {showMobileMenu ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
+      </header>
+
+      {/* Spacer */}
+      <div style={{ height: 'var(--navbar-height)' }} />
+
+      {/* Mobile menu overlay */}
+      {showMobileMenu && (
+        <div
+          className="fixed inset-0 z-40 md:hidden animate-fade-in"
+          onClick={closeMobile}
+          style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
+        />
+      )}
+
+      {/* Mobile drawer */}
+      <div
+        className={`fixed top-0 right-0 bottom-0 z-50 md:hidden w-80 max-w-full transition-transform duration-300 ${showMobileMenu ? "translate-x-0" : "translate-x-full"
+          }`}
+        style={{
+          background: 'rgba(11, 15, 26, 0.98)',
+          backdropFilter: 'blur(24px)',
+          borderLeft: '1px solid rgba(255,255,255,0.08)',
+        }}
+      >
+        {/* Mobile header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-white/5"
+          style={{ height: 'var(--navbar-height)' }}>
+          <span className="font-heading font-bold text-white">Menu</span>
+          <button
+            onClick={closeMobile}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/5"
+          >
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Mobile Menu */}
-        {showMobileMenu && (
-          <div className="md:hidden border-t border-gray-100 py-3 space-y-1">
-            {/* City picker */}
-            <div className="px-4 py-2">
-              <p className="text-xs font-semibold text-gray-400 uppercase mb-2">Select City</p>
+        <div className="overflow-y-auto h-[calc(100%-var(--navbar-height))]">
+          <div className="p-4 space-y-1">
+
+            {/* City selector (mobile) */}
+            <div className="mb-3 px-1">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">Browse By City</p>
               <div className="flex flex-wrap gap-2">
-                {popularCities.map((city) => (
+                {POPULAR_CITIES.slice(0, 5).map((city) => (
                   <button
                     key={city}
                     onClick={() => handleCitySelect(city)}
-                    className={`px-3 py-1 rounded-full text-sm border ${selectedCity === city
-                      ? "bg-blue-600 text-white border-blue-600"
-                      : "text-gray-700 border-gray-300 hover:bg-gray-100"
+                    className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-colors ${selectedCity === city
+                      ? "text-brand-300 border-brand-500/40"
+                      : "text-slate-400 border-white/10"
                       }`}
+                    style={{
+                      background: selectedCity === city ? "rgba(108,71,236,0.15)" : "rgba(255,255,255,0.04)",
+                      border: '1px solid',
+                    }}
                   >
                     {city}
                   </button>
@@ -275,133 +339,83 @@ export default function Navbar() {
               </div>
             </div>
 
-            <div className="border-t border-gray-100 pt-2" />
+            <div className="h-px bg-white/5 my-3" />
 
             <button
               onClick={handleCreateEvent}
-              className="block w-full text-left px-4 py-2.5 text-gray-700 hover:bg-gray-50 font-medium"
+              className="btn-primary w-full justify-center py-2.5 text-sm"
             >
+              <Zap className="w-3.5 h-3.5" />
               Create Event
             </button>
 
-            {!user ? (
-              <Link
-                to="/login"
-                onClick={closeMobile}
-                className="flex items-center px-4 py-2.5 text-gray-700 hover:bg-gray-50"
-              >
-                <User className="w-5 h-5 mr-2" />
-                Login
-              </Link>
-            ) : (
+
+            {user ? (
               <>
-                <div className="px-4 py-2 flex items-center gap-2">
-                  <span
-                    className={`px-3 py-1 text-xs font-semibold rounded-full ${roleStyles[user.role]}`}
-                  >
-                    {user.role}
-                  </span>
+                {/* User info */}
+                <div className="flex items-center gap-3 px-3 py-3 mt-2 rounded-xl"
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                  <div className="w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center bg-gradient-to-br from-brand-500 to-indigo-500 text-white font-bold text-sm">
+                    {user.name?.[0]?.toUpperCase() ?? "U"}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-white text-sm font-medium truncate">{user.name}</p>
+                    {roleInfo && (
+                      <span className={`inline-flex text-xs px-2 py-0.5 rounded-full border ${roleInfo.color}`}>
+                        {roleInfo.label}
+                      </span>
+                    )}
+                  </div>
                 </div>
-                {user.role === "ADMIN" && (
-                  <>
-                    <Link
-                      to="/admin"
-                      onClick={closeMobile}
-                      className="block px-4 py-2.5 text-gray-700 hover:bg-gray-50"
-                    >
-                      Admin Panel
-                    </Link>
-                    <Link
-                      to="/my-bookings"
-                      onClick={closeMobile}
-                      className="block px-4 py-2.5 text-gray-700 hover:bg-gray-50"
-                    >
-                      My Bookings
-                    </Link>
-                    <Link
-                      to="/wishlist"
-                      onClick={closeMobile}
-                      className="block px-4 py-2.5 text-gray-700 hover:bg-gray-50"
-                    >
-                      My Wishlist
-                    </Link>
-                  </>
-                )}
+
+                <div className="h-px bg-white/5 my-2" />
+
+                {/* Role-based links */}
                 {user.role === "USER" && (
                   <>
-                    <Link
-                      to="/profile"
-                      onClick={closeMobile}
-                      className="block px-4 py-2.5 text-gray-700 hover:bg-gray-50"
-                    >
-                      My Profile
-                    </Link>
-                    <Link
-                      to="/my-bookings"
-                      onClick={closeMobile}
-                      className="block px-4 py-2.5 text-gray-700 hover:bg-gray-50"
-                    >
-                      My Bookings
-                    </Link>
-                    <Link
-                      to="/wishlist"
-                      onClick={closeMobile}
-                      className="block px-4 py-2.5 text-gray-700 hover:bg-gray-50"
-                    >
-                      My Wishlist
-                    </Link>
+                    <NavLink to="/profile" onClick={closeMobile}><User className="w-4 h-4 text-slate-400" />My Profile</NavLink>
+                    <NavLink to="/my-bookings" onClick={closeMobile}><Ticket className="w-4 h-4 text-slate-400" />My Bookings</NavLink>
+                    <NavLink to="/wishlist" onClick={closeMobile}><Heart className="w-4 h-4 text-slate-400" />My Wishlist</NavLink>
                   </>
                 )}
                 {user.role === "ORGANIZER" && (
                   <>
-                    <Link
-                      to="/organizer/dashboard/profile"
-                      onClick={closeMobile}
-                      className="block px-4 py-2.5 text-gray-700 hover:bg-gray-50"
-                    >
-                      My Profile
-                    </Link>
-                    <Link
-                      to="/organizer/dashboard/overview"
-                      onClick={closeMobile}
-                      className="block px-4 py-2.5 text-gray-700 hover:bg-gray-50"
-                    >
-                      Organizer Dashboard
-                    </Link>
-                    <Link
-                      to="/organizer/events"
-                      onClick={closeMobile}
-                      className="block px-4 py-2.5 text-gray-700 hover:bg-gray-50"
-                    >
-                      My Events
-                    </Link>
-                    <Link
-                      to="/my-bookings"
-                      onClick={closeMobile}
-                      className="block px-4 py-2.5 text-gray-700 hover:bg-gray-50"
-                    >
-                      My Bookings
-                    </Link>
-                    <Link
-                      to="/wishlist"
-                      onClick={closeMobile}
-                      className="block px-4 py-2.5 text-gray-700 hover:bg-gray-50"
-                    >
-                      My Wishlist
-                    </Link>
+                    <NavLink to="/organizer/dashboard/profile" onClick={closeMobile}><User className="w-4 h-4 text-slate-400" />My Profile</NavLink>
+                    <NavLink to="/organizer/dashboard/overview" onClick={closeMobile}><LayoutDashboard className="w-4 h-4 text-slate-400" />Dashboard</NavLink>
+                    <NavLink to="/organizer/events" onClick={closeMobile}><Calendar className="w-4 h-4 text-slate-400" />My Events</NavLink>
+                    <NavLink to="/my-bookings" onClick={closeMobile}><Ticket className="w-4 h-4 text-slate-400" />My Bookings</NavLink>
+                    <NavLink to="/wishlist" onClick={closeMobile}><Heart className="w-4 h-4 text-slate-400" />My Wishlist</NavLink>
                   </>
                 )}
+                {user.role === "ADMIN" && (
+                  <>
+                    <NavLink to="/admin" onClick={closeMobile}><Settings className="w-4 h-4 text-slate-400" />Admin Panel</NavLink>
+                    <NavLink to="/my-bookings" onClick={closeMobile}><Ticket className="w-4 h-4 text-slate-400" />My Bookings</NavLink>
+                    <NavLink to="/wishlist" onClick={closeMobile}><Heart className="w-4 h-4 text-slate-400" />My Wishlist</NavLink>
+                  </>
+                )}
+
+                <div className="h-px bg-white/5 my-2" />
                 <button
                   onClick={handleLogout}
-                  className="w-full text-left px-4 py-2.5 text-red-600 hover:bg-red-50"
+                  className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-xl text-sm text-red-400 hover:text-red-300 hover:bg-red-500/8 transition-all"
                 >
-                  Logout
+                  <LogOut className="w-4 h-4" />
+                  Sign Out
                 </button>
               </>
+            ) : (
+              <Link
+                to="/login"
+                onClick={closeMobile}
+                className="btn-primary w-full justify-center mt-4"
+              >
+                Sign In
+              </Link>
             )}
           </div>
-        )}
+        </div>
       </div>
-    </nav>
+    </>
   );
 }

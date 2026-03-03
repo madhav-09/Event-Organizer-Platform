@@ -4,11 +4,7 @@ import api from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 import {
-  Building2,
-  User,
-  MapPin,
-  Globe,
-  ArrowRight,
+  Building2, User, MapPin, Globe, ArrowRight, Loader2,
 } from "lucide-react";
 
 interface FormData {
@@ -41,6 +37,29 @@ const initialForm: FormData = {
   website: "",
 };
 
+/* ─── Section colours ─── */
+const SECTIONS = [
+  { icon: Building2, label: "Organization / Brand", color: "rgba(108,71,236,0.2)", border: "rgba(108,71,236,0.35)", text: "#c4b5fd" },
+  { icon: User, label: "Contact Person", color: "rgba(59,130,246,0.15)", border: "rgba(59,130,246,0.3)", text: "#93c5fd" },
+  { icon: MapPin, label: "Business Address", color: "rgba(16,185,129,0.15)", border: "rgba(16,185,129,0.3)", text: "#6ee7b7" },
+  { icon: Globe, label: "Additional (optional)", color: "rgba(245,158,11,0.15)", border: "rgba(245,158,11,0.3)", text: "#fcd34d" },
+];
+
+/* ─── Field helpers ─── */
+function Label({ children }: { children: React.ReactNode }) {
+  return (
+    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+      {children}
+    </label>
+  );
+}
+function FieldError({ msg }: { msg?: string }) {
+  return msg ? <p className="text-red-400 text-xs mt-1">{msg}</p> : null;
+}
+function inputCls(hasError?: boolean) {
+  return `input-glass w-full text-sm py-3 ${hasError ? "border-red-500/60 focus:border-red-500" : ""}`;
+}
+
 export default function ApplyOrganizer() {
   const [form, setForm] = useState<FormData>(initialForm);
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({});
@@ -60,50 +79,26 @@ export default function ApplyOrganizer() {
 
   const validate = (): boolean => {
     const next: Partial<Record<keyof FormData, string>> = {};
-
-    if (!form.brand_name.trim()) {
-      next.brand_name = "Organization / brand name is required";
-    }
-    if (!form.contact_name.trim()) {
-      next.contact_name = "Contact person name is required";
-    }
-    if (!form.contact_email.trim()) {
-      next.contact_email = "Contact email is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.contact_email)) {
+    if (!form.brand_name.trim()) next.brand_name = "Organization name is required";
+    if (!form.contact_name.trim()) next.contact_name = "Contact name is required";
+    if (!form.contact_email.trim()) next.contact_email = "Contact email is required";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.contact_email))
       next.contact_email = "Enter a valid email address";
-    }
-    if (!form.contact_phone.trim()) {
-      next.contact_phone = "Contact phone is required";
-    } else if (!/^[+]?[\d\s-]{10,}$/.test(form.contact_phone.replace(/\s/g, ""))) {
+    if (!form.contact_phone.trim()) next.contact_phone = "Phone is required";
+    else if (!/^[+]?[\d\s-]{10,}$/.test(form.contact_phone.replace(/\s/g, "")))
       next.contact_phone = "Enter a valid phone number";
-    }
-    if (!form.address_line1.trim()) {
-      next.address_line1 = "Address line 1 is required";
-    }
-    if (!form.city.trim()) {
-      next.city = "City is required";
-    }
-    if (!form.state.trim()) {
-      next.state = "State is required";
-    }
-    if (!form.pincode.trim()) {
-      next.pincode = "Pincode / ZIP is required";
-    }
-    if (!form.country.trim()) {
-      next.country = "Country is required";
-    }
-
+    if (!form.address_line1.trim()) next.address_line1 = "Address line 1 is required";
+    if (!form.city.trim()) next.city = "City is required";
+    if (!form.state.trim()) next.state = "State is required";
+    if (!form.pincode.trim()) next.pincode = "Pincode is required";
+    if (!form.country.trim()) next.country = "Country is required";
     setErrors(next);
     return Object.keys(next).length === 0;
   };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!validate()) {
-      toast.error("Please fill all required fields correctly.");
-      return;
-    }
-
+    if (!validate()) { toast.error("Please fill all required fields correctly."); return; }
     try {
       setLoading(true);
       await api.post("/organizers/apply", {
@@ -124,295 +119,176 @@ export default function ApplyOrganizer() {
       navigate("/");
     } catch (err: unknown) {
       const msg =
-        (err as { response?: { data?: { detail?: string } } })?.response?.data
-          ?.detail || "Application failed. You may have already applied.";
+        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ||
+        "Application failed. You may have already applied.";
       toast.error(msg);
     } finally {
       setLoading(false);
     }
   };
 
-  const inputClass =
-    "w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition";
-  const errorClass = "border-red-500 focus:ring-red-500 focus:border-red-500";
-  const labelClass = "block text-sm font-medium text-gray-700 mb-1";
+  const [s0, s1, s2, s3] = SECTIONS;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-8 px-4">
+    <div className="min-h-screen py-10 px-4" style={{ background: 'var(--bg-primary)' }}>
       <div className="max-w-2xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-            Apply as Organizer
-          </h1>
-          <p className="text-gray-600 mt-2">
-            Fill in your organization and contact details. All fields marked with
-            <span className="text-red-500"> *</span> are required.
+
+        {/* Header */}
+        <div className="text-center mb-8 animate-fade-up">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-4"
+            style={{ background: 'rgba(108,71,236,0.15)', border: '1px solid rgba(108,71,236,0.3)', color: '#c4b5fd' }}>
+            <Building2 className="w-3 h-3" /> Organizer Application
+          </div>
+          <h1 className="font-heading font-black text-3xl sm:text-4xl text-white mb-2">Apply as Organizer</h1>
+          <p className="text-slate-500 text-sm">
+            Fill in your details. Fields marked <span className="text-brand-400">*</span> are required.
           </p>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 overflow-hidden"
-        >
-          {/* Organization */}
-          <div className="p-6 border-b border-gray-100">
-            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-4">
-              <Building2 className="w-5 h-5 text-blue-600" />
-              Organization / Brand
-            </h2>
-            <div className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 animate-fade-up" style={{ animationDelay: '100ms', animationFillMode: 'both' }}>
+
+          {/* ── Organization ── */}
+          <div className="glass-card rounded-2xl overflow-hidden">
+            <SectionHeader s={s0} />
+            <div className="p-5 space-y-4">
               <div>
-                <label htmlFor="brand_name" className={labelClass}>
-                  Organization or brand name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="brand_name"
-                  name="brand_name"
-                  value={form.brand_name}
-                  onChange={handleChange}
-                  placeholder="e.g. TechFest Pvt Ltd"
-                  className={`${inputClass} ${errors.brand_name ? errorClass : ""}`}
-                />
-                {errors.brand_name && (
-                  <p className="text-red-500 text-sm mt-1">{errors.brand_name}</p>
-                )}
+                <Label>Organization / brand name <span className="text-brand-400">*</span></Label>
+                <input name="brand_name" value={form.brand_name} onChange={handleChange}
+                  placeholder="e.g. TechFest Pvt Ltd" className={inputCls(!!errors.brand_name)} />
+                <FieldError msg={errors.brand_name} />
               </div>
               <div>
-                <label htmlFor="description" className={labelClass}>
-                  About your organization (optional)
-                </label>
-                <textarea
-                  id="description"
-                  name="description"
-                  value={form.description}
-                  onChange={handleChange}
-                  rows={3}
-                  placeholder="Brief description of events you plan to organize"
-                  className={inputClass}
-                />
+                <Label>About your organization (optional)</Label>
+                <textarea name="description" value={form.description} onChange={handleChange}
+                  rows={3} placeholder="Brief description of events you plan to organize"
+                  className="input-glass w-full text-sm py-3 resize-none" />
               </div>
             </div>
           </div>
 
-          {/* Contact */}
-          <div className="p-6 border-b border-gray-100">
-            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-4">
-              <User className="w-5 h-5 text-blue-600" />
-              Contact person
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="contact_name" className={labelClass}>
-                  Full name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="contact_name"
-                  name="contact_name"
-                  value={form.contact_name}
-                  onChange={handleChange}
-                  placeholder="Your name"
-                  className={`${inputClass} ${errors.contact_name ? errorClass : ""}`}
-                />
-                {errors.contact_name && (
-                  <p className="text-red-500 text-sm mt-1">{errors.contact_name}</p>
-                )}
+          {/* ── Contact ── */}
+          <div className="glass-card rounded-2xl overflow-hidden">
+            <SectionHeader s={s1} />
+            <div className="p-5 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label>Full name <span className="text-brand-400">*</span></Label>
+                  <input name="contact_name" value={form.contact_name} onChange={handleChange}
+                    placeholder="Your name" className={inputCls(!!errors.contact_name)} />
+                  <FieldError msg={errors.contact_name} />
+                </div>
+                <div>
+                  <Label>Email <span className="text-brand-400">*</span></Label>
+                  <input type="email" name="contact_email" value={form.contact_email} onChange={handleChange}
+                    placeholder="contact@company.com" className={inputCls(!!errors.contact_email)} />
+                  <FieldError msg={errors.contact_email} />
+                </div>
               </div>
               <div>
-                <label htmlFor="contact_email" className={labelClass}>
-                  Email <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="contact_email"
-                  name="contact_email"
-                  type="email"
-                  value={form.contact_email}
-                  onChange={handleChange}
-                  placeholder="contact@company.com"
-                  className={`${inputClass} ${errors.contact_email ? errorClass : ""}`}
-                />
-                {errors.contact_email && (
-                  <p className="text-red-500 text-sm mt-1">{errors.contact_email}</p>
-                )}
+                <Label>Phone <span className="text-brand-400">*</span></Label>
+                <input type="tel" name="contact_phone" value={form.contact_phone} onChange={handleChange}
+                  placeholder="+91 98765 43210" className={inputCls(!!errors.contact_phone)} />
+                <FieldError msg={errors.contact_phone} />
               </div>
-            </div>
-            <div className="mt-4">
-              <label htmlFor="contact_phone" className={labelClass}>
-                Phone <span className="text-red-500">*</span>
-              </label>
-              <input
-                id="contact_phone"
-                name="contact_phone"
-                type="tel"
-                value={form.contact_phone}
-                onChange={handleChange}
-                placeholder="e.g. +91 98765 43210"
-                className={`${inputClass} ${errors.contact_phone ? errorClass : ""}`}
-              />
-              {errors.contact_phone && (
-                <p className="text-red-500 text-sm mt-1">{errors.contact_phone}</p>
-              )}
             </div>
           </div>
 
-          {/* Address */}
-          <div className="p-6 border-b border-gray-100">
-            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-4">
-              <MapPin className="w-5 h-5 text-blue-600" />
-              Business address
-            </h2>
-            <div className="space-y-4">
+          {/* ── Address ── */}
+          <div className="glass-card rounded-2xl overflow-hidden">
+            <SectionHeader s={s2} />
+            <div className="p-5 space-y-4">
               <div>
-                <label htmlFor="address_line1" className={labelClass}>
-                  Address line 1 <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="address_line1"
-                  name="address_line1"
-                  value={form.address_line1}
-                  onChange={handleChange}
-                  placeholder="Street, building, block"
-                  className={`${inputClass} ${errors.address_line1 ? errorClass : ""}`}
-                />
-                {errors.address_line1 && (
-                  <p className="text-red-500 text-sm mt-1">{errors.address_line1}</p>
-                )}
+                <Label>Address line 1 <span className="text-brand-400">*</span></Label>
+                <input name="address_line1" value={form.address_line1} onChange={handleChange}
+                  placeholder="Street, building, block" className={inputCls(!!errors.address_line1)} />
+                <FieldError msg={errors.address_line1} />
               </div>
               <div>
-                <label htmlFor="address_line2" className={labelClass}>
-                  Address line 2 (optional)
-                </label>
-                <input
-                  id="address_line2"
-                  name="address_line2"
-                  value={form.address_line2}
-                  onChange={handleChange}
-                  placeholder="Landmark, suite, etc."
-                  className={inputClass}
-                />
+                <Label>Address line 2 (optional)</Label>
+                <input name="address_line2" value={form.address_line2} onChange={handleChange}
+                  placeholder="Landmark, suite, etc." className={inputCls()} />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label htmlFor="city" className={labelClass}>
-                    City <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    id="city"
-                    name="city"
-                    value={form.city}
-                    onChange={handleChange}
-                    placeholder="City"
-                    className={`${inputClass} ${errors.city ? errorClass : ""}`}
-                  />
-                  {errors.city && (
-                    <p className="text-red-500 text-sm mt-1">{errors.city}</p>
-                  )}
+                  <Label>City <span className="text-brand-400">*</span></Label>
+                  <input name="city" value={form.city} onChange={handleChange}
+                    placeholder="City" className={inputCls(!!errors.city)} />
+                  <FieldError msg={errors.city} />
                 </div>
                 <div>
-                  <label htmlFor="state" className={labelClass}>
-                    State <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    id="state"
-                    name="state"
-                    value={form.state}
-                    onChange={handleChange}
-                    placeholder="State"
-                    className={`${inputClass} ${errors.state ? errorClass : ""}`}
-                  />
-                  {errors.state && (
-                    <p className="text-red-500 text-sm mt-1">{errors.state}</p>
-                  )}
+                  <Label>State <span className="text-brand-400">*</span></Label>
+                  <input name="state" value={form.state} onChange={handleChange}
+                    placeholder="State" className={inputCls(!!errors.state)} />
+                  <FieldError msg={errors.state} />
                 </div>
                 <div>
-                  <label htmlFor="pincode" className={labelClass}>
-                    Pincode / ZIP <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    id="pincode"
-                    name="pincode"
-                    value={form.pincode}
-                    onChange={handleChange}
-                    placeholder="e.g. 411001"
-                    className={`${inputClass} ${errors.pincode ? errorClass : ""}`}
-                  />
-                  {errors.pincode && (
-                    <p className="text-red-500 text-sm mt-1">{errors.pincode}</p>
-                  )}
+                  <Label>Pincode / ZIP <span className="text-brand-400">*</span></Label>
+                  <input name="pincode" value={form.pincode} onChange={handleChange}
+                    placeholder="411001" className={inputCls(!!errors.pincode)} />
+                  <FieldError msg={errors.pincode} />
                 </div>
               </div>
               <div>
-                <label htmlFor="country" className={labelClass}>
-                  Country <span className="text-red-500">*</span>
-                </label>
-                <select
-                  id="country"
-                  name="country"
-                  value={form.country}
-                  onChange={handleChange}
-                  className={`${inputClass} ${errors.country ? errorClass : ""}`}
-                >
-                  <option value="India">India</option>
-                  <option value="United States">United States</option>
-                  <option value="United Kingdom">United Kingdom</option>
-                  <option value="Other">Other</option>
+                <Label>Country <span className="text-brand-400">*</span></Label>
+                <select name="country" value={form.country} onChange={handleChange}
+                  className={inputCls(!!errors.country)}>
+                  <option style={{ background: '#0b0f1a' }} value="India">India</option>
+                  <option style={{ background: '#0b0f1a' }} value="United States">United States</option>
+                  <option style={{ background: '#0b0f1a' }} value="United Kingdom">United Kingdom</option>
+                  <option style={{ background: '#0b0f1a' }} value="Other">Other</option>
                 </select>
-                {errors.country && (
-                  <p className="text-red-500 text-sm mt-1">{errors.country}</p>
-                )}
+                <FieldError msg={errors.country} />
               </div>
             </div>
           </div>
 
-          {/* Optional */}
-          <div className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-4">
-              <Globe className="w-5 h-5 text-blue-600" />
-              Additional (optional)
-            </h2>
-            <div>
-              <label htmlFor="website" className={labelClass}>
-                Website
-              </label>
-              <input
-                id="website"
-                name="website"
-                type="url"
-                value={form.website}
-                onChange={handleChange}
-                placeholder="https://yourcompany.com"
-                className={inputClass}
-              />
+          {/* ── Optional ── */}
+          <div className="glass-card rounded-2xl overflow-hidden">
+            <SectionHeader s={s3} />
+            <div className="p-5">
+              <Label>Website</Label>
+              <input type="url" name="website" value={form.website} onChange={handleChange}
+                placeholder="https://yourcompany.com" className={inputCls()} />
             </div>
           </div>
 
-          <div className="p-6 bg-gray-50 flex flex-col sm:flex-row gap-3 justify-end">
-            <button
-              type="button"
-              onClick={() => navigate(-1)}
-              className="px-5 py-2.5 border border-gray-300 rounded-xl text-gray-700 font-medium hover:bg-gray-100"
-            >
+          {/* ── Actions ── */}
+          <div className="flex flex-col sm:flex-row gap-3 justify-end pt-1">
+            <button type="button" onClick={() => navigate(-1)}
+              className="px-5 py-3 rounded-xl text-sm font-semibold text-slate-300 transition-colors"
+              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
               Cancel
             </button>
-            <button
-              type="submit"
-              disabled={loading || !user}
-              className="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              {loading ? "Submitting..." : "Submit application"}
-              <ArrowRight className="w-4 h-4" />
+            <button type="submit" disabled={loading || !user}
+              className="btn-primary px-7 py-3 text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
+              {loading ? "Submitting..." : "Submit Application"}
             </button>
           </div>
-        </form>
 
-        {!user && (
-          <p className="text-center text-gray-500 mt-4 text-sm">
-            You need to be logged in to apply.{" "}
-            <a href="/login" className="text-blue-600 hover:underline">
-              Sign in
-            </a>
-          </p>
-        )}
+          {!user && (
+            <p className="text-center text-slate-500 text-sm mt-2">
+              You need to be logged in to apply.{" "}
+              <a href="/login" className="text-brand-400 hover:text-brand-300 font-medium transition-colors">Sign in</a>
+            </p>
+          )}
+        </form>
       </div>
+    </div>
+  );
+}
+
+/* ─── Section header sub-component ─── */
+function SectionHeader({ s }: { s: typeof SECTIONS[number] }) {
+  const Icon = s.icon;
+  return (
+    <div className="flex items-center gap-3 px-5 py-3.5"
+      style={{ borderBottom: '1px solid rgba(255,255,255,0.07)', background: s.color }}>
+      <div className="w-7 h-7 rounded-lg flex items-center justify-center"
+        style={{ background: 'rgba(0,0,0,0.2)', border: `1px solid ${s.border}` }}>
+        <Icon className="w-3.5 h-3.5" style={{ color: s.text }} />
+      </div>
+      <h2 className="font-heading font-semibold text-white text-sm">{s.label}</h2>
     </div>
   );
 }

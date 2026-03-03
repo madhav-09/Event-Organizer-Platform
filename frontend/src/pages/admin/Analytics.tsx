@@ -1,27 +1,12 @@
 import { useEffect, useState } from "react";
 import api from "../../services/api";
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
+  LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend,
 } from "recharts";
 import {
-  Calendar,
-  Users,
-  UserCheck,
-  Ticket,
-  IndianRupee,
-  TrendingUp,
-  Loader2,
-  AlertCircle,
-  Activity,
+  Calendar, Users, UserCheck, Ticket, IndianRupee, TrendingUp,
+  Loader2, AlertCircle, Activity, BarChart3,
 } from "lucide-react";
 
 type Overview = {
@@ -36,70 +21,52 @@ type Overview = {
 };
 
 type TrendPoint = { date: string; revenue: number; count: number };
-
-type TopEvent = {
-  event_id: string;
-  title: string;
-  city: string;
-  tickets_sold: number;
-  revenue: number;
-  bookings_count: number;
-};
-
-type RecentItem = {
-  booking_id: string;
-  event_title: string;
-  user_name: string;
-  user_email: string;
-  quantity: number;
-  amount: number;
-  status: string;
-  created_at: string;
-};
-
+type TopEvent = { event_id: string; title: string; city: string; tickets_sold: number; revenue: number; bookings_count: number };
+type RecentItem = { booking_id: string; event_title: string; user_name: string; quantity: number; amount: number; status: string; created_at: string };
 type StatusCount = { status: string; count: number };
 
 const STATUS_COLORS: Record<string, string> = {
   CONFIRMED: "#22c55e",
-  PENDING: "#eab308",
+  PENDING: "#f59e0b",
   CANCELLED: "#ef4444",
 };
 
 function formatCurrency(n: number) {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(n);
+  return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
 }
 
 function formatDate(iso: string) {
   if (!iso) return "—";
-  try {
-    return new Date(iso).toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
-  } catch {
-    return iso;
-  }
+  try { return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }); }
+  catch { return iso; }
 }
 
 function timeAgo(iso: string) {
   if (!iso) return "";
-  try {
-    const d = new Date(iso);
-    const sec = Math.floor((Date.now() - d.getTime()) / 1000);
-    if (sec < 60) return "Just now";
-    if (sec < 3600) return `${Math.floor(sec / 60)}m ago`;
-    if (sec < 86400) return `${Math.floor(sec / 3600)}h ago`;
-    if (sec < 604800) return `${Math.floor(sec / 86400)}d ago`;
-    return formatDate(iso);
-  } catch {
-    return iso;
-  }
+  const sec = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (sec < 60) return "Just now";
+  if (sec < 3600) return `${Math.floor(sec / 60)}m ago`;
+  if (sec < 86400) return `${Math.floor(sec / 3600)}h ago`;
+  return formatDate(iso);
 }
+
+const KPI_CONFIG = [
+  { key: "total_events" as const, label: "Events", icon: Calendar, accent: "rgba(108,71,236,0.2)", border: "rgba(108,71,236,0.3)", text: "#c4b5fd" },
+  { key: "total_users" as const, label: "Users", icon: Users, accent: "rgba(59,130,246,0.2)", border: "rgba(59,130,246,0.3)", text: "#93c5fd" },
+  { key: "total_organizers" as const, label: "Organizers", icon: UserCheck, accent: "rgba(139,92,246,0.2)", border: "rgba(139,92,246,0.3)", text: "#c4b5fd" },
+  { key: "total_bookings" as const, label: "Bookings", icon: Ticket, accent: "rgba(16,185,129,0.2)", border: "rgba(16,185,129,0.3)", text: "#6ee7b7" },
+  { key: "total_revenue" as const, label: "Revenue", icon: IndianRupee, accent: "rgba(245,158,11,0.2)", border: "rgba(245,158,11,0.3)", text: "#fcd34d" },
+];
+
+const CHART_TOOLTIP_STYLE = {
+  contentStyle: {
+    background: 'rgba(18,24,39,0.95)',
+    border: '1px solid rgba(255,255,255,0.1)',
+    borderRadius: '12px',
+    color: '#e2e8f0',
+  },
+  labelStyle: { color: '#94a3b8' },
+};
 
 export default function Analytics() {
   const [overview, setOverview] = useState<Overview | null>(null);
@@ -113,102 +80,66 @@ export default function Analytics() {
 
   useEffect(() => {
     let cancelled = false;
-
-    const load = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const [overviewRes, trendRes, topRes, recentRes, statusRes] = await Promise.all([
-          api.get("/admin/analytics/overview"),
-          api.get("/admin/analytics/revenue-trend", { params: { days: trendDays } }),
-          api.get("/admin/analytics/top-events", { params: { limit: 10 } }),
-          api.get("/admin/analytics/recent-activity", { params: { limit: 10 } }),
-          api.get("/admin/analytics/bookings-by-status"),
-        ]);
-
-        if (cancelled) return;
-
-        setOverview(overviewRes.data);
-        setTrend(Array.isArray(trendRes.data) ? trendRes.data : []);
-        setTopEvents(Array.isArray(topRes.data) ? topRes.data : []);
-        setRecent(Array.isArray(recentRes.data) ? recentRes.data : []);
-        setByStatus(Array.isArray(statusRes.data) ? statusRes.data : []);
-      } catch (err: unknown) {
-        if (!cancelled) {
-          const msg =
-            (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ||
-            "Failed to load analytics";
-          setError(Array.isArray(msg) ? msg[0]?.msg : msg);
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-
-    load();
-    return () => {
-      cancelled = true;
-    };
+    setLoading(true); setError(null);
+    Promise.all([
+      api.get("/admin/analytics/overview"),
+      api.get("/admin/analytics/revenue-trend", { params: { days: trendDays } }),
+      api.get("/admin/analytics/top-events", { params: { limit: 10 } }),
+      api.get("/admin/analytics/recent-activity", { params: { limit: 10 } }),
+      api.get("/admin/analytics/bookings-by-status"),
+    ]).then(([o, t, te, r, s]) => {
+      if (cancelled) return;
+      setOverview(o.data);
+      setTrend(Array.isArray(t.data) ? t.data : []);
+      setTopEvents(Array.isArray(te.data) ? te.data : []);
+      setRecent(Array.isArray(r.data) ? r.data : []);
+      setByStatus(Array.isArray(s.data) ? s.data : []);
+    }).catch((err) => {
+      if (!cancelled) setError(err?.response?.data?.detail || "Failed to load analytics");
+    }).finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
   }, [trendDays]);
 
-  if (loading && !overview) {
-    return (
-      <div className="flex items-center justify-center py-24">
-        <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
-      </div>
-    );
-  }
+  if (loading && !overview) return (
+    <div className="flex items-center justify-center py-24">
+      <Loader2 className="w-10 h-10 animate-spin text-brand-400" />
+    </div>
+  );
 
-  if (error && !overview) {
-    return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center">
-        <AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-2" />
-        <p className="text-red-700">{error}</p>
-      </div>
-    );
-  }
+  if (error && !overview) return (
+    <div className="glass-card rounded-2xl p-8 text-center">
+      <AlertCircle className="w-10 h-10 text-red-400 mx-auto mb-3" />
+      <p className="text-red-400">{error}</p>
+    </div>
+  );
 
-  const stats = overview || {
-    total_events: 0,
-    total_users: 0,
-    total_organizers: 0,
-    total_bookings: 0,
-    total_revenue: 0,
-    pending_bookings: 0,
-    confirmed_bookings: 0,
-    cancelled_bookings: 0,
-  };
-
-  const kpis = [
-    { label: "Total Events", value: stats.total_events, icon: Calendar, color: "indigo" },
-    { label: "Total Users", value: stats.total_users, icon: Users, color: "blue" },
-    { label: "Organizers", value: stats.total_organizers, icon: UserCheck, color: "violet" },
-    { label: "Total Bookings", value: stats.total_bookings, icon: Ticket, color: "emerald" },
-    { label: "Revenue", value: formatCurrency(stats.total_revenue), icon: IndianRupee, color: "amber" },
-  ];
-
-  const colorMap: Record<string, string> = {
-    indigo: "bg-indigo-100 text-indigo-800 border-indigo-200",
-    blue: "bg-blue-100 text-blue-800 border-blue-200",
-    violet: "bg-violet-100 text-violet-800 border-violet-200",
-    emerald: "bg-emerald-100 text-emerald-800 border-emerald-200",
-    amber: "bg-amber-100 text-amber-800 border-amber-200",
-  };
+  const stats = overview!;
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h2 className="text-2xl font-bold text-gray-800">Analytics Dashboard</h2>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+            style={{ background: 'rgba(108,71,236,0.15)', border: '1px solid rgba(108,71,236,0.25)' }}>
+            <BarChart3 className="w-5 h-5 text-brand-400" />
+          </div>
+          <div>
+            <h2 className="font-heading font-bold text-white text-xl">Analytics Dashboard</h2>
+            <p className="text-slate-500 text-sm">Platform-wide performance overview</p>
+          </div>
+        </div>
         <div className="flex gap-2">
           {[7, 30].map((d) => (
             <button
               key={d}
               onClick={() => setTrendDays(d)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
-                trendDays === d
-                  ? "bg-indigo-600 text-white"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-              }`}
+              className={`px-3 py-1.5 rounded-xl text-sm font-medium transition-all ${trendDays === d ? "text-white" : "text-slate-400 hover:text-white"
+                }`}
+              style={{
+                background: trendDays === d ? "rgba(108,71,236,0.4)" : "rgba(255,255,255,0.05)",
+                border: `1px solid ${trendDays === d ? "rgba(108,71,236,0.5)" : "rgba(255,255,255,0.1)"}`,
+              }}
             >
               Last {d}d
             </button>
@@ -217,170 +148,146 @@ export default function Analytics() {
       </div>
 
       {/* KPI cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        {kpis.map(({ label, value, icon: Icon, color }) => (
-          <div
-            key={label}
-            className={`rounded-xl border p-5 ${colorMap[color]} bg-white border-gray-200`}
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-600">{label}</span>
-              <Icon className="w-5 h-5 text-gray-400" />
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        {KPI_CONFIG.map(({ key, label, icon: Icon, accent, border, text }) => {
+          const val = stats[key];
+          const display = key === "total_revenue" ? formatCurrency(val) : val.toLocaleString();
+          return (
+            <div key={key} className="glass-card rounded-2xl p-5 animate-fade-up" style={{ animationFillMode: 'both' }}>
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{label}</span>
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                  style={{ background: accent, border: `1px solid ${border}` }}>
+                  <Icon className="w-4 h-4" style={{ color: text }} />
+                </div>
+              </div>
+              <p className="text-2xl font-black text-white font-heading">{display}</p>
             </div>
-            <p className="mt-2 text-2xl font-bold text-gray-900">
-              {typeof value === "number" ? value.toLocaleString() : value}
-            </p>
+          );
+        })}
+      </div>
+
+      {/* Booking status summary */}
+      <div className="grid grid-cols-3 gap-4">
+        {[
+          { label: "Pending", value: stats.pending_bookings, accent: "rgba(245,158,11,0.15)", border: "rgba(245,158,11,0.25)", color: "#fcd34d" },
+          { label: "Confirmed", value: stats.confirmed_bookings, accent: "rgba(16,185,129,0.15)", border: "rgba(16,185,129,0.25)", color: "#6ee7b7" },
+          { label: "Cancelled", value: stats.cancelled_bookings, accent: "rgba(239,68,68,0.15)", border: "rgba(239,68,68,0.25)", color: "#fca5a5" },
+        ].map(({ label, value, accent, border, color }) => (
+          <div key={label} className="rounded-2xl p-4 text-center" style={{ background: accent, border: `1px solid ${border}` }}>
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">{label}</p>
+            <p className="text-3xl font-black font-heading" style={{ color }}>{value}</p>
           </div>
         ))}
       </div>
 
-      {/* Booking status summary */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-lg bg-amber-50 border border-amber-200 p-3 text-center">
-          <p className="text-xs font-medium text-amber-800">Pending</p>
-          <p className="text-xl font-bold text-amber-900">{stats.pending_bookings}</p>
-        </div>
-        <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3 text-center">
-          <p className="text-xs font-medium text-emerald-800">Confirmed</p>
-          <p className="text-xl font-bold text-emerald-900">{stats.confirmed_bookings}</p>
-        </div>
-        <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-center">
-          <p className="text-xs font-medium text-red-800">Cancelled</p>
-          <p className="text-xl font-bold text-red-900">{stats.cancelled_bookings}</p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      {/* Charts row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Revenue trend */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <TrendingUp className="w-5 h-5" />
-            Revenue trend
+        <div className="glass-card rounded-2xl p-6">
+          <h3 className="font-heading font-bold text-white text-base mb-5 flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-brand-400" />
+            Revenue Trend
           </h3>
           {trend.length > 0 ? (
-            <ResponsiveContainer width="100%" height={280}>
+            <ResponsiveContainer width="100%" height={260}>
               <LineChart data={trend}>
-                <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `₹${v / 1000}k`} />
-                <Tooltip
-                  formatter={(value: number) => [formatCurrency(value), "Revenue"]}
-                  labelFormatter={(label) => formatDate(label)}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="revenue"
-                  stroke="#6366f1"
-                  strokeWidth={2}
-                  dot={false}
-                />
+                <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: '#64748b' }} tickFormatter={(v) => `₹${v / 1000}k`} axisLine={false} tickLine={false} />
+                <Tooltip {...CHART_TOOLTIP_STYLE} formatter={(value: number) => [formatCurrency(value), "Revenue"]} labelFormatter={formatDate} />
+                <Line type="monotone" dataKey="revenue" stroke="#6c47ec" strokeWidth={2.5} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           ) : (
-            <p className="text-gray-500 py-12 text-center">No revenue data in this period</p>
+            <div className="py-16 text-center text-slate-500 text-sm">No revenue data in this period</div>
           )}
         </div>
 
-        {/* Bookings by status */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Bookings by status</h3>
+        {/* Status pie */}
+        <div className="glass-card rounded-2xl p-6">
+          <h3 className="font-heading font-bold text-white text-base mb-5">Bookings by Status</h3>
           {byStatus.length > 0 ? (
-            <ResponsiveContainer width="100%" height={280}>
+            <ResponsiveContainer width="100%" height={260}>
               <PieChart>
-                <Pie
-                  data={byStatus}
-                  dataKey="count"
-                  nameKey="status"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={100}
-                  label={({ status, count }) => `${status}: ${count}`}
-                >
-                  {byStatus.map((entry, i) => (
+                <Pie data={byStatus} dataKey="count" nameKey="status" cx="50%" cy="50%" outerRadius={90}
+                  label={({ status, count }) => `${status}: ${count}`}>
+                  {byStatus.map((entry) => (
                     <Cell key={entry.status} fill={STATUS_COLORS[entry.status] || "#94a3b8"} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value: number) => [value, "Bookings"]} />
-                <Legend />
+                <Tooltip formatter={(value: number) => [value, "Bookings"]} contentStyle={CHART_TOOLTIP_STYLE.contentStyle} />
+                <Legend wrapperStyle={{ color: '#94a3b8', fontSize: 12 }} />
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <p className="text-gray-500 py-12 text-center">No booking data</p>
+            <div className="py-16 text-center text-slate-500 text-sm">No booking data</div>
           )}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      {/* Bottom row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top events */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Top events by revenue</h3>
+        <div className="glass-card rounded-2xl p-6">
+          <h3 className="font-heading font-bold text-white text-base mb-5">Top Events by Revenue</h3>
           {topEvents.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="min-w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-2 font-medium text-gray-600">Event</th>
-                    <th className="text-right py-2 font-medium text-gray-600">Tickets</th>
-                    <th className="text-right py-2 font-medium text-gray-600">Revenue</th>
+                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+                    <th className="text-left py-2.5 text-xs font-semibold text-slate-500 uppercase">Event</th>
+                    <th className="text-right py-2.5 text-xs font-semibold text-slate-500 uppercase">Tickets</th>
+                    <th className="text-right py-2.5 text-xs font-semibold text-slate-500 uppercase">Revenue</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {topEvents.map((e) => (
-                    <tr key={e.event_id} className="border-b border-gray-100">
-                      <td className="py-2">
-                        <p className="font-medium text-gray-900">{e.title}</p>
-                        {e.city && <p className="text-xs text-gray-500">{e.city}</p>}
+                  {topEvents.map((e, i) => (
+                    <tr key={e.event_id} style={{ borderBottom: i < topEvents.length - 1 ? '1px solid rgba(255,255,255,0.05)' : undefined }}>
+                      <td className="py-3">
+                        <p className="font-medium text-white">{e.title}</p>
+                        {e.city && <p className="text-xs text-slate-500">{e.city}</p>}
                       </td>
-                      <td className="text-right py-2">{e.tickets_sold}</td>
-                      <td className="text-right py-2 font-medium">{formatCurrency(e.revenue)}</td>
+                      <td className="text-right py-3 text-slate-300">{e.tickets_sold}</td>
+                      <td className="text-right py-3 font-bold text-brand-300">{formatCurrency(e.revenue)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           ) : (
-            <p className="text-gray-500 py-8 text-center">No events with bookings yet</p>
+            <div className="py-10 text-center text-slate-500 text-sm">No events with bookings yet</div>
           )}
         </div>
 
         {/* Recent activity */}
-        <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <Activity className="w-5 h-5" />
-            Recent activity
+        <div className="glass-card rounded-2xl p-6">
+          <h3 className="font-heading font-bold text-white text-base mb-5 flex items-center gap-2">
+            <Activity className="w-4 h-4 text-brand-400" />
+            Recent Activity
           </h3>
           {recent.length > 0 ? (
             <ul className="space-y-3">
               {recent.map((r) => (
-                <li
-                  key={r.booking_id}
-                  className="flex justify-between items-start gap-3 py-2 border-b border-gray-100 last:border-0"
-                >
+                <li key={r.booking_id} className="flex justify-between items-start gap-3 py-3"
+                  style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                   <div>
-                    <p className="font-medium text-gray-900">{r.event_title}</p>
-                    <p className="text-xs text-gray-500">
-                      {r.user_name} · {r.quantity} ticket{r.quantity !== 1 ? "s" : ""} ·{" "}
-                      {formatCurrency(r.amount)}
+                    <p className="font-medium text-white text-sm">{r.event_title}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      {r.user_name} · {r.quantity} ticket{r.quantity !== 1 ? "s" : ""} · {formatCurrency(r.amount)}
                     </p>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <span
-                      className={`text-xs font-medium px-2 py-0.5 rounded ${
-                        r.status === "CONFIRMED"
-                          ? "bg-emerald-100 text-emerald-800"
-                          : r.status === "PENDING"
-                          ? "bg-amber-100 text-amber-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
-                    >
+                    <span className={`text-xs font-semibold px-2 py-1 rounded-lg ${r.status === "CONFIRMED" ? "text-emerald-400" : r.status === "PENDING" ? "text-amber-400" : "text-red-400"
+                      }`} style={{ background: 'rgba(255,255,255,0.06)' }}>
                       {r.status}
                     </span>
-                    <p className="text-xs text-gray-400 mt-1">{timeAgo(r.created_at)}</p>
+                    <p className="text-xs text-slate-600 mt-1">{timeAgo(r.created_at)}</p>
                   </div>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-gray-500 py-8 text-center">No recent bookings</p>
+            <div className="py-10 text-center text-slate-500 text-sm">No recent bookings</div>
           )}
         </div>
       </div>

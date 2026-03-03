@@ -1,22 +1,9 @@
 import { useEffect, useState } from "react";
-import {
-  FaCalendarAlt,
-  FaUsers,
-  FaRupeeSign,
-  FaCheckCircle,
-} from "react-icons/fa";
+import { Calendar, Users, IndianRupee, CheckCircle, TrendingUp, Activity } from "lucide-react";
 
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
+  LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend,
 } from "recharts";
 
 import {
@@ -29,200 +16,207 @@ import {
   getRecentBookings,
 } from "../../services/organizerAnalytics";
 
-/* ================= TYPES ================= */
+type Event = { event_id: string; title: string; date: string; location: string };
+type OverviewStats = { total_events: number; registrations: number; revenue: number; checked_in: number; not_checked_in: number };
+type RecentBooking = { user: { name: string; email: string }; event: string; quantity: number; amount: number; status: string; created_at: string };
 
-type Event = {
-  event_id: string;
-  title: string;
-  date: string;
-  location: string;
+const KPI_CONFIG = [
+  { key: "total_events" as const, label: "Total Events", icon: Calendar, accent: "rgba(108,71,236,0.15)", border: "rgba(108,71,236,0.25)", color: "#c4b5fd" },
+  { key: "registrations" as const, label: "Registrations", icon: Users, accent: "rgba(59,130,246,0.15)", border: "rgba(59,130,246,0.25)", color: "#93c5fd" },
+  { key: "revenue" as const, label: "Revenue", icon: IndianRupee, accent: "rgba(245,158,11,0.15)", border: "rgba(245,158,11,0.25)", color: "#fcd34d" },
+  { key: "checked_in" as const, label: "Checked In", icon: CheckCircle, accent: "rgba(16,185,129,0.15)", border: "rgba(16,185,129,0.25)", color: "#6ee7b7" },
+  { key: "not_checked_in" as const, label: "Pending", icon: Users, accent: "rgba(239,68,68,0.12)", border: "rgba(239,68,68,0.22)", color: "#fca5a5" },
+];
+
+const CHART_TOOLTIP = {
+  contentStyle: {
+    background: 'rgba(18,24,39,0.97)',
+    border: '1px solid rgba(255,255,255,0.1)',
+    borderRadius: '12px',
+    color: '#e2e8f0',
+  },
 };
 
-type OverviewStats = {
-  total_events: number;
-  registrations: number;
-  revenue: number;
-  checked_in: number;
-  not_checked_in: number;
-};
-
-type RecentBooking = {
-  user: {
-    name: string;
-    email: string;
-  };
-  event: string;
-  quantity: number;
-  amount: number;
-  status: string;
-  created_at: string;
-};
-
-/* ================= COMPONENT ================= */
+const COLORS = ["#6c47ec", "#4f46e5", "#3b82f6", "#10b981"];
 
 const Overview = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [selectedEvent, setSelectedEvent] = useState("ALL");
-
   const [stats, setStats] = useState<OverviewStats | null>(null);
   const [loading, setLoading] = useState(true);
-
   const [registrationsTrend, setRegistrationsTrend] = useState<any[]>([]);
   const [revenueTrend, setRevenueTrend] = useState<any[]>([]);
   const [ticketData, setTicketData] = useState<any[]>([]);
   const [checkinData, setCheckinData] = useState<any[]>([]);
   const [recentBookings, setRecentBookings] = useState<RecentBooking[]>([]);
 
-  /* ===== Load events ===== */
   useEffect(() => {
     getOrganizerEvents().then(setEvents);
     getRecentBookings().then(setRecentBookings);
   }, []);
 
-  /* ===== Load analytics when event changes ===== */
   useEffect(() => {
     setLoading(true);
-
     Promise.all([
       getAnalyticsOverview(selectedEvent),
       getRegistrationsTrend(selectedEvent),
       getRevenueTrend(selectedEvent),
       getTicketDistribution(selectedEvent),
       getCheckinDistribution(selectedEvent),
-    ])
-      .then(
-        ([
-          overview,
-          registrations,
-          revenue,
-          tickets,
-          checkins,
-        ]) => {
-          setStats(overview);
-          setRegistrationsTrend(registrations);
-          setRevenueTrend(revenue);
-          setTicketData(
-            tickets.map((t: any) => ({
-              name: t._id,
-              value: t.count,
-            }))
-          );
-          setCheckinData([
-            { name: "Checked In", value: checkins.checked_in },
-            { name: "Not Checked In", value: checkins.not_checked_in },
-          ]);
-        }
-      )
-      .finally(() => setLoading(false));
+    ]).then(([overview, registrations, revenue, tickets, checkins]) => {
+      setStats(overview);
+      setRegistrationsTrend(registrations);
+      setRevenueTrend(revenue);
+      setTicketData(tickets.map((t: any) => ({ name: t._id, value: t.count })));
+      setCheckinData([
+        { name: "Checked In", value: checkins.checked_in },
+        { name: "Not Checked In", value: checkins.not_checked_in },
+      ]);
+    }).finally(() => setLoading(false));
   }, [selectedEvent]);
 
   return (
-    <div className="space-y-10">
-      {/* ===== Header ===== */}
+    <div className="space-y-8">
+      {/* Header */}
       <div>
-        <h1 className="text-3xl font-semibold text-gray-900">
-          Dashboard Overview
-        </h1>
-        <p className="text-gray-500 mt-1">
-          Monitor registrations, revenue, and check-ins
-        </p>
+        <h1 className="font-heading font-black text-2xl text-white">Dashboard Overview</h1>
+        <p className="text-slate-500 mt-1 text-sm">Monitor registrations, revenue, and check-ins</p>
       </div>
 
-      {/* ===== Event Filter ===== */}
-      <div className="bg-white border rounded-lg px-6 py-4">
-        <label className="text-sm text-gray-600 mb-1 block">
-          Select Event
+      {/* Event filter */}
+      <div className="glass-card rounded-2xl px-5 py-4">
+        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">
+          Filter by Event
         </label>
         <select
           value={selectedEvent}
           onChange={(e) => setSelectedEvent(e.target.value)}
-          className="w-full md:w-[420px] border border-gray-300 rounded-md px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500"
+          className="input-glass w-full md:w-[420px] text-sm py-2.5"
+          style={{ '--tw-ring-color': 'rgba(108,71,236,0.5)' } as React.CSSProperties}
         >
-          <option value="ALL">All Events</option>
+          <option value="ALL" style={{ background: '#0b0f1a' }}>All Events</option>
           {events.map((e) => (
-            <option key={e.event_id} value={e.event_id}>
+            <option key={e.event_id} value={e.event_id} style={{ background: '#0b0f1a' }}>
               {e.title} • {new Date(e.date).toLocaleDateString()} • {e.location}
             </option>
           ))}
         </select>
       </div>
 
-      {/* ===== KPI CARDS ===== */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
-        <KpiCard label="Total Events" value={stats?.total_events} loading={loading} icon={<FaCalendarAlt />} />
-        <KpiCard label="Registrations" value={stats?.registrations} loading={loading} icon={<FaUsers />} />
-        <KpiCard label="Revenue" value={stats ? `₹${stats.revenue}` : undefined} loading={loading} icon={<FaRupeeSign />} />
-        <KpiCard label="Checked In" value={stats?.checked_in} loading={loading} icon={<FaCheckCircle />} />
-        <KpiCard label="Pending" value={stats?.not_checked_in} loading={loading} icon={<FaUsers />} />
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        {KPI_CONFIG.map(({ key, label, icon: Icon, accent, border, color }) => {
+          const val = stats?.[key];
+          const display = key === "revenue" && val != null ? `₹${val}` : val;
+          return (
+            <div key={key} className="glass-card rounded-2xl p-5">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{label}</span>
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center"
+                  style={{ background: accent, border: `1px solid ${border}` }}>
+                  <Icon className="w-4 h-4" style={{ color }} />
+                </div>
+              </div>
+              <p className="text-2xl font-black text-white font-heading">{loading ? "—" : display}</p>
+            </div>
+          );
+        })}
       </div>
 
-      {/* ===== LINE CHARTS ===== */}
+      {/* Line Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <LineChartBox title="Registrations Trend" data={registrationsTrend} dataKey="count" />
-        <LineChartBox title="Revenue Trend" data={revenueTrend} dataKey="revenue" />
+        <div className="glass-card rounded-2xl p-6 h-72">
+          <h3 className="font-heading font-semibold text-white text-sm mb-4 flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-brand-400" /> Registrations Trend
+          </h3>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={registrationsTrend}>
+              <XAxis dataKey="_id" tick={{ fontSize: 10, fill: '#64748b' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 10, fill: '#64748b' }} axisLine={false} tickLine={false} />
+              <Tooltip {...CHART_TOOLTIP} />
+              <Line type="monotone" dataKey="count" stroke="#6c47ec" strokeWidth={2.5} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div className="glass-card rounded-2xl p-6 h-72">
+          <h3 className="font-heading font-semibold text-white text-sm mb-4 flex items-center gap-2">
+            <IndianRupee className="w-4 h-4 text-amber-400" /> Revenue Trend
+          </h3>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={revenueTrend}>
+              <XAxis dataKey="_id" tick={{ fontSize: 10, fill: '#64748b' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 10, fill: '#64748b' }} tickFormatter={v => `₹${v}`} axisLine={false} tickLine={false} />
+              <Tooltip {...CHART_TOOLTIP} />
+              <Line type="monotone" dataKey="revenue" stroke="#f59e0b" strokeWidth={2.5} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
-      {/* ===== DONUT CHARTS ===== */}
+      {/* Donut Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <DonutChartBox title="Ticket Distribution" data={ticketData} />
-        <DonutChartBox title="Check-in Status" data={checkinData} />
+        {[
+          { title: "Ticket Distribution", data: ticketData },
+          { title: "Check-in Status", data: checkinData },
+        ].map(({ title, data }) => (
+          <div key={title} className="glass-card rounded-2xl p-6 h-72">
+            <h3 className="font-heading font-semibold text-white text-sm mb-4">{title}</h3>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={data} dataKey="value" nameKey="name" innerRadius={55} outerRadius={85}>
+                  {data.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                </Pie>
+                <Tooltip contentStyle={CHART_TOOLTIP.contentStyle} />
+                <Legend wrapperStyle={{ color: '#94a3b8', fontSize: 12 }} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        ))}
       </div>
 
-      {/* ===== RECENT BOOKINGS TABLE ===== */}
-      <div className="bg-white border rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">
-          Recent Bookings
-        </h3>
-
+      {/* Recent Bookings */}
+      <div className="glass-card rounded-2xl overflow-hidden">
+        <div className="px-6 py-4 border-b flex items-center gap-2" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+          <Activity className="w-4 h-4 text-brand-400" />
+          <h3 className="font-heading font-bold text-white">Recent Bookings</h3>
+        </div>
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
-            <thead className="bg-gray-50 text-gray-600 uppercase text-xs">
-              <tr>
-                <th className="px-4 py-3 text-left">User</th>
-                <th className="px-4 py-3 text-left">Event</th>
-                <th className="px-4 py-3 text-center">Qty</th>
-                <th className="px-4 py-3 text-right">Amount</th>
-                <th className="px-4 py-3 text-center">Status</th>
-                <th className="px-4 py-3 text-right">Date</th>
+            <thead>
+              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+                {["User", "Event", "Qty", "Amount", "Status", "Date"].map(h => (
+                  <th key={h} className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{h}</th>
+                ))}
               </tr>
             </thead>
-
-            <tbody className="divide-y">
+            <tbody>
+              {recentBookings.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-5 py-10 text-center text-slate-500 text-sm">No recent bookings found</td>
+                </tr>
+              )}
               {recentBookings.map((b, i) => (
-                <tr key={i} className="hover:bg-gray-50">
-                  <td className="px-4 py-3">
-                    <div className="font-medium">{b.user.name}</div>
-                    <div className="text-gray-500 text-xs">{b.user.email}</div>
+                <tr key={i} className="transition-colors hover:bg-white/3"
+                  style={{ borderBottom: i < recentBookings.length - 1 ? '1px solid rgba(255,255,255,0.05)' : undefined }}>
+                  <td className="px-5 py-3.5">
+                    <p className="font-medium text-white text-sm">{b.user.name}</p>
+                    <p className="text-slate-500 text-xs">{b.user.email}</p>
                   </td>
-                  <td className="px-4 py-3">{b.event}</td>
-                  <td className="px-4 py-3 text-center">{b.quantity}</td>
-                  <td className="px-4 py-3 text-right font-medium">
-                    ₹{b.amount}
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        b.status === "CONFIRMED"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-yellow-100 text-yellow-700"
-                      }`}
-                    >
+                  <td className="px-5 py-3.5 text-slate-300 text-sm">{b.event}</td>
+                  <td className="px-5 py-3.5 text-slate-300 text-sm">{b.quantity}</td>
+                  <td className="px-5 py-3.5 font-bold text-brand-300 text-sm">₹{b.amount}</td>
+                  <td className="px-5 py-3.5">
+                    <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${b.status === "CONFIRMED" ? "text-emerald-400" : "text-amber-400"
+                      }`} style={{ background: 'rgba(255,255,255,0.06)' }}>
                       {b.status}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-right text-gray-500">
+                  <td className="px-5 py-3.5 text-slate-500 text-xs">
                     {new Date(b.created_at).toLocaleDateString()}
                   </td>
                 </tr>
               ))}
-
-              {recentBookings.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-4 py-6 text-center text-gray-400">
-                    No recent bookings found
-                  </td>
-                </tr>
-              )}
             </tbody>
           </table>
         </div>
@@ -230,76 +224,5 @@ const Overview = () => {
     </div>
   );
 };
-
-/* ================= UI COMPONENTS ================= */
-
-const KpiCard = ({
-  label,
-  value,
-  loading,
-  icon,
-}: {
-  label: string;
-  value?: number | string;
-  loading: boolean;
-  icon: JSX.Element;
-}) => (
-  <div className="bg-white border rounded-lg px-6 py-5 flex justify-between items-center">
-    <div>
-      <p className="text-sm text-gray-500">{label}</p>
-      <p className="text-2xl font-semibold mt-1">
-        {loading ? "—" : value}
-      </p>
-    </div>
-    <div className="text-blue-600 text-xl">{icon}</div>
-  </div>
-);
-
-const LineChartBox = ({
-  title,
-  data,
-  dataKey,
-}: {
-  title: string;
-  data: any[];
-  dataKey: string;
-}) => (
-  <div className="bg-white border rounded-lg p-5 h-80">
-    <h3 className="text-sm font-medium text-gray-700 mb-4">{title}</h3>
-    <ResponsiveContainer width="100%" height="100%">
-      <LineChart data={data}>
-        <XAxis dataKey="_id" />
-        <YAxis />
-        <Tooltip />
-        <Line type="monotone" dataKey={dataKey} stroke="#2563eb" strokeWidth={2} />
-      </LineChart>
-    </ResponsiveContainer>
-  </div>
-);
-
-const COLORS = ["#2563eb", "#60a5fa", "#93c5fd", "#bfdbfe"];
-
-const DonutChartBox = ({
-  title,
-  data,
-}: {
-  title: string;
-  data: any[];
-}) => (
-  <div className="bg-white border rounded-lg p-5 h-80">
-    <h3 className="text-sm font-medium text-gray-700 mb-4">{title}</h3>
-    <ResponsiveContainer width="100%" height="100%">
-      <PieChart>
-        <Pie data={data} dataKey="value" nameKey="name" innerRadius={60} outerRadius={90}>
-          {data.map((_, i) => (
-            <Cell key={i} fill={COLORS[i % COLORS.length]} />
-          ))}
-        </Pie>
-        <Tooltip />
-        <Legend />
-      </PieChart>
-    </ResponsiveContainer>
-  </div>
-);
 
 export default Overview;

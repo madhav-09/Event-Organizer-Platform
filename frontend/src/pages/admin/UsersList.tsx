@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../../services/api";
 import toast from "react-hot-toast";
-import { Ban, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { Ban, CheckCircle, XCircle, Loader2, Users } from "lucide-react";
 
 type User = {
   _id: string;
@@ -17,6 +17,18 @@ type User = {
   };
 };
 
+const ROLE_BADGE: Record<string, string> = {
+  ADMIN: "text-red-400 border-red-500/30",
+  ORGANIZER: "text-purple-400 border-purple-500/30",
+  USER: "text-brand-300 border-brand-500/30",
+};
+
+const KYC_BADGE: Record<string, string> = {
+  APPROVED: "text-emerald-400 border-emerald-500/30",
+  PENDING: "text-amber-400 border-amber-500/30",
+  REJECTED: "text-red-400 border-red-500/30",
+};
+
 export default function UsersList() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -26,250 +38,219 @@ export default function UsersList() {
   const fetchUsers = () => {
     setLoading(true);
     setError(null);
-    api
-      .get("/admin/users")
-      .then((res) => {
-        setUsers(Array.isArray(res.data) ? res.data : []);
-      })
+    api.get("/admin/users")
+      .then((res) => setUsers(Array.isArray(res.data) ? res.data : []))
       .catch((err) => {
-        const msg =
-          err?.response?.data?.detail ||
-          (typeof err?.response?.data === "string" ? err.response.data : null) ||
-          "Failed to load users";
+        const msg = err?.response?.data?.detail || "Failed to load users";
         setError(Array.isArray(msg) ? msg[0]?.msg : msg);
         setUsers([]);
       })
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  useEffect(() => { fetchUsers(); }, []);
 
   const approve = async (organizerId: string) => {
     setActionId(organizerId);
     try {
       await api.put(`/admin/organizers/${organizerId}/approve`);
-      setUsers((prev) =>
-        prev.map((u) =>
-          u.organizer && u.organizer._id === organizerId
-            ? { ...u, organizer: { ...u.organizer, kyc_status: "APPROVED" } }
-            : u
-        )
-      );
+      setUsers(prev => prev.map(u => u.organizer && u.organizer._id === organizerId
+        ? { ...u, organizer: { ...u.organizer, kyc_status: "APPROVED" } } : u));
       toast.success("Organizer approved");
-    } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      toast.error(msg || "Failed to approve");
-    } finally {
-      setActionId(null);
-    }
+    } catch { toast.error("Failed to approve"); }
+    finally { setActionId(null); }
   };
 
   const reject = async (organizerId: string) => {
     setActionId(organizerId);
     try {
       await api.put(`/admin/organizers/${organizerId}/reject`);
-      setUsers((prev) =>
-        prev.map((u) =>
-          u.organizer && u.organizer._id === organizerId
-            ? { ...u, organizer: { ...u.organizer, kyc_status: "REJECTED" } }
-            : u
-        )
-      );
+      setUsers(prev => prev.map(u => u.organizer && u.organizer._id === organizerId
+        ? { ...u, organizer: { ...u.organizer, kyc_status: "REJECTED" } } : u));
       toast.success("Organizer rejected");
-    } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      toast.error(msg || "Failed to reject");
-    } finally {
-      setActionId(null);
-    }
+    } catch { toast.error("Failed to reject"); }
+    finally { setActionId(null); }
   };
 
   const blockUser = async (userId: string) => {
     setActionId(userId);
     try {
       await api.put(`/admin/users/${userId}/block`);
-      setUsers((prev) =>
-        prev.map((u) => (u._id === userId ? { ...u, is_blocked: true } : u))
-      );
+      setUsers(prev => prev.map(u => u._id === userId ? { ...u, is_blocked: true } : u));
       toast.success("User blocked");
-    } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      toast.error(msg || "Failed to block user");
-    } finally {
-      setActionId(null);
-    }
+    } catch { toast.error("Failed to block"); }
+    finally { setActionId(null); }
   };
 
   const unblockUser = async (userId: string) => {
     setActionId(userId);
     try {
       await api.put(`/admin/users/${userId}/unblock`);
-      setUsers((prev) =>
-        prev.map((u) => (u._id === userId ? { ...u, is_blocked: false } : u))
-      );
+      setUsers(prev => prev.map(u => u._id === userId ? { ...u, is_blocked: false } : u));
       toast.success("User unblocked");
-    } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
-      toast.error(msg || "Failed to unblock user");
-    } finally {
-      setActionId(null);
-    }
+    } catch { toast.error("Failed to unblock"); }
+    finally { setActionId(null); }
   };
 
   return (
-    <div className="container mx-auto p-6">
-        <h2 className="text-3xl font-bold text-gray-800 mb-6">Users List</h2>
+    <div>
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-8">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center"
+          style={{ background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.25)' }}>
+          <Users className="w-5 h-5 text-blue-400" />
+        </div>
+        <div>
+          <h2 className="font-heading font-bold text-white text-xl">Users List</h2>
+          <p className="text-slate-500 text-sm">{users.length} registered user{users.length !== 1 ? "s" : ""}</p>
+        </div>
+      </div>
 
-        {loading ? (
-          <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-          </div>
-        ) : error ? (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
-            {error}
-            <button
-              type="button"
-              onClick={fetchUsers}
-              className="ml-4 text-sm font-medium underline"
-            >
-              Retry
-            </button>
-          </div>
-        ) : (
-          <div className="overflow-x-auto bg-white shadow-md rounded-lg">
-            <table className="min-w-full leading-normal">
+      {loading ? (
+        <div className="flex items-center justify-center py-24">
+          <Loader2 className="w-8 h-8 animate-spin text-brand-400" />
+        </div>
+      ) : error ? (
+        <div className="glass-card rounded-2xl p-6 text-center">
+          <p className="text-red-400 mb-3">{error}</p>
+          <button onClick={fetchUsers} className="text-sm text-brand-400 hover:text-brand-300 underline">Retry</button>
+        </div>
+      ) : (
+        <div className="glass-card rounded-2xl overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full">
               <thead>
-                <tr>
-                  <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Email
-                  </th>
-                  <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Role
-                  </th>
-                  <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Organizer
-                  </th>
-                  <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    Actions
-                  </th>
+                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+                  {["Name", "Email", "Role", "Status", "Organizer KYC", "Actions"].map(h => (
+                    <th key={h} className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                      {h}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
-                {users.map((u) => (
-                  <tr key={u._id} className={u.is_blocked ? "bg-red-50" : ""}>
-                    <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
-                      <p className="text-gray-900 font-medium">
-                        {u.name || "—"}
-                        {u.is_blocked && (
-                          <span className="ml-2 text-red-600 text-xs">(Blocked)</span>
-                        )}
-                      </p>
-                    </td>
-                    <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
-                      <p className="text-gray-900">{u.email || "—"}</p>
-                    </td>
-                    <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
-                      <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-800 text-xs font-medium">
-                        {u.role || "USER"}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
-                      {u.is_blocked ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                          <Ban size={12} /> Blocked
+                {users.map((u, i) => {
+                  const isActing = actionId === u._id || (u.organizer && actionId === u.organizer._id);
+                  return (
+                    <tr
+                      key={u._id}
+                      className="transition-colors hover:bg-white/3"
+                      style={{ borderBottom: i < users.length - 1 ? '1px solid rgba(255,255,255,0.05)' : undefined }}
+                    >
+                      {/* Name */}
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
+                            style={{ background: 'linear-gradient(135deg, rgba(108,71,236,0.7), rgba(79,70,229,0.7))' }}>
+                            {u.name?.[0]?.toUpperCase() ?? "U"}
+                          </div>
+                          <div>
+                            <p className="text-white text-sm font-medium">
+                              {u.name || "—"}
+                              {u.is_blocked && <span className="ml-2 text-red-400 text-xs">(Blocked)</span>}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Email */}
+                      <td className="px-5 py-4 text-sm text-slate-400">{u.email || "—"}</td>
+
+                      {/* Role */}
+                      <td className="px-5 py-4">
+                        <span className={`inline-flex px-2.5 py-1 rounded-lg text-xs font-semibold border ${ROLE_BADGE[u.role] || ROLE_BADGE["USER"]}`}
+                          style={{ background: 'rgba(255,255,255,0.05)' }}>
+                          {u.role || "USER"}
                         </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          <CheckCircle size={12} /> Active
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
-                      {u.organizer ? (
-                        <span
-                          className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
-                            u.organizer.kyc_status === "APPROVED"
-                              ? "bg-green-100 text-green-800"
-                              : u.organizer.kyc_status === "PENDING"
-                              ? "bg-amber-100 text-amber-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {u.organizer.kyc_status}
-                        </span>
-                      ) : (
-                        <span className="text-gray-400">—</span>
-                      )}
-                    </td>
-                    <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
-                      <div className="flex flex-wrap items-center gap-2">
-                        {u.organizer && u.organizer.kyc_status === "PENDING" && (
-                          <>
-                            <button
-                              onClick={() => approve(u.organizer!._id)}
-                              disabled={actionId !== null}
-                              className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-green-600 text-white rounded-lg text-xs font-medium hover:bg-green-700 disabled:opacity-50"
-                            >
-                              {actionId === u.organizer._id ? (
-                                <Loader2 size={12} className="animate-spin" />
-                              ) : (
-                                <CheckCircle size={12} />
-                              )}
-                              Approve
-                            </button>
-                            <button
-                              onClick={() => reject(u.organizer!._id)}
-                              disabled={actionId !== null}
-                              className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-red-600 text-white rounded-lg text-xs font-medium hover:bg-red-700 disabled:opacity-50"
-                            >
-                              <XCircle size={12} /> Reject
-                            </button>
-                          </>
-                        )}
+                      </td>
+
+                      {/* Status */}
+                      <td className="px-5 py-4">
                         {u.is_blocked ? (
-                          <button
-                            onClick={() => unblockUser(u._id)}
-                            disabled={actionId !== null}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-gray-600 text-white rounded-lg text-xs font-medium hover:bg-gray-700 disabled:opacity-50"
-                          >
-                            {actionId === u._id ? (
-                              <Loader2 size={12} className="animate-spin" />
-                            ) : null}
-                            Unblock
-                          </button>
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-red-400 border border-red-500/30"
+                            style={{ background: 'rgba(239,68,68,0.08)' }}>
+                            <Ban className="w-3 h-3" /> Blocked
+                          </span>
                         ) : (
-                          <button
-                            onClick={() => blockUser(u._id)}
-                            disabled={actionId !== null}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-red-100 text-red-700 rounded-lg text-xs font-medium hover:bg-red-200 disabled:opacity-50"
-                          >
-                            {actionId === u._id ? (
-                              <Loader2 size={12} className="animate-spin" />
-                            ) : (
-                              <Ban size={12} />
-                            )}
-                            Block
-                          </button>
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-emerald-400 border border-emerald-500/30"
+                            style={{ background: 'rgba(16,185,129,0.08)' }}>
+                            <CheckCircle className="w-3 h-3" /> Active
+                          </span>
                         )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+
+                      {/* Organizer KYC */}
+                      <td className="px-5 py-4">
+                        {u.organizer ? (
+                          <span className={`inline-flex px-2.5 py-1 rounded-lg text-xs font-semibold border ${KYC_BADGE[u.organizer.kyc_status] || ""}`}
+                            style={{ background: 'rgba(255,255,255,0.05)' }}>
+                            {u.organizer.kyc_status}
+                          </span>
+                        ) : (
+                          <span className="text-slate-600 text-xs">—</span>
+                        )}
+                      </td>
+
+                      {/* Actions */}
+                      <td className="px-5 py-4">
+                        <div className="flex flex-wrap gap-2">
+                          {u.organizer && u.organizer.kyc_status === "PENDING" && (
+                            <>
+                              <button
+                                onClick={() => approve(u.organizer!._id)}
+                                disabled={!!isActing}
+                                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-white transition-all disabled:opacity-50"
+                                style={{ background: 'rgba(16,185,129,0.2)', border: '1px solid rgba(16,185,129,0.3)' }}
+                              >
+                                {isActing ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle className="w-3 h-3" />}
+                                Approve
+                              </button>
+                              <button
+                                onClick={() => reject(u.organizer!._id)}
+                                disabled={!!isActing}
+                                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-white transition-all disabled:opacity-50"
+                                style={{ background: 'rgba(239,68,68,0.2)', border: '1px solid rgba(239,68,68,0.3)' }}
+                              >
+                                <XCircle className="w-3 h-3" /> Reject
+                              </button>
+                            </>
+                          )}
+                          {u.is_blocked ? (
+                            <button
+                              onClick={() => unblockUser(u._id)}
+                              disabled={!!isActing}
+                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-white transition-all disabled:opacity-50"
+                              style={{ background: 'rgba(100,116,139,0.2)', border: '1px solid rgba(100,116,139,0.3)' }}
+                            >
+                              {isActing ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                              Unblock
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => blockUser(u._id)}
+                              disabled={!!isActing}
+                              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-red-400 transition-all disabled:opacity-50"
+                              style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)' }}
+                            >
+                              {isActing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Ban className="w-3 h-3" />}
+                              Block
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
-            {users.length === 0 && !loading && (
-              <p className="text-center text-gray-500 py-8">No users found</p>
+            {users.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-slate-500 text-sm">No users found</p>
+              </div>
             )}
           </div>
-        )}
-      </div>
+        </div>
+      )}
+    </div>
   );
 }
