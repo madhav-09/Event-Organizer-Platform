@@ -7,6 +7,7 @@ import {
   FaCalendarAlt,
   FaArrowLeft,
   FaUserCircle,
+  FaTicketAlt,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
@@ -95,6 +96,15 @@ const OrganizerLayout = ({
             active={activeSection === "profile"}
             onClick={() => {
               onSelectSection("profile");
+              setOpen(false);
+            }}
+          />
+          <SidebarItem
+            label="My Bookings"
+            icon={<FaTicketAlt />}
+            active={false}
+            onClick={() => {
+              navigate("/my-bookings");
               setOpen(false);
             }}
           />

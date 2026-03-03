@@ -6,10 +6,13 @@ import {
   Users,
   Tag,
   Info,
+  Heart,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import api from "../services/api";
 import toast from "react-hot-toast";
+import { useAuth } from "../context/AuthContext";
+import { getMyWishlist, addToWishlist, removeFromWishlist } from "../services/api";
 
 declare global {
   interface Window {
@@ -68,6 +71,43 @@ export default function EventDetail() {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const { user } = useAuth();
+  const [isWishlisted, setIsWishlisted] = useState(false);
+
+  useEffect(() => {
+    if (user && event) {
+      getMyWishlist()
+        .then((data) => {
+          setIsWishlisted(data.some((e: any) => String(e.id) === String(event._id)));
+        })
+        .catch(console.error);
+    }
+  }, [user, event]);
+
+  const handleToggleWishlist = async () => {
+    if (!user) {
+      toast.error("Please login to save events");
+      return;
+    }
+    if (!event) return;
+
+    const currentlyWishlisted = isWishlisted;
+    setIsWishlisted(!currentlyWishlisted); // Optimistic wrap
+
+    try {
+      if (currentlyWishlisted) {
+        await removeFromWishlist(event._id);
+        toast.success("Removed from wishlist");
+      } else {
+        await addToWishlist(event._id);
+        toast.success("Added to wishlist");
+      }
+    } catch (err) {
+      setIsWishlisted(currentlyWishlisted);
+      toast.error("Failed to update wishlist");
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -182,6 +222,18 @@ export default function EventDetail() {
             </span>
           </div>
         </div>
+        <div className="absolute top-4 right-4 sm:top-8 sm:right-8">
+          <button
+            onClick={handleToggleWishlist}
+            className="p-3 bg-white/20 backdrop-blur-md rounded-full hover:bg-white/40 transition"
+            title={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+          >
+            <Heart
+              className={`w-6 h-6 transition-colors ${isWishlisted ? "fill-red-500 text-red-500" : "text-white hover:text-red-500"
+                }`}
+            />
+          </button>
+        </div>
       </div>
 
       <div className="max-w-7xl mx-auto grid lg:grid-cols-3 gap-6 lg:gap-8 px-4 sm:px-6 py-6 sm:py-10">
@@ -220,8 +272,8 @@ export default function EventDetail() {
                   key={ticket._id}
                   onClick={() => handleSelectTicket(ticket)}
                   className={`p-4 border rounded-xl cursor-pointer ${selectedTicket?._id === ticket._id
-                      ? "border-blue-600 bg-blue-50"
-                      : "border-gray-200"
+                    ? "border-blue-600 bg-blue-50"
+                    : "border-gray-200"
                     }`}
                 >
                   <div className="flex justify-between">
@@ -290,8 +342,8 @@ export default function EventDetail() {
             disabled={!selectedTicket || processing || quantity < 1 || quantity > available}
             onClick={handleCheckout}
             className={`w-full mt-6 py-4 rounded-xl font-bold ${selectedTicket && quantity >= 1 && quantity <= available
-                ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white"
-                : "bg-gray-200 text-gray-400"
+              ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white"
+              : "bg-gray-200 text-gray-400"
               }`}
           >
             {processing ? "Processing..." : quantity > 1 ? `Proceed to Pay ₹${totalPrice}` : "Proceed to Checkout"}

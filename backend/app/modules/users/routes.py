@@ -130,6 +130,7 @@ async def get_my_profile(current_user=Depends(get_current_user())):
         "name": user.get("name"),
         "email": user.get("email"),
         "role": user.get("role"),
+        "wishlist": user.get("wishlist", []),
     }
 
 @router.put("/me")
@@ -165,36 +166,56 @@ async def update_my_profile(
 @router.get("/me/bookings")
 async def my_bookings(user=Depends(get_current_user())):
     user_id = user["_id"]
-    # Support both ObjectId and string user_id in bookings
     try:
         uid = ObjectId(user_id) if not isinstance(user_id, ObjectId) else user_id
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid user")
 
-    cursor = db.bookings.find({"user_id": uid}).sort("created_at", -1)
+    pipeline = [
+        {"$match": {"user_id": uid}},
+        {"$sort": {"created_at": -1}},
+        {
+            "$addFields": {
+                "event_object_id": {"$toObjectId": "$event_id"},
+                "ticket_object_id": {"$toObjectId": "$ticket_id"}
+            }
+        },
+        {
+            "$lookup": {
+                "from": "events",
+                "localField": "event_object_id",
+                "foreignField": "_id",
+                "as": "eventData"
+            }
+        },
+        {
+            "$lookup": {
+                "from": "tickets",
+                "localField": "ticket_object_id",
+                "foreignField": "_id",
+                "as": "ticketData"
+            }
+        },
+        {"$unwind": "$eventData"},
+        {"$unwind": "$ticketData"}
+    ]
+
+    cursor = db.bookings.aggregate(pipeline)
     bookings = []
 
     async for b in cursor:
-        try:
-            ticket = await db.tickets.find_one(
-                {"_id": ObjectId(b["ticket_id"])},
-                {"title": 1, "price": 1},
-            )
-            event = await db.events.find_one(
-                {"_id": ObjectId(b["event_id"])},
-                {"title": 1, "start_date": 1, "city": 1, "venue": 1, "banner_url": 1},
-            )
-        except Exception:
-            continue
-
-        if not event or not ticket:
-            continue
+        event = b["eventData"]
+        ticket = b["ticketData"]
 
         start_date = event.get("start_date")
         date_iso = start_date.isoformat() if hasattr(start_date, "isoformat") else str(start_date)
+        
         location = event.get("venue") or event.get("city") or ""
         if event.get("city") and location != event.get("city"):
             location = f"{location}, {event['city']}" if location else event["city"]
+
+        created_at = b.get("created_at")
+        created_at_iso = created_at.isoformat() if created_at and hasattr(created_at, "isoformat") else (str(created_at) if created_at else "")
 
         bookings.append({
             "booking_id": str(b["_id"]),
@@ -214,10 +235,135 @@ async def my_bookings(user=Depends(get_current_user())):
             "quantity": int(b["quantity"]),
             "total_amount": float(b["total_amount"]),
             "status": b.get("status", "PENDING"),
-            "created_at": b.get("created_at").isoformat() if b.get("created_at") and hasattr(b["created_at"], "isoformat") else (str(b.get("created_at")) if b.get("created_at") else ""),
+            "created_at": created_at_iso,
         })
 
     return bookings
+
+
+@router.delete("/me/bookings/{booking_id}")
+async def cancel_user_booking(booking_id: str, current_user=Depends(get_current_user())):
+    try:
+        user_id = ObjectId(current_user["_id"]) if not isinstance(current_user["_id"], ObjectId) else current_user["_id"]
+        booking_obj_id = ObjectId(booking_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid ID format")
+
+    booking = await db.bookings.find_one({"_id": booking_obj_id, "user_id": user_id})
+    if not booking:
+        raise HTTPException(status_code=404, detail="Booking not found or not authorized")
+
+    if booking["status"] == "CONFIRMED":
+        # Restore ticket stock
+        await db.tickets.update_one(
+            {"_id": ObjectId(booking["ticket_id"])},
+            {"$inc": {"sold": -booking["quantity"]}}
+        )
+
+    await db.bookings.delete_one({"_id": booking_obj_id})
+    
+    # Also attempt to clean up related payment record
+    await db.payments.delete_one({"booking_id": booking_id})
+
+    return {"message": "Booking deleted successfully."}
+
+
+# ================= SEARCH EVENTS =================
+@router.post("/me/wishlist/{event_id}")
+async def add_to_wishlist(event_id: str, current_user=Depends(get_current_user())):
+    try:
+        user_id = ObjectId(current_user["_id"]) if not isinstance(current_user["_id"], ObjectId) else current_user["_id"]
+        event_obj_id = ObjectId(event_id)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid event ID")
+
+    # Verify event exists
+    event = await db.events.find_one({"_id": event_obj_id})
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found")
+
+    await db.users.update_one(
+        {"_id": user_id},
+        {"$addToSet": {"wishlist": event_id}}
+    )
+    return {"message": "Event added to wishlist"}
+
+@router.delete("/me/wishlist/{event_id}")
+async def remove_from_wishlist(event_id: str, current_user=Depends(get_current_user())):
+    try:
+        user_id = ObjectId(current_user["_id"]) if not isinstance(current_user["_id"], ObjectId) else current_user["_id"]
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid user ID")
+
+    await db.users.update_one(
+        {"_id": user_id},
+        {"$pull": {"wishlist": event_id}}
+    )
+    return {"message": "Event removed from wishlist"}
+
+@router.get("/me/wishlist", response_model=List[EventWithTicketsOut])
+async def get_wishlist(current_user=Depends(get_current_user())):
+    try:
+        user_id = ObjectId(current_user["_id"]) if not isinstance(current_user["_id"], ObjectId) else current_user["_id"]
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid user ID")
+
+    user = await db.users.find_one({"_id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    wishlist_ids = user.get("wishlist", [])
+    if not wishlist_ids:
+        return []
+
+    try:
+        object_ids = [ObjectId(eid) for eid in wishlist_ids]
+    except Exception:
+        object_ids = []
+
+    if not object_ids:
+        return []
+
+    event_cursor = db.events.find({"_id": {"$in": object_ids}}, EVENT_SEARCH_PROJECTION).sort("created_at", -1)
+    events = await event_cursor.to_list(length=None)
+    
+    if not events:
+        return []
+
+    event_ids = [str(event["_id"]) for event in events]
+    ticket_cursor = db.tickets.find({"event_id": {"$in": event_ids}})
+
+    tickets_by_event = {eid: [] for eid in event_ids}
+    async for ticket in ticket_cursor:
+        eid = ticket.get("event_id")
+        if not eid:
+            continue
+
+        tickets_by_event.setdefault(eid, []).append(
+            {
+                "id": str(ticket["_id"]),
+                "event_id": eid,
+                "title": ticket.get("title", ""),
+                "price": float(ticket.get("price", 0)),
+                "quantity": int(ticket.get("quantity", 0)),
+                "sold": int(ticket.get("sold", 0)),
+                "created_at": ticket.get("created_at"),
+            }
+        )
+
+    for eid, ticket_list in tickets_by_event.items():
+        ticket_list.sort(key=lambda t: t["price"])
+
+    response = []
+    for event in events:
+        eid = str(event["_id"])
+        event["id"] = eid
+        event["organizer_id"] = str(event["organizer_id"])
+        del event["_id"]
+        event["tickets"] = tickets_by_event.get(eid, [])
+        response.append(event)
+
+    return response
 
 
 # ================= SEARCH EVENTS =================

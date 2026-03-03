@@ -6,6 +6,9 @@ import CityGrid from "../components/CityGrid";
 import { TrendingUp, Calendar } from "lucide-react";
 import api from "../services/api";
 import { useSearchParams } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { getMyWishlist, addToWishlist, removeFromWishlist } from "../services/api";
+import toast from "react-hot-toast";
 
 interface Ticket {
   id: string;
@@ -28,6 +31,8 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
+  const [wishlistIds, setWishlistIds] = useState<Set<string>>(new Set());
 
   const [searchParams] = useSearchParams();
   const city = searchParams.get("city");
@@ -50,6 +55,54 @@ export default function Home() {
     fetchEvents({ city });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [city]);
+
+  useEffect(() => {
+    if (user) {
+      getMyWishlist()
+        .then((data) => {
+          setWishlistIds(new Set(data.map((e: any) => e.id)));
+        })
+        .catch(console.error);
+    } else {
+      setWishlistIds(new Set());
+    }
+  }, [user]);
+
+  const handleToggleWishlist = async (e: React.MouseEvent, eventId: string) => {
+    if (!user) {
+      toast.error("Please login to save events");
+      return;
+    }
+
+    const isWishlisted = wishlistIds.has(eventId);
+
+    // Optimistic
+    setWishlistIds((prev) => {
+      const next = new Set(prev);
+      if (isWishlisted) next.delete(eventId);
+      else next.add(eventId);
+      return next;
+    });
+
+    try {
+      if (isWishlisted) {
+        await removeFromWishlist(eventId);
+        toast.success("Removed from wishlist");
+      } else {
+        await addToWishlist(eventId);
+        toast.success("Added to wishlist");
+      }
+    } catch (err) {
+      // Revert
+      setWishlistIds((prev) => {
+        const next = new Set(prev);
+        if (isWishlisted) next.add(eventId);
+        else next.delete(eventId);
+        return next;
+      });
+      toast.error("Failed to update wishlist");
+    }
+  };
 
   const filteredEvents =
     selectedCategory === "All"
@@ -95,6 +148,8 @@ export default function Home() {
                   price={price}
                   image={event.banner_url}
                   category={event.category}
+                  isWishlisted={wishlistIds.has(event.id)}
+                  onToggleWishlist={(e) => handleToggleWishlist(e, event.id)}
                 />
               );
             })}

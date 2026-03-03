@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Calendar, MapPin, Ticket, ExternalLink, AlertCircle } from "lucide-react";
-import { getMyBookings } from "../services/api";
+import { Calendar, MapPin, Ticket, ExternalLink, AlertCircle, Trash2 } from "lucide-react";
+import { getMyBookings, deleteMyBooking } from "../services/api";
 import toast from "react-hot-toast";
 
 interface Booking {
@@ -68,6 +68,7 @@ export default function MyBookings() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -99,6 +100,23 @@ export default function MyBookings() {
       cancelled = true;
     };
   }, []);
+
+  const handleDelete = async (bookingId: string) => {
+    if (!window.confirm("Are you sure you want to delete this booking? This action cannot be undone.")) {
+      return;
+    }
+
+    try {
+      setDeletingId(bookingId);
+      await deleteMyBooking(bookingId);
+      setBookings((prev) => prev.filter((b) => b.booking_id !== bookingId));
+      toast.success("Booking deleted successfully");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.detail || "Failed to delete booking");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -185,7 +203,8 @@ export default function MyBookings() {
           {bookings.map((b) => (
             <div
               key={b.booking_id}
-              className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+              className={`bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden hover:shadow-md transition-shadow relative ${deletingId === b.booking_id ? "opacity-50 pointer-events-none" : ""
+                }`}
             >
               <div className="flex flex-col sm:flex-row">
                 {b.event.banner_url && (
@@ -199,7 +218,7 @@ export default function MyBookings() {
                 )}
                 <div className="flex-1 p-5 flex flex-col justify-between">
                   <div>
-                    <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
+                    <div className="flex flex-wrap items-start justify-between gap-2 mb-2 pr-8">
                       <Link
                         to={`/event/${b.event.id}`}
                         className="text-lg font-semibold text-gray-900 hover:text-blue-600 hover:underline"
@@ -207,13 +226,21 @@ export default function MyBookings() {
                         {b.event.title}
                       </Link>
                       <span
-                        className={`px-2.5 py-1 text-xs font-medium rounded-full border ${
-                          statusStyles[b.status] ?? "bg-gray-100 text-gray-700 border-gray-200"
-                        }`}
+                        className={`px-2.5 py-1 text-xs font-medium rounded-full border ${statusStyles[b.status] ?? "bg-gray-100 text-gray-700 border-gray-200"
+                          }`}
                       >
                         {statusLabel[b.status] ?? b.status}
                       </span>
                     </div>
+
+                    <button
+                      onClick={() => handleDelete(b.booking_id)}
+                      disabled={deletingId === b.booking_id}
+                      className="absolute top-5 right-5 text-gray-400 hover:text-red-600 transition-colors"
+                      title="Delete booking"
+                    >
+                      <Trash2 size={20} />
+                    </button>
 
                     <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600">
                       <span className="flex items-center gap-1">

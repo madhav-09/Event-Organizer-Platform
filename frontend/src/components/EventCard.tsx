@@ -14,6 +14,8 @@ interface EventCardProps {
   price: string;
   image?: string;
   category: string;
+  isWishlisted?: boolean;
+  onToggleWishlist?: (e: React.MouseEvent) => void;
 }
 
 function EventCard(props: EventCardProps) {
@@ -27,10 +29,11 @@ function EventCard(props: EventCardProps) {
     price,
     image,
     category,
+    isWishlisted = false,
+    onToggleWishlist,
   } = props;
 
   const navigate = useNavigate();
-  const [isFavorite, setIsFavorite] = useState(false);
 
   const imageSrc = useMemo(() => {
     if (!image) return "/placeholder-event.jpg";
@@ -57,20 +60,23 @@ function EventCard(props: EventCardProps) {
           />
 
           {/* FAVORITE */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsFavorite((p) => !p);
-            }}
-            className="absolute top-4 right-4 p-2 bg-white rounded-full"
-          >
-            <Heart
-              className={`w-5 h-5 ${isFavorite
-                  ? "fill-red-500 text-red-500"
-                  : "text-gray-600"
-                }`}
-            />
-          </button>
+          {onToggleWishlist && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleWishlist(e);
+              }}
+              className="absolute top-4 right-4 p-2 bg-white rounded-full transition-transform active:scale-95 shadow-sm"
+              title={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+            >
+              <Heart
+                className={`w-5 h-5 transition-colors ${isWishlisted
+                    ? "fill-red-500 text-red-500"
+                    : "text-gray-400 hover:text-red-500"
+                  }`}
+              />
+            </button>
+          )}
 
           <span className="absolute top-4 left-4 bg-blue-600 text-white text-xs px-3 py-1 rounded-full">
             {category}

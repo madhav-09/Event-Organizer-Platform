@@ -6,7 +6,9 @@ import {
   FaChartBar,
   FaBars,
   FaTimes,
+  FaTicketAlt,
 } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 type Props = {
   children: ReactNode;
@@ -16,6 +18,7 @@ type Props = {
 
 const AdminLayout = ({ children, activeSection, onSelectSection }: Props) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const navigate = useNavigate();
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -127,6 +130,16 @@ const AdminLayout = ({ children, activeSection, onSelectSection }: Props) => {
           >
             <FaChartBar className="mr-3" />
             Analytics
+          </div>
+          <div
+            onClick={() => {
+              navigate("/my-bookings");
+              setIsSidebarOpen(false);
+            }}
+            className="flex items-center px-4 py-2 rounded-lg cursor-pointer transition-colors duration-200 text-gray-700 hover:bg-gray-200"
+          >
+            <FaTicketAlt className="mr-3" />
+            My Bookings
           </div>
         </nav>
       </aside>

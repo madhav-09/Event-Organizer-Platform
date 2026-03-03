@@ -105,6 +105,9 @@ export const getMyBookings = async () => {
   return res.data;
 }
 
+export const deleteMyBooking = (booking_id: string) =>
+  api.delete(`/users/me/bookings/${booking_id}`);
+
 export const createBooking = (ticket_id: string, quantity: number) =>
   api.post("/bookings/", { ticket_id, quantity });
 
@@ -164,5 +167,21 @@ export const getOrganizerProfile = async () => {
 
 export const updateOrganizerProfile = async (data: Record<string, any>) => {
   const response = await api.put("/organizers/me", data);
+  return response.data;
+};
+
+// ================= WISHLIST MANAGEMENT =================
+export const getMyWishlist = async () => {
+  const response = await api.get("/users/me/wishlist");
+  return response.data;
+};
+
+export const addToWishlist = async (eventId: string) => {
+  const response = await api.post(`/users/me/wishlist/${eventId}`);
+  return response.data;
+};
+
+export const removeFromWishlist = async (eventId: string) => {
+  const response = await api.delete(`/users/me/wishlist/${eventId}`);
   return response.data;
 };

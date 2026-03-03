@@ -164,6 +164,31 @@ export default function Navbar() {
                           >
                             My Bookings
                           </Link>
+                          <Link
+                            to="/wishlist"
+                            onClick={() => setShowProfileDropdown(false)}
+                            className="block px-4 py-2 hover:bg-gray-100"
+                          >
+                            My Wishlist
+                          </Link>
+                        </>
+                      )}
+                      {user.role === "ADMIN" && (
+                        <>
+                          <Link
+                            to="/my-bookings"
+                            onClick={() => setShowProfileDropdown(false)}
+                            className="block px-4 py-2 hover:bg-gray-100"
+                          >
+                            My Bookings
+                          </Link>
+                          <Link
+                            to="/wishlist"
+                            onClick={() => setShowProfileDropdown(false)}
+                            className="block px-4 py-2 hover:bg-gray-100"
+                          >
+                            My Wishlist
+                          </Link>
                         </>
                       )}
                       {user.role === "ORGANIZER" && (
@@ -188,6 +213,20 @@ export default function Navbar() {
                             className="block px-4 py-2 hover:bg-gray-100"
                           >
                             My Events
+                          </Link>
+                          <Link
+                            to="/my-bookings"
+                            onClick={() => setShowProfileDropdown(false)}
+                            className="block px-4 py-2 hover:bg-gray-100"
+                          >
+                            My Bookings
+                          </Link>
+                          <Link
+                            to="/wishlist"
+                            onClick={() => setShowProfileDropdown(false)}
+                            className="block px-4 py-2 hover:bg-gray-100"
+                          >
+                            My Wishlist
                           </Link>
                         </>
                       )}
@@ -264,13 +303,29 @@ export default function Navbar() {
                   </span>
                 </div>
                 {user.role === "ADMIN" && (
-                  <Link
-                    to="/admin"
-                    onClick={closeMobile}
-                    className="block px-4 py-2.5 text-gray-700 hover:bg-gray-50"
-                  >
-                    Admin Panel
-                  </Link>
+                  <>
+                    <Link
+                      to="/admin"
+                      onClick={closeMobile}
+                      className="block px-4 py-2.5 text-gray-700 hover:bg-gray-50"
+                    >
+                      Admin Panel
+                    </Link>
+                    <Link
+                      to="/my-bookings"
+                      onClick={closeMobile}
+                      className="block px-4 py-2.5 text-gray-700 hover:bg-gray-50"
+                    >
+                      My Bookings
+                    </Link>
+                    <Link
+                      to="/wishlist"
+                      onClick={closeMobile}
+                      className="block px-4 py-2.5 text-gray-700 hover:bg-gray-50"
+                    >
+                      My Wishlist
+                    </Link>
+                  </>
                 )}
                 {user.role === "USER" && (
                   <>
@@ -287,6 +342,13 @@ export default function Navbar() {
                       className="block px-4 py-2.5 text-gray-700 hover:bg-gray-50"
                     >
                       My Bookings
+                    </Link>
+                    <Link
+                      to="/wishlist"
+                      onClick={closeMobile}
+                      className="block px-4 py-2.5 text-gray-700 hover:bg-gray-50"
+                    >
+                      My Wishlist
                     </Link>
                   </>
                 )}
@@ -312,6 +374,20 @@ export default function Navbar() {
                       className="block px-4 py-2.5 text-gray-700 hover:bg-gray-50"
                     >
                       My Events
+                    </Link>
+                    <Link
+                      to="/my-bookings"
+                      onClick={closeMobile}
+                      className="block px-4 py-2.5 text-gray-700 hover:bg-gray-50"
+                    >
+                      My Bookings
+                    </Link>
+                    <Link
+                      to="/wishlist"
+                      onClick={closeMobile}
+                      className="block px-4 py-2.5 text-gray-700 hover:bg-gray-50"
+                    >
+                      My Wishlist
                     </Link>
                   </>
                 )}

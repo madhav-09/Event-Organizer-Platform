@@ -10,6 +10,7 @@ import ApplyOrganizer from "./pages/ApplyOrganizer";
 
 import UserProfile from "./pages/UserProfile";
 import MyBookings from "./pages/MyBookings";
+import MyWishlist from "./pages/MyWishlist";
 import MyEvents from "./pages/MyEvents";
 
 import OrganizerDashboard from "./pages/OrganizerDashboard";
@@ -81,6 +82,14 @@ const App = () => {
             element={
               <ProtectedRoute>
                 <MyBookings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/wishlist"
+            element={
+              <ProtectedRoute>
+                <MyWishlist />
               </ProtectedRoute>
             }
           />
