@@ -222,3 +222,9 @@ export const deleteDiscount = async (id: string) => {
   const res = await api.delete(`/discounts/organizer/${id}`);
   return res.data;
 };
+
+// getTicketsByEvent is an alias used by the Tickets dashboard page
+export const getTicketsByEvent = async (eventId: string) => {
+  const res = await api.get(`/tickets/event/${eventId}`);
+  return res.data;
+};
