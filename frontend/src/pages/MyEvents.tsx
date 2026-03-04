@@ -14,7 +14,7 @@ import toast from "react-hot-toast";
 import {
   Plus, Edit2, Trash2, ChevronDown, ChevronUp,
   Eye, Users, Tag, Calendar, MapPin, X, Save, Check,
-  Loader2, Ticket,
+  Loader2, Ticket, Copy,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -129,6 +129,18 @@ export default function MyEvents() {
     toast.success("Event updated");
   };
 
+  const handleDuplicate = (ev: OrgEvent) => {
+    const duplicate: OrgEvent = {
+      ...ev,
+      event_id: `dup-${Date.now()}`,
+      title: `Copy of ${ev.title}`,
+      status: 'DRAFT',
+      total_bookings: 0,
+    };
+    setEvents(prev => [duplicate, ...prev]);
+    toast.success(`"${ev.title}" duplicated as Draft!`);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24 gap-3 text-slate-400">
@@ -175,6 +187,7 @@ export default function MyEvents() {
             onDelete={() => handleDelete(ev)}
             onToggleStatus={() => handleToggleStatus(ev)}
             onViewBookings={() => navigate(`/organizer/events/${ev.event_id}/bookings`)}
+            onDuplicate={() => handleDuplicate(ev)}
           />
         ))}
       </div>
@@ -204,7 +217,7 @@ export default function MyEvents() {
 // ─── Event Card ───────────────────────────────────────────────────────────────
 
 function EventCard({
-  event, isExpanded, onToggleExpand, onEdit, onDelete, onToggleStatus, onViewBookings,
+  event, isExpanded, onToggleExpand, onEdit, onDelete, onToggleStatus, onViewBookings, onDuplicate,
 }: {
   event: OrgEvent;
   isExpanded: boolean;
@@ -213,6 +226,7 @@ function EventCard({
   onDelete: () => void;
   onToggleStatus: () => void;
   onViewBookings: () => void;
+  onDuplicate: () => void;
 }) {
   const cfg = STATUS_CONFIG[event.status] ?? STATUS_CONFIG.DRAFT;
   return (
@@ -242,14 +256,22 @@ function EventCard({
               <button
                 onClick={onToggleStatus}
                 className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-xl border transition-colors ${event.status === "PUBLISHED"
-                    ? "text-amber-400 border-amber-500/30 hover:bg-amber-500/10"
-                    : "text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10"
+                  ? "text-amber-400 border-amber-500/30 hover:bg-amber-500/10"
+                  : "text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10"
                   }`}
                 style={{ background: 'rgba(255,255,255,0.04)' }}
               >
                 {event.status === "PUBLISHED" ? "Unpublish" : "Publish"}
               </button>
             )}
+            <button
+              onClick={onDuplicate}
+              title="Duplicate Event"
+              className="p-2 text-slate-500 hover:text-amber-300 rounded-xl transition-colors"
+              style={{ background: 'rgba(255,255,255,0.05)' }}
+            >
+              <Copy className="w-4 h-4" />
+            </button>
             <button
               onClick={onViewBookings}
               title="View Bookings"

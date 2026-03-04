@@ -185,3 +185,40 @@ export const removeFromWishlist = async (eventId: string) => {
   const response = await api.delete(`/users/me/wishlist/${eventId}`);
   return response.data;
 };
+
+// ================= DISCOUNT MANAGEMENT =================
+export const getOrganizerDiscounts = async () => {
+  const res = await api.get('/discounts/organizer');
+  return res.data;
+};
+
+export const createDiscount = async (payload: {
+  code: string;
+  type: 'PERCENTAGE' | 'FIXED_AMOUNT';
+  value: number;
+  applies_to_ticket?: string;
+  usage_limit?: number;
+  expires_at?: string;
+  event_id?: string | null;
+}) => {
+  const res = await api.post('/discounts/organizer', payload);
+  return res.data;
+};
+
+export const updateDiscount = async (id: string, payload: {
+  code?: string;
+  type?: 'PERCENTAGE' | 'FIXED_AMOUNT';
+  value?: number;
+  applies_to_ticket?: string;
+  usage_limit?: number;
+  expires_at?: string;
+  event_id?: string | null;
+}) => {
+  const res = await api.put(`/discounts/organizer/${id}`, payload);
+  return res.data;
+};
+
+export const deleteDiscount = async (id: string) => {
+  const res = await api.delete(`/discounts/organizer/${id}`);
+  return res.data;
+};

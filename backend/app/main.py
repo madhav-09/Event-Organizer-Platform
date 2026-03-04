@@ -11,6 +11,7 @@ from app.modules.bookings.routes import router as booking_router
 from app.modules.payments.routes import router as payment_router
 from app.modules.admin.routes import router as admin_router
 from app.modules.payments import webhook
+from app.modules.discounts.routes import router as discount_router
 
 import os
 import uuid
@@ -51,6 +52,7 @@ app.include_router(booking_router)
 app.include_router(payment_router)
 app.include_router(admin_router)
 app.include_router(webhook.router, prefix="/payments")
+app.include_router(discount_router)
 
 # ================= CLOUDINARY SETUP =================
 import cloudinary

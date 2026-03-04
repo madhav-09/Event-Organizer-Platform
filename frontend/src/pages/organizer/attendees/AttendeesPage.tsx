@@ -3,7 +3,7 @@ import EventSelector from "./EventSelector";
 import AttendeesTable from "./AttendeesTable";
 import UnifiedQrScanner from "./QrScannerModal";
 import { getMyEvents, getEventBookings } from "../../../services/api";
-import { Users, CheckCircle, RefreshCw, Loader2 } from "lucide-react";
+import { Users, CheckCircle, RefreshCw, Loader2, Download } from "lucide-react";
 
 type TabType = "not_checked_in" | "checked_in";
 
@@ -36,6 +36,27 @@ export default function AttendeesPage() {
     getEventBookings(selectedEventId).then(setAttendees).finally(() => setLoading(false));
   };
 
+  const handleExportCSV = () => {
+    if (!attendees.length) return;
+    const headers = ['Name', 'Email', 'Ticket', 'Quantity', 'Amount', 'Checked In'];
+    const rows = attendees.map((a: any) => [
+      a.user?.name ?? '',
+      a.user?.email ?? '',
+      a.ticket_title ?? '',
+      a.quantity ?? '',
+      a.amount ?? '',
+      a.checked_in ? 'Yes' : 'No',
+    ]);
+    const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `attendees-${selectedEventId}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -44,16 +65,28 @@ export default function AttendeesPage() {
           <h2 className="font-heading font-black text-2xl text-white">Attendees</h2>
           <p className="text-slate-500 text-sm mt-0.5">Scan QR codes to check in attendees</p>
         </div>
-        {selectedEventId && (
-          <button
-            onClick={handleRefresh}
-            className="flex items-center gap-2 px-3 py-2 text-sm text-slate-400 rounded-xl transition-colors"
-            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
-          >
-            <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
-            Refresh
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {selectedEventId && attendees.length > 0 && (
+            <button
+              onClick={handleExportCSV}
+              className="flex items-center gap-2 px-3 py-2 text-sm text-slate-400 rounded-xl transition-colors"
+              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+            >
+              <Download size={15} />
+              Export CSV
+            </button>
+          )}
+          {selectedEventId && (
+            <button
+              onClick={handleRefresh}
+              className="flex items-center gap-2 px-3 py-2 text-sm text-slate-400 rounded-xl transition-colors"
+              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+            >
+              <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
+              Refresh
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Event Selector */}
@@ -107,8 +140,8 @@ export default function AttendeesPage() {
                 >
                   Not Checked In
                   <span className={`ml-2 text-xs px-2 py-0.5 rounded-full font-bold ${activeTab === "not_checked_in"
-                      ? "text-brand-300 border border-brand-500/30"
-                      : "text-slate-500 border border-white/10"
+                    ? "text-brand-300 border border-brand-500/30"
+                    : "text-slate-500 border border-white/10"
                     }`} style={{ background: 'rgba(255,255,255,0.05)' }}>
                     {totalCount - checkedInCount}
                   </span>
@@ -125,8 +158,8 @@ export default function AttendeesPage() {
                 >
                   Checked In
                   <span className={`ml-2 text-xs px-2 py-0.5 rounded-full font-bold ${activeTab === "checked_in"
-                      ? "text-emerald-400 border border-emerald-500/30"
-                      : "text-slate-500 border border-white/10"
+                    ? "text-emerald-400 border border-emerald-500/30"
+                    : "text-slate-500 border border-white/10"
                     }`} style={{ background: 'rgba(255,255,255,0.05)' }}>
                     {checkedInCount}
                   </span>

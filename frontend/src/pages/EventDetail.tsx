@@ -1,6 +1,6 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import {
-  Calendar, Clock, MapPin, Users, Tag, Info, Heart, ChevronUp, ChevronDown, CheckCircle
+  Calendar, Clock, MapPin, Users, Tag, Info, Heart, ChevronUp, ChevronDown, CheckCircle, Share2, Link2, CheckCheck, BadgePercent, X, Loader2
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import api from "../services/api";
@@ -40,7 +40,7 @@ interface Ticket {
 }
 
 interface Event {
-  _id: string;
+  id: string;   // API returns 'id', not '_id'
   title: string;
   description: string;
   category: string;
@@ -53,6 +53,7 @@ interface Event {
 
 export default function EventDetail() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
 
   const [event, setEvent] = useState<Event | null>(null);
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -61,6 +62,13 @@ export default function EventDetail() {
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  // ── Discount state ────────────────────────────────────────────────────────
+  const [discountCode, setDiscountCode] = useState('');
+  const [appliedDiscount, setAppliedDiscount] = useState<{ code: string; type: string; value: number; message: string } | null>(null);
+  const [discountError, setDiscountError] = useState<string | null>(null);
+  const [discountLoading, setDiscountLoading] = useState(false);
 
   const { user } = useAuth();
   const [isWishlisted, setIsWishlisted] = useState(false);
@@ -86,7 +94,7 @@ export default function EventDetail() {
   useEffect(() => {
     if (user && event) {
       getMyWishlist()
-        .then((data) => setIsWishlisted(data.some((e: any) => String(e.id) === String(event._id))))
+        .then((data) => setIsWishlisted(data.some((e: any) => String(e.id) === String(event.id))))
         .catch(console.error);
     }
   }, [user, event]);
@@ -97,12 +105,43 @@ export default function EventDetail() {
     const cur = isWishlisted;
     setIsWishlisted(!cur);
     try {
-      if (cur) { await removeFromWishlist(event._id); toast.success("Removed from wishlist"); }
-      else { await addToWishlist(event._id); toast.success("Added to wishlist"); }
+      if (cur) { await removeFromWishlist(event.id); toast.success("Removed from wishlist"); }
+      else { await addToWishlist(event.id); toast.success("Added to wishlist"); }
     } catch {
       setIsWishlisted(cur);
       toast.error("Failed to update wishlist");
     }
+  };
+
+  const handleApplyDiscount = async () => {
+    if (!discountCode.trim() || !selectedTicket || !event) return;
+    setDiscountLoading(true);
+    setDiscountError(null);
+    setAppliedDiscount(null);
+    try {
+      const res = await api.post('/discounts/validate', {
+        code: discountCode.trim().toUpperCase(),
+        event_id: event.id,          // fixed: API returns 'id' not '_id'
+        ticket_id: selectedTicket._id,
+      });
+      setAppliedDiscount(res.data);
+      toast.success(res.data.message);
+    } catch (e: any) {
+      const detail = e?.response?.data?.detail;
+      // FastAPI 422 detail is an array of objects; extract a readable string
+      const msg = Array.isArray(detail)
+        ? detail.map((d: any) => d?.msg ?? String(d)).join(', ')
+        : (typeof detail === 'string' ? detail : 'Invalid discount code');
+      setDiscountError(msg);
+    } finally {
+      setDiscountLoading(false);
+    }
+  };
+
+  const removeDiscount = () => {
+    setAppliedDiscount(null);
+    setDiscountCode('');
+    setDiscountError(null);
   };
 
   const handleCheckout = async () => {
@@ -112,30 +151,37 @@ export default function EventDetail() {
     try {
       setProcessing(true);
       const bookingRes = await api.post("/bookings/", {
-        event_id: String(event!._id),
+        event_id: String(event!.id),   // fixed: API returns 'id' not '_id'
         ticket_id: String(selectedTicket._id),
         quantity,
+        discount_code: appliedDiscount ? appliedDiscount.code : undefined,
       });
       const bookingId = bookingRes.data.booking_id;
-      const orderRes = await api.post(`/payments/create-order/${bookingId}`);
-      const { order_id, key, amount } = orderRes.data;
-      const options: RazorpayOptions = {
-        key, amount, currency: "INR",
-        name: "Event Organizer",
-        description: event!.title,
-        order_id,
-        handler: async (response) => {
-          await api.post("/payments/verify", {
-            booking_id: bookingId,
-            order_id: response.razorpay_order_id,
-            payment_id: response.razorpay_payment_id,
-            signature: response.razorpay_signature,
-          });
-          toast.success("Payment successful! Ticket sent to your email.");
-        },
-        theme: { color: "#6c47ec" },
-      };
-      new window.Razorpay(options).open();
+
+      if (totalPrice === 0) {
+        toast.success("Payment successful! Ticket sent to your email.");
+        navigate('/my-bookings');
+      } else {
+        const orderRes = await api.post(`/payments/create-order/${bookingId}`);
+        const { order_id, key, amount } = orderRes.data;
+        const options: RazorpayOptions = {
+          key, amount, currency: "INR",
+          name: "Event Organizer",
+          description: event!.title,
+          order_id,
+          handler: async (response) => {
+            await api.post("/payments/verify", {
+              booking_id: bookingId,
+              order_id: response.razorpay_order_id,
+              payment_id: response.razorpay_payment_id,
+              signature: response.razorpay_signature,
+            });
+            toast.success("Payment successful! Ticket sent to your email.");
+          },
+          theme: { color: "#6c47ec" },
+        };
+        new window.Razorpay(options).open();
+      }
     } catch {
       toast.error("Payment failed. Please try again.");
     } finally {
@@ -150,7 +196,13 @@ export default function EventDetail() {
   };
 
   const available = selectedTicket ? selectedTicket.quantity - selectedTicket.sold : 0;
-  const totalPrice = selectedTicket ? selectedTicket.price * quantity : 0;
+  const basePrice = selectedTicket ? selectedTicket.price * quantity : 0;
+  const discountAmount = appliedDiscount
+    ? appliedDiscount.type === 'PERCENTAGE'
+      ? Math.round(basePrice * appliedDiscount.value / 100)
+      : Math.min(appliedDiscount.value, basePrice)
+    : 0;
+  const totalPrice = Math.max(0, basePrice - discountAmount);
 
   if (loading) {
     return (
@@ -258,6 +310,57 @@ export default function EventDetail() {
             <h2 className="font-heading font-bold text-white text-xl mb-4">About This Event</h2>
             <p className="text-slate-400 leading-relaxed whitespace-pre-line">{event.description}</p>
           </div>
+
+          {/* Social Share */}
+          <div className="glass-card rounded-2xl p-6 animate-fade-up delay-150" style={{ animationFillMode: 'both' }}>
+            <div className="flex items-center gap-2 mb-4">
+              <Share2 className="w-4 h-4 text-brand-400" />
+              <h2 className="font-heading font-bold text-white text-base">Share This Event</h2>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {[
+                {
+                  label: 'Twitter / X',
+                  color: '#000',
+                  border: 'rgba(255,255,255,0.15)',
+                  emoji: '𝕏',
+                  href: `https://twitter.com/intent/tweet?text=${encodeURIComponent(event.title)}&url=${encodeURIComponent(window.location.href)}`,
+                },
+                {
+                  label: 'WhatsApp',
+                  color: 'rgba(37,211,102,0.15)',
+                  border: 'rgba(37,211,102,0.3)',
+                  emoji: '💬',
+                  href: `https://wa.me/?text=${encodeURIComponent(event.title + ' ' + window.location.href)}`,
+                },
+                {
+                  label: 'LinkedIn',
+                  color: 'rgba(10,102,194,0.15)',
+                  border: 'rgba(10,102,194,0.3)',
+                  emoji: 'in',
+                  href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`,
+                },
+              ].map(({ label, color, border, emoji, href }) => (
+                <a key={label} href={href} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:scale-105"
+                  style={{ background: color, border: `1px solid ${border}` }}>
+                  <span className="font-bold text-base leading-none">{emoji}</span>
+                  {label}
+                </a>
+              ))}
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.href);
+                  setLinkCopied(true);
+                  setTimeout(() => setLinkCopied(false), 2000);
+                }}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:scale-105"
+                style={{ background: linkCopied ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.07)', border: `1px solid ${linkCopied ? 'rgba(16,185,129,0.3)' : 'rgba(255,255,255,0.12)'}`, color: linkCopied ? '#6ee7b7' : '#cbd5e1' }}>
+                {linkCopied ? <CheckCheck className="w-4 h-4" /> : <Link2 className="w-4 h-4" />}
+                {linkCopied ? 'Copied!' : 'Copy Link'}
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Right — Booking Sidebar */}
@@ -277,8 +380,8 @@ export default function EventDetail() {
                     key={ticket._id}
                     onClick={() => handleSelectTicket(ticket)}
                     className={`p-4 rounded-xl cursor-pointer transition-all duration-200 border ${isSelected
-                        ? "border-brand-500/50"
-                        : "border-white/8 hover:border-white/15"
+                      ? "border-brand-500/50"
+                      : "border-white/8 hover:border-white/15"
                       }`}
                     style={{
                       background: isSelected
@@ -312,7 +415,7 @@ export default function EventDetail() {
 
             {/* Quantity */}
             {selectedTicket && (
-              <div className="mb-5 p-4 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+              <div className="mb-4 p-4 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-white text-sm font-medium">Quantity</span>
                   <div className="flex items-center gap-2">
@@ -336,10 +439,77 @@ export default function EventDetail() {
                   </div>
                 </div>
                 <p className="text-slate-500 text-xs">{available} tickets available</p>
-                <div className="flex justify-between items-center mt-3 pt-3 border-t border-white/5">
-                  <span className="text-slate-400 text-sm">Total</span>
-                  <span className="text-white font-bold text-xl">₹{totalPrice}</span>
+
+                {/* Price summary */}
+                <div className="mt-3 pt-3 border-t border-white/5 space-y-1.5">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-slate-400">Subtotal</span>
+                    <span className="text-slate-300">₹{basePrice}</span>
+                  </div>
+                  {appliedDiscount && (
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-emerald-400 flex items-center gap-1">
+                        <BadgePercent className="w-3.5 h-3.5" />
+                        Discount ({appliedDiscount.code})
+                      </span>
+                      <span className="text-emerald-400">-₹{discountAmount}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center pt-1.5 border-t border-white/5">
+                    <span className="text-slate-400 text-sm">Total</span>
+                    <span className="text-white font-bold text-xl">₹{totalPrice}</span>
+                  </div>
                 </div>
+              </div>
+            )}
+
+            {/* Discount Code Input */}
+            {selectedTicket && (
+              <div className="mb-4">
+                {!appliedDiscount ? (
+                  <div>
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">
+                      Discount Code
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={discountCode}
+                        onChange={e => { setDiscountCode(e.target.value.toUpperCase()); setDiscountError(null); }}
+                        placeholder="Enter code…"
+                        className="input-glass flex-1 text-sm py-2.5 tracking-widest"
+                        onKeyDown={e => e.key === 'Enter' && handleApplyDiscount()}
+                      />
+                      <button
+                        onClick={handleApplyDiscount}
+                        disabled={!discountCode.trim() || discountLoading}
+                        className="px-4 py-2.5 text-sm font-semibold text-white rounded-xl flex items-center gap-1.5 transition-all disabled:opacity-40"
+                        style={{ background: 'rgba(108,71,236,0.3)', border: '1px solid rgba(108,71,236,0.4)' }}
+                      >
+                        {discountLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Tag className="w-4 h-4" />}
+                        Apply
+                      </button>
+                    </div>
+                    {discountError && (
+                      <p className="text-red-400 text-xs mt-1.5 flex items-center gap-1">
+                        <X className="w-3 h-3" />{discountError}
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between px-3 py-2.5 rounded-xl" style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.25)' }}>
+                    <div className="flex items-center gap-2">
+                      <BadgePercent className="w-4 h-4 text-emerald-400" />
+                      <div>
+                        <p className="text-emerald-300 text-sm font-bold tracking-widest">{appliedDiscount.code}</p>
+                        <p className="text-emerald-500 text-xs">{appliedDiscount.message}</p>
+                      </div>
+                    </div>
+                    <button onClick={removeDiscount} className="text-slate-400 hover:text-red-400 transition-colors p-1">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 

@@ -6,21 +6,31 @@ import Overview from "./organizer/Overview";
 import Attendees from "./organizer/attendees/AttendeesPage";
 import MyEvents from "./MyEvents";
 import OrganizerProfile from "./organizer/OrganizerProfile";
+import Tickets from "./organizer/Tickets";
+import Discounts from "./organizer/Discounts";
+import Waitlist from "./organizer/Waitlist";
+import EmailBlast from "./organizer/EmailBlast";
+import Agenda from "./organizer/Agenda";
+import Speakers from "./organizer/Speakers";
+import Survey from "./organizer/Survey";
+
+const VALID_SECTIONS = [
+  "overview", "events", "attendees", "profile",
+  "tickets", "discounts", "waitlist",
+  "email-blast", "agenda", "speakers", "survey",
+];
 
 const OrganizerDashboard = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Get section from URL (e.g. /organizer/dashboard/attendees -> "attendees")
-  // Default to overview if undefined
   const pathSection = location.pathname.split("/").pop();
-  const validSections = ["overview", "events", "attendees", "profile"];
-  const initialSection = validSections.includes(pathSection || "") ? pathSection : "overview";
+  const initialSection = VALID_SECTIONS.includes(pathSection || "") ? pathSection : "overview";
 
   const [activeSection, setActiveSection] = useState(initialSection as string);
 
   useEffect(() => {
-    if (validSections.includes(pathSection || "") && pathSection !== activeSection) {
+    if (VALID_SECTIONS.includes(pathSection || "") && pathSection !== activeSection) {
       setActiveSection(pathSection as string);
     }
   }, [pathSection]);
@@ -32,20 +42,18 @@ const OrganizerDashboard = () => {
 
   const renderContent = () => {
     switch (activeSection) {
-      case "overview":
-        return <Overview />;
-
-      case "events":
-        return <MyEvents />;
-
-      case "attendees":
-        return <Attendees />;
-
-      case "profile":
-        return <OrganizerProfile />;
-
-      default:
-        return <Overview />;
+      case "overview": return <Overview />;
+      case "events": return <MyEvents />;
+      case "attendees": return <Attendees />;
+      case "profile": return <OrganizerProfile />;
+      case "tickets": return <Tickets />;
+      case "discounts": return <Discounts />;
+      case "waitlist": return <Waitlist />;
+      case "email-blast": return <EmailBlast />;
+      case "agenda": return <Agenda />;
+      case "speakers": return <Speakers />;
+      case "survey": return <Survey />;
+      default: return <Overview />;
     }
   };
 

@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { FaPlus, FaEdit, FaTrash, FaTicketAlt } from 'react-icons/fa';
+import { useState, useEffect } from 'react';
+import { Plus, Edit2, Trash2, Ticket, X, Loader2 } from 'lucide-react';
+import { useParams } from 'react-router-dom';
 
 interface TicketType {
   _id: string;
@@ -11,241 +12,236 @@ interface TicketType {
   availableTo: string;
 }
 
+const EMPTY_FORM: Omit<TicketType, '_id' | 'quantitySold'> = {
+  name: '',
+  price: 0,
+  quantityTotal: 100,
+  availableFrom: '',
+  availableTo: '',
+};
+
 const dummyTicketTypes: TicketType[] = [
-  {
-    _id: 't1',
-    name: 'Early Bird',
-    price: 25.00,
-    quantityTotal: 100,
-    quantitySold: 40,
-    availableFrom: '2026-01-01',
-    availableTo: '2026-02-28',
-  },
-  {
-    _id: 't2',
-    name: 'General Admission',
-    price: 40.00,
-    quantityTotal: 500,
-    quantitySold: 120,
-    availableFrom: '2026-03-01',
-    availableTo: '2026-03-14',
-  },
-  {
-    _id: 't3',
-    name: 'VIP Pass',
-    price: 100.00,
-    quantityTotal: 50,
-    quantitySold: 15,
-    availableFrom: '2026-01-01',
-    availableTo: '2026-03-14',
-  },
+  { _id: 't1', name: 'Early Bird', price: 499, quantityTotal: 100, quantitySold: 40, availableFrom: '2026-01-01', availableTo: '2026-02-28' },
+  { _id: 't2', name: 'General Admission', price: 999, quantityTotal: 500, quantitySold: 120, availableFrom: '2026-03-01', availableTo: '2026-03-14' },
+  { _id: 't3', name: 'VIP Pass', price: 2499, quantityTotal: 50, quantitySold: 15, availableFrom: '2026-01-01', availableTo: '2026-03-14' },
 ];
 
-const Tickets = () => {
-  const [ticketTypes, setTicketTypes] = useState<TicketType[]>(dummyTicketTypes);
-  const [showAddEditModal, setShowAddEditModal] = useState(false);
-  const [editingTicket, setEditingTicket] = useState<TicketType | null>(null);
+const ACCENT_COLORS = [
+  { bg: 'rgba(108,71,236,0.15)', border: 'rgba(108,71,236,0.3)', text: '#c4b5fd' },
+  { bg: 'rgba(59,130,246,0.15)', border: 'rgba(59,130,246,0.3)', text: '#93c5fd' },
+  { bg: 'rgba(245,158,11,0.15)', border: 'rgba(245,158,11,0.3)', text: '#fcd34d' },
+  { bg: 'rgba(16,185,129,0.15)', border: 'rgba(16,185,129,0.3)', text: '#6ee7b7' },
+];
 
-  const handleAddEditTicket = (ticket: TicketType) => {
-    if (editingTicket) {
-      setTicketTypes((prev) =>
-        prev.map((t) => (t._id === ticket._id ? ticket : t))
-      );
-    } else {
-      setTicketTypes((prev) => [...prev, { ...ticket, _id: String(prev.length + 1) }]);
-    }
-    setShowAddEditModal(false);
-    setEditingTicket(null);
+export default function Tickets() {
+  const { id: eventId } = useParams<{ id: string }>();
+  const [tickets, setTickets] = useState<TicketType[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [editing, setEditing] = useState<TicketType | null>(null);
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    // Simulate API load
+    setTimeout(() => {
+      setTickets(dummyTicketTypes);
+      setLoading(false);
+    }, 600);
+  }, [eventId]);
+
+  const openAdd = () => {
+    setEditing(null);
+    setForm(EMPTY_FORM);
+    setShowModal(true);
   };
 
-  const handleDeleteTicket = (id: string) => {
-    setTicketTypes((prev) => prev.filter((t) => t._id !== id));
+  const openEdit = (t: TicketType) => {
+    setEditing(t);
+    setForm({ name: t.name, price: t.price, quantityTotal: t.quantityTotal, availableFrom: t.availableFrom, availableTo: t.availableTo });
+    setShowModal(true);
   };
 
-  const openEditModal = (ticket: TicketType) => {
-    setEditingTicket(ticket);
-    setShowAddEditModal(true);
+  const handleDelete = (id: string) => {
+    setTickets(prev => prev.filter(t => t._id !== id));
   };
 
-  const openAddModal = () => {
-    setEditingTicket(null);
-    setShowAddEditModal(true);
+  const handleSave = () => {
+    setSaving(true);
+    setTimeout(() => {
+      if (editing) {
+        setTickets(prev => prev.map(t => t._id === editing._id ? { ...t, ...form } : t));
+      } else {
+        setTickets(prev => [...prev, { _id: `t${Date.now()}`, ...form, quantitySold: 0 }]);
+      }
+      setSaving(false);
+      setShowModal(false);
+    }, 500);
   };
+
+  const totalSold = tickets.reduce((a, t) => a + t.quantitySold, 0);
+  const totalCapacity = tickets.reduce((a, t) => a + t.quantityTotal, 0);
+  const totalRevenue = tickets.reduce((a, t) => a + t.price * t.quantitySold, 0);
 
   return (
-    <div className="container mx-auto p-6">
-      <h2 className="text-3xl font-bold text-gray-800 mb-6">Ticket Types</h2>
-
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={openAddModal}
-          className="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-md shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-        >
-          <FaPlus className="inline-block mr-2" /> Add New Ticket
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="font-heading font-black text-2xl text-white">Ticket Types</h1>
+          <p className="text-slate-500 mt-1 text-sm">Manage ticket tiers, pricing, and availability</p>
+        </div>
+        <button onClick={openAdd} className="btn-primary text-sm px-4 py-2.5">
+          <Plus className="w-4 h-4" />
+          Add Ticket Type
         </button>
       </div>
 
-      <div className="overflow-x-auto bg-white shadow-md rounded-lg">
-        <table className="min-w-full leading-normal">
-          <thead>
-            <tr>
-              <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Name
-              </th>
-              <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Price
-              </th>
-              <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Quantity (Sold/Total)
-              </th>
-              <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Availability
-              </th>
-              <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {ticketTypes.map((ticket) => (
-              <tr key={ticket._id}>
-                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                  <p className="text-gray-900 whitespace-no-wrap">{ticket.name}</p>
-                </td>
-                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                  <p className="text-gray-900 whitespace-no-wrap">₹{ticket.price.toFixed(2)}</p>
-                </td>
-                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                  <p className="text-gray-900 whitespace-no-wrap">
-                    {ticket.quantitySold} / {ticket.quantityTotal}
-                  </p>
-                </td>
-                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                  <p className="text-gray-900 whitespace-no-wrap">
-                    {ticket.availableFrom} to {ticket.availableTo}
-                  </p>
-                </td>
-                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                  <div className="flex space-x-3">
-                    <button
-                      onClick={() => openEditModal(ticket)}
-                      className="text-blue-600 hover:text-blue-900"
-                    >
-                      <FaEdit size={18} />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteTicket(ticket._id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      <FaTrash size={18} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {/* Stats Row */}
+      <div className="grid grid-cols-3 gap-4">
+        {[
+          { label: 'Total Sold', value: loading ? '—' : totalSold, accent: 'rgba(108,71,236,0.15)', border: 'rgba(108,71,236,0.25)', color: '#c4b5fd' },
+          { label: 'Total Capacity', value: loading ? '—' : totalCapacity, accent: 'rgba(59,130,246,0.15)', border: 'rgba(59,130,246,0.25)', color: '#93c5fd' },
+          { label: 'Revenue', value: loading ? '—' : `₹${totalRevenue.toLocaleString()}`, accent: 'rgba(245,158,11,0.15)', border: 'rgba(245,158,11,0.25)', color: '#fcd34d' },
+        ].map(({ label, value, accent, border, color }) => (
+          <div key={label} className="glass-card rounded-2xl px-5 py-4">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">{label}</p>
+            <p className="text-2xl font-black text-white font-heading">{value}</p>
+          </div>
+        ))}
       </div>
 
-      {/* Add/Edit Ticket Modal */}
-      {showAddEditModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full" id="my-modal">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <h3 className="text-lg font-bold mb-4">{editingTicket ? 'Edit Ticket Type' : 'Add New Ticket Type'}</h3>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const form = e.target as HTMLFormElement;
-                const newTicket: TicketType = {
-                  _id: editingTicket?._id || String(ticketTypes.length + 1),
-                  name: form.ticketName.value,
-                  price: parseFloat(form.ticketPrice.value),
-                  quantityTotal: parseInt(form.quantityTotal.value),
-                  quantitySold: editingTicket?.quantitySold || 0,
-                  availableFrom: form.availableFrom.value,
-                  availableTo: form.availableTo.value,
-                };
-                handleAddEditTicket(newTicket);
-              }}
-              className="space-y-4"
-            >
-              <div>
-                <label htmlFor="ticketName" className="block text-sm font-medium text-gray-700">Ticket Name</label>
-                <input
-                  type="text"
-                  name="ticketName"
-                  id="ticketName"
-                  defaultValue={editingTicket?.name || ''}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="ticketPrice" className="block text-sm font-medium text-gray-700">Price</label>
-                <input
-                  type="number"
-                  name="ticketPrice"
-                  id="ticketPrice"
-                  step="0.01"
-                  defaultValue={editingTicket?.price || ''}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="quantityTotal" className="block text-sm font-medium text-gray-700">Total Quantity</label>
-                <input
-                  type="number"
-                  name="quantityTotal"
-                  id="quantityTotal"
-                  defaultValue={editingTicket?.quantityTotal || ''}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="availableFrom" className="block text-sm font-medium text-gray-700">Available From</label>
-                <input
-                  type="date"
-                  name="availableFrom"
-                  id="availableFrom"
-                  defaultValue={editingTicket?.availableFrom || ''}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="availableTo" className="block text-sm font-medium text-gray-700">Available To</label>
-                <input
-                  type="date"
-                  name="availableTo"
-                  id="availableTo"
-                  defaultValue={editingTicket?.availableTo || ''}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  required
-                />
-              </div>
-              <div className="flex justify-end space-x-4">
-                <button
-                  type="button"
-                  onClick={() => setShowAddEditModal(false)}
-                  className="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-                >
-                  {editingTicket ? 'Save Changes' : 'Add Ticket'}
-                </button>
-              </div>
-            </form>
+      {/* Table */}
+      <div className="glass-card rounded-2xl overflow-hidden">
+        <div className="px-6 py-4 border-b flex items-center gap-2" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+          <Ticket className="w-4 h-4 text-brand-400" />
+          <h3 className="font-heading font-bold text-white">Ticket Types</h3>
+        </div>
+
+        {loading ? (
+          <div className="flex items-center justify-center py-16 gap-3 text-slate-400">
+            <Loader2 className="w-5 h-5 animate-spin text-brand-400" />
+            <span className="text-sm">Loading tickets…</span>
+          </div>
+        ) : tickets.length === 0 ? (
+          <div className="py-16 text-center">
+            <Ticket className="w-10 h-10 text-slate-700 mx-auto mb-3" />
+            <p className="text-slate-500 text-sm">No ticket types yet. Add your first one!</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+                  {['Ticket Name', 'Price', 'Sold / Total', 'Progress', 'Availability', 'Actions'].map(h => (
+                    <th key={h} className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {tickets.map((t, i) => {
+                  const pct = Math.round((t.quantitySold / t.quantityTotal) * 100);
+                  const ac = ACCENT_COLORS[i % ACCENT_COLORS.length];
+                  return (
+                    <tr key={t._id} className="transition-colors hover:bg-white/3"
+                      style={{ borderBottom: i < tickets.length - 1 ? '1px solid rgba(255,255,255,0.05)' : undefined }}>
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
+                            style={{ background: ac.bg, border: `1px solid ${ac.border}` }}>
+                            <Ticket className="w-3.5 h-3.5" style={{ color: ac.text }} />
+                          </div>
+                          <span className="font-semibold text-white">{t.name}</span>
+                        </div>
+                      </td>
+                      <td className="px-5 py-4 font-bold text-brand-300">₹{t.price.toLocaleString()}</td>
+                      <td className="px-5 py-4 text-slate-300">{t.quantitySold} / {t.quantityTotal}</td>
+                      <td className="px-5 py-4 w-32">
+                        <div className="w-full h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                          <div className="h-full rounded-full transition-all"
+                            style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${ac.text}, ${ac.border.replace('0.3', '0.8')})` }} />
+                        </div>
+                        <p className="text-xs text-slate-500 mt-1">{pct}% sold</p>
+                      </td>
+                      <td className="px-5 py-4 text-slate-400 text-xs">
+                        <span>{t.availableFrom}</span>
+                        <span className="mx-1 text-slate-600">→</span>
+                        <span>{t.availableTo}</span>
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => openEdit(t)}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-brand-300 transition-colors"
+                            style={{ background: 'rgba(255,255,255,0.05)' }}>
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button onClick={() => handleDelete(t._id)}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-400 transition-colors"
+                            style={{ background: 'rgba(255,255,255,0.05)' }}>
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }}>
+          <div className="glass-card rounded-2xl w-full max-w-md p-6 space-y-5">
+            <div className="flex items-center justify-between">
+              <h3 className="font-heading font-bold text-white text-lg">
+                {editing ? 'Edit Ticket Type' : 'Add Ticket Type'}
+              </h3>
+              <button onClick={() => setShowModal(false)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white"
+                style={{ background: 'rgba(255,255,255,0.06)' }}>
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {([
+                { label: 'Ticket Name', key: 'name', type: 'text', placeholder: 'e.g. VIP Pass' },
+                { label: 'Price (₹)', key: 'price', type: 'number', placeholder: '999' },
+                { label: 'Total Quantity', key: 'quantityTotal', type: 'number', placeholder: '100' },
+                { label: 'Available From', key: 'availableFrom', type: 'date', placeholder: '' },
+                { label: 'Available To', key: 'availableTo', type: 'date', placeholder: '' },
+              ] as { label: string; key: keyof typeof form; type: string; placeholder: string }[]).map(({ label, key, type, placeholder }) => (
+                <div key={key}>
+                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">{label}</label>
+                  <input
+                    type={type}
+                    placeholder={placeholder}
+                    value={form[key] as string | number}
+                    onChange={e => setForm(f => ({ ...f, [key]: type === 'number' ? Number(e.target.value) : e.target.value }))}
+                    className="input-glass w-full text-sm py-2.5"
+                  />
+                </div>
+              ))}
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <button onClick={() => setShowModal(false)}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-slate-400 transition-colors"
+                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                Cancel
+              </button>
+              <button onClick={handleSave} disabled={saving}
+                className="flex-1 btn-primary justify-center py-2.5 text-sm">
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : (editing ? 'Save Changes' : 'Add Ticket')}
+              </button>
+            </div>
           </div>
         </div>
       )}
     </div>
   );
-};
-
-export default Tickets;
+}

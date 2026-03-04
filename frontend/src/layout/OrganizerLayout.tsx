@@ -43,13 +43,13 @@ const OrganizerLayout = ({ children, activeSection, onSelectSection }: Props) =>
         className={`fixed md:static inset-y-0 left-0 z-30 flex flex-col transform ${open ? "translate-x-0" : "-translate-x-full"
           } md:translate-x-0 transition-transform duration-300`}
         style={{
-          width: 'var(--sidebar-width)',
+          width: '260px',
           background: 'var(--bg-secondary)',
           borderRight: '1px solid rgba(255,255,255,0.07)',
         }}
       >
         {/* Brand header */}
-        <div className="px-5 py-5 border-b" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+        <div className="px-5 py-5 border-b flex-shrink-0" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-xl overflow-hidden border border-white/10">
@@ -77,8 +77,9 @@ const OrganizerLayout = ({ children, activeSection, onSelectSection }: Props) =>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          <p className="text-xs font-semibold text-slate-600 uppercase tracking-widest px-3 mb-3">
+        <nav className="flex-1 px-3 py-4 overflow-y-auto space-y-0.5">
+          {/* ── Dashboard ── */}
+          <p className="text-xs font-semibold text-slate-600 uppercase tracking-widest px-3 pb-2 pt-1">
             Dashboard
           </p>
           {NAV_ITEMS.map(({ key, label, icon: Icon }) => (
@@ -92,8 +93,50 @@ const OrganizerLayout = ({ children, activeSection, onSelectSection }: Props) =>
             </button>
           ))}
 
-          <div className="h-px my-3" style={{ background: 'rgba(255,255,255,0.06)' }} />
-          <p className="text-xs font-semibold text-slate-600 uppercase tracking-widest px-3 mb-3">
+          {/* ── Ticketing ── */}
+          <div className="h-px my-2" style={{ background: 'rgba(255,255,255,0.06)' }} />
+          <p className="text-xs font-semibold text-slate-600 uppercase tracking-widest px-3 pb-2 pt-1">
+            Ticketing
+          </p>
+          {[
+            { key: 'tickets', label: 'Ticket Types', emoji: '🎟️' },
+            { key: 'discounts', label: 'Discount Codes', emoji: '🏷️' },
+            { key: 'waitlist', label: 'Waitlist', emoji: '⏳' },
+          ].map(({ key, label, emoji }) => (
+            <button
+              key={key}
+              onClick={() => handleSectionClick(key)}
+              className={`sidebar-item w-full text-left ${activeSection === key ? "active" : ""}`}
+            >
+              <span className="text-sm leading-none flex-shrink-0 w-4 text-center">{emoji}</span>
+              {label}
+            </button>
+          ))}
+
+          {/* ── Event Tools ── */}
+          <div className="h-px my-2" style={{ background: 'rgba(255,255,255,0.06)' }} />
+          <p className="text-xs font-semibold text-slate-600 uppercase tracking-widest px-3 pb-2 pt-1">
+            Event Tools
+          </p>
+          {[
+            { key: 'email-blast', label: 'Email Blast', emoji: '📧' },
+            { key: 'agenda', label: 'Agenda & Schedule', emoji: '📅' },
+            { key: 'speakers', label: 'Speakers', emoji: '🎤' },
+            { key: 'survey', label: 'Feedback Survey', emoji: '📝' },
+          ].map(({ key, label, emoji }) => (
+            <button
+              key={key}
+              onClick={() => handleSectionClick(key)}
+              className={`sidebar-item w-full text-left ${activeSection === key ? "active" : ""}`}
+            >
+              <span className="text-sm leading-none flex-shrink-0 w-4 text-center">{emoji}</span>
+              {label}
+            </button>
+          ))}
+
+          {/* ── Quick Links ── */}
+          <div className="h-px my-2" style={{ background: 'rgba(255,255,255,0.06)' }} />
+          <p className="text-xs font-semibold text-slate-600 uppercase tracking-widest px-3 pb-2 pt-1">
             Quick Links
           </p>
           <button
@@ -106,7 +149,7 @@ const OrganizerLayout = ({ children, activeSection, onSelectSection }: Props) =>
         </nav>
 
         {/* Create Event CTA */}
-        <div className="p-3 border-t" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+        <div className="p-3 border-t flex-shrink-0" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
           <button
             onClick={() => navigate("/create-event")}
             className="btn-primary w-full justify-center text-sm py-2.5"

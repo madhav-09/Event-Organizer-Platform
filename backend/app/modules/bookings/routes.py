@@ -29,13 +29,44 @@ async def create_booking(
         raise HTTPException(status_code=400, detail="Not enough tickets")
 
     total = ticket["price"] * data.quantity
+    discount_applied = 0
+    discount_info = None
+
+    # ── Apply discount code if provided ──────────────────────────────────────
+    if data.discount_code:
+        code_upper = data.discount_code.strip().upper()
+        discount_doc = await db.discount_codes.find_one({"code": code_upper})
+        if discount_doc:
+            now = datetime.utcnow()
+            is_expired = discount_doc.get("expires_at") and discount_doc["expires_at"] < now
+            is_exhausted = discount_doc.get("usage_limit") and discount_doc.get("used_count", 0) >= discount_doc["usage_limit"]
+            wrong_event = discount_doc.get("event_id") and str(discount_doc["event_id"]) != str(event["_id"])
+
+            if not is_expired and not is_exhausted and not wrong_event:
+                if discount_doc["type"] == "PERCENTAGE":
+                    discount_applied = round(total * discount_doc["value"] / 100, 2)
+                else:  # FIXED_AMOUNT
+                    discount_applied = min(discount_doc["value"], total)
+
+                total = max(0, total - discount_applied)
+                discount_info = {
+                    "code": code_upper,
+                    "type": discount_doc["type"],
+                    "value": discount_doc["value"],
+                    "discount_applied": discount_applied,
+                }
+                # Increment used_count
+                await db.discount_codes.update_one(
+                    {"code": code_upper},
+                    {"$inc": {"used_count": 1}}
+                )
 
     booking_doc = data.dict()
     booking_doc.update({
         "user_id": current_user["_id"],
         "event_id": str(event["_id"]),
         "total_amount": total,
-        "status": "PENDING"
+        "status": "CONFIRMED" if total == 0 else "PENDING"
     })
 
     await db.tickets.update_one(
