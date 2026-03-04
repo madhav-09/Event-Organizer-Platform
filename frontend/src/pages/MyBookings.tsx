@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Calendar, MapPin, Ticket, ExternalLink, AlertCircle, Trash2,
-  CheckCircle, Clock, XCircle, ShoppingBag, Loader
+  CheckCircle, Clock, XCircle, ShoppingBag, Loader, MessageSquare
 } from "lucide-react";
 import { getMyBookings, deleteMyBooking } from "../services/api";
 import toast from "react-hot-toast";
@@ -243,6 +243,18 @@ export default function MyBookings() {
                               Cancel Booking
                             </button>
                           )}
+                        </div>
+                      )}
+                      {isPastEvent && booking.status === 'CONFIRMED' && (
+                        <div className="mt-4 flex items-center justify-end">
+                          <Link
+                            to={`/events/${booking.event.id}/feedback`}
+                            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-brand-300 hover:text-white transition-colors"
+                            style={{ background: 'rgba(108,71,236,0.15)', border: '1px solid rgba(108,71,236,0.3)' }}
+                          >
+                            <MessageSquare className="w-4 h-4" />
+                            Leave Feedback
+                          </Link>
                         </div>
                       )}
                     </div>

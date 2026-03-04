@@ -44,6 +44,8 @@ app.add_middleware(
 async def health_check():
     return {"status": "OK"}
 
+from app.modules.reviews.routes import router as surveys_router
+
 app.include_router(user_router)
 app.include_router(organizer_router)
 app.include_router(event_router)
@@ -53,6 +55,7 @@ app.include_router(payment_router)
 app.include_router(admin_router)
 app.include_router(webhook.router, prefix="/payments")
 app.include_router(discount_router)
+app.include_router(surveys_router)
 
 # ================= CLOUDINARY SETUP =================
 import cloudinary

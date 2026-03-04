@@ -12,6 +12,7 @@ import UserProfile from "./pages/UserProfile";
 import MyBookings from "./pages/MyBookings";
 import MyWishlist from "./pages/MyWishlist";
 import MyEvents from "./pages/MyEvents";
+import EventFeedback from "./pages/EventFeedback";
 
 import OrganizerDashboard from "./pages/OrganizerDashboard";
 import ManageEvent from "./pages/organizer/ManageEvent";
@@ -82,6 +83,14 @@ const App = () => {
             element={
               <ProtectedRoute>
                 <MyBookings />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/events/:id/feedback"
+            element={
+              <ProtectedRoute>
+                <EventFeedback />
               </ProtectedRoute>
             }
           />

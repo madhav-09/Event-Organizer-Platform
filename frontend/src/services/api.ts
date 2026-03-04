@@ -2,8 +2,8 @@ import axios from 'axios';
 import type { InternalAxiosRequestConfig } from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://event-organizer-platform.onrender.com',
-  // baseURL: 'http://localhost:8000',
+  // baseURL: 'https://event-organizer-platform.onrender.com',
+  baseURL: 'http://localhost:8000',
 });
 
 api.interceptors.request.use(
@@ -226,5 +226,39 @@ export const deleteDiscount = async (id: string) => {
 // getTicketsByEvent is an alias used by the Tickets dashboard page
 export const getTicketsByEvent = async (eventId: string) => {
   const res = await api.get(`/tickets/event/${eventId}`);
+  return res.data;
+};
+
+// ================= SURVEY / FEEDBACK =================
+
+// Organizer Endpoints
+export const getOrganizerSurvey = async (eventId: string) => {
+  const res = await api.get(`/surveys/organizer/${eventId}`);
+  return res.data;
+};
+
+export const saveOrganizerSurvey = async (eventId: string, questions: any[]) => {
+  const res = await api.put(`/surveys/organizer/${eventId}`, { questions });
+  return res.data;
+};
+
+export const getSurveyResponses = async (eventId: string) => {
+  const res = await api.get(`/surveys/organizer/${eventId}/responses`);
+  return res.data;
+};
+
+// User Endpoints
+export const getEventSurvey = async (eventId: string) => {
+  const res = await api.get(`/surveys/event/${eventId}`);
+  return res.data;
+};
+
+export const checkMySurveyResponse = async (eventId: string) => {
+  const res = await api.get(`/surveys/event/${eventId}/my-response`);
+  return res.data;
+};
+
+export const submitSurveyResponse = async (eventId: string, responses: any[]) => {
+  const res = await api.post(`/surveys/event/${eventId}/respond`, { responses });
   return res.data;
 };
