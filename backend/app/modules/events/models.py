@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel, Field
 
 
@@ -10,6 +10,7 @@ class EventDB(BaseModel):
     title: str
     description: Optional[str]
     category: str
+    tags: Optional[List[str]] = None
     type: str  # ONLINE | OFFLINE | HYBRID
 
     city: str

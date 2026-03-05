@@ -1,7 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi.exceptions import RequestValidationError
 from typing import List, Optional
 from bson import ObjectId
 from bson.errors import InvalidId
+import logging
+
+logger = logging.getLogger(__name__)
 
 from app.common.utils.dependencies import get_current_user
 from app.core.database import db
@@ -23,6 +27,7 @@ EVENT_PUBLIC_PROJECTION = {
     "title": 1,
     "description": 1,
     "category": 1,
+    "tags": 1,
     "type": 1,
     "city": 1,
     "venue": 1,
@@ -69,6 +74,9 @@ async def update_event(
         matched = await update_event_service(obj_id, payload, current_user["_id"])
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Update error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
     if matched == 0:
         raise HTTPException(status_code=404, detail="Event not found")

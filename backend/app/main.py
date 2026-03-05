@@ -1,7 +1,12 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.exceptions import RequestValidationError
 from app.core.config import PROJECT_NAME
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 from app.modules.users.routes import router as user_router
 from app.modules.organizers.routes import router as organizer_router
@@ -18,6 +23,15 @@ import uuid
 import shutil
 
 app = FastAPI(title=PROJECT_NAME)
+
+# ================= VALIDATION ERROR HANDLER =================
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    logger.error(f"Validation error for {request.url}: {exc.errors()}")
+    return JSONResponse(
+        status_code=422,
+        content={"detail": exc.errors(), "message": "Validation error"},
+    )
 
 # ================= CORS =================
 origins = [

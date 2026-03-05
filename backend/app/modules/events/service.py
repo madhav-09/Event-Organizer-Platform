@@ -16,15 +16,23 @@ async def create_event_service(payload: EventCreate, organizer_id: str):
     return str(result.inserted_id)
 
 
-async def update_event_service(event_id: ObjectId, payload: EventUpdate, organizer_id: str):
+async def update_event_service(event_id: ObjectId, payload: EventUpdate, organizer_id):
     update_data = payload.dict(exclude_unset=True)
 
     if "start_date" in update_data and "end_date" in update_data:
         if update_data["end_date"] < update_data["start_date"]:
             raise ValueError("Invalid date range")
 
+    organizer_id_str = str(organizer_id)
+
     result = await db.events.update_one(
-        {"_id": event_id, "organizer_id": organizer_id},
+        {
+            "_id": event_id,
+            "$or": [
+                {"organizer_id": organizer_id_str},
+                {"organizer_id": organizer_id},
+            ],
+        },
         {"$set": update_data}
     )
 
