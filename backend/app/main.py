@@ -56,6 +56,11 @@ origins = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
 
+    # Production EC2
+    "http://35.154.225.67",
+    "http://35.154.225.67:80",
+    "http://35.154.225.67:8000",
+
     # Production domain
     "https://event-organizer-platform.vercel.app",
 ]
