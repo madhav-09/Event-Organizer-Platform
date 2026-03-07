@@ -1,0 +1,25 @@
+venv
+.env
+__pycache__/
+*.pyc
+instance/
+.DS_Store
+.idea/
+.vscode/
+*.log
+coverage/
+*.sqlite3
+.envrc
+*.egg-info/
+dist/
+build/
+*.bak
+*.swp
+<<<<<<< HEAD
+backend/.gitignore
+
+=======
+>>>>>>> 5bbd6b3 (chore: fully ignore uploaded media directory)
+
+# Uploaded media (runtime only)
+backend/uploads/**
