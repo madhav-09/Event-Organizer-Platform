@@ -45,7 +45,8 @@ async def send_email(
         html_content = template.render(**context)
 
         # Build MIME message
-        msg = MIMEMultipart("alternative")
+        # Use "mixed" when there's an attachment, "alternative" for HTML-only
+        msg = MIMEMultipart("mixed") if pdf_bytes else MIMEMultipart("alternative")
         msg["Subject"] = subject
         msg["From"] = FROM_EMAIL
         msg["To"] = to_email
