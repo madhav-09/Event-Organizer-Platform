@@ -20,6 +20,7 @@ EMAIL_USER = os.getenv("EMAIL_USER")
 EMAIL_PASS = os.getenv("EMAIL_PASS")
 SMTP_STARTTLS = os.getenv("SMTP_STARTTLS", "true").lower() in {"1", "true", "yes", "on"}
 SMTP_USE_TLS = os.getenv("SMTP_USE_TLS", "false").lower() in {"1", "true", "yes", "on"}
+FROM_EMAIL = os.getenv("FROM_EMAIL") or EMAIL_USER
 
 # ================= TEMPLATE CONFIG =================
 BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
@@ -46,7 +47,7 @@ async def send_email(
         # Build MIME message
         msg = MIMEMultipart("alternative")
         msg["Subject"] = subject
-        msg["From"] = EMAIL_USER
+        msg["From"] = FROM_EMAIL
         msg["To"] = to_email
 
         msg.attach(MIMEText(html_content, "html"))
