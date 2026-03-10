@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, Clock, MapPin, User, CalendarDays, X, Loader2 } from 'lucide-react';
+import { getMyEvents, updateEventAgenda } from '../../services/api';
+import api from '../../services/api';
+import toast from 'react-hot-toast';
 
 interface AgendaItem {
-    _id: string;
+    _id: string; // The backend expects "_id" as string
     title: string;
     startTime: string;
     endTime: string;
@@ -19,53 +22,107 @@ const TYPE_COLORS: Record<AgendaItem['type'], { bg: string; border: string; text
     BREAK: { bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.25)', text: '#6ee7b7', label: 'Break' },
 };
 
-const DUMMY_EVENTS = [
-    { id: 'e1', title: 'Tech Summit 2026' },
-    { id: 'e2', title: 'Startup Pitch Night' },
-];
-
-const DUMMY_AGENDA: AgendaItem[] = [
-    { _id: 'a1', title: 'Opening Keynote: Future of AI', startTime: '09:00', endTime: '09:45', speaker: 'Dr. Ananya Krishnan', room: 'Main Hall', description: 'A deep dive into the next wave of AI.', type: 'TALK' },
-    { _id: 'a2', title: 'Building Scalable Systems', startTime: '10:00', endTime: '11:00', speaker: 'Rahul Verma', room: 'Hall B', description: 'Best practices for scaling microservices.', type: 'WORKSHOP' },
-    { _id: 'a3', title: 'Networking Break', startTime: '11:00', endTime: '11:30', speaker: '', room: 'Foyer', description: 'Coffee and networking.', type: 'BREAK' },
-    { _id: 'a4', title: 'Startup Funding: What VCs Look For', startTime: '11:30', endTime: '12:30', speaker: 'Panel of 4', room: 'Main Hall', description: 'Investors share insights.', type: 'PANEL' },
-];
-
 const EMPTY_FORM: Omit<AgendaItem, '_id'> = {
     title: '', startTime: '', endTime: '', speaker: '', room: '', description: '', type: 'TALK',
 };
 
 export default function Agenda() {
-    const [selectedEvent, setSelectedEvent] = useState('e1');
+    const [events, setEvents] = useState<any[]>([]);
+    const [selectedEventObj, setSelectedEventObj] = useState<any>(null);
     const [items, setItems] = useState<AgendaItem[]>([]);
-    const [loading, setLoading] = useState(true);
+
+    const [loadingEvents, setLoadingEvents] = useState(true);
+    const [loadingAgenda, setLoadingAgenda] = useState(false);
+
     const [showModal, setShowModal] = useState(false);
     const [editing, setEditing] = useState<AgendaItem | null>(null);
     const [form, setForm] = useState(EMPTY_FORM);
     const [saving, setSaving] = useState(false);
 
+    // Initial load: Fetch organizer's events
     useEffect(() => {
-        setLoading(true);
-        setTimeout(() => { setItems(DUMMY_AGENDA); setLoading(false); }, 600);
-    }, [selectedEvent]);
+        const fetchEvents = async () => {
+            try {
+                const data = await getMyEvents();
+                setEvents(data);
+                if (data.length > 0) {
+                    await selectAndLoadEvent(data[0].event_id);
+                }
+            } catch (error) {
+                toast.error("Failed to load events");
+            } finally {
+                setLoadingEvents(false);
+            }
+        };
+        fetchEvents();
+    }, []);
+
+    const selectAndLoadEvent = async (eventId: string) => {
+        try {
+            setLoadingAgenda(true);
+            const res = await api.get(`/events/${eventId}`);
+            setSelectedEventObj(res.data);
+            setItems(res.data.agenda || []);
+        } catch (error) {
+            toast.error("Failed to load event details");
+        } finally {
+            setLoadingAgenda(false);
+        }
+    };
+
+    const handleEventSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const id = e.target.value;
+        selectAndLoadEvent(id);
+    };
 
     const sortedItems = [...items].sort((a, b) => a.startTime.localeCompare(b.startTime));
 
     const openAdd = () => { setEditing(null); setForm(EMPTY_FORM); setShowModal(true); };
     const openEdit = (item: AgendaItem) => { setEditing(item); setForm({ ...item }); setShowModal(true); };
-    const handleDelete = (id: string) => setItems(prev => prev.filter(i => i._id !== id));
 
-    const handleSave = () => {
+    const handleDelete = async (id: string) => {
+        if (!selectedEventObj) return;
+        const confirmDelete = window.confirm("Are you sure you want to delete this session?");
+        if (!confirmDelete) return;
+
+        const newItems = items.filter(i => i._id !== id);
+
+        try {
+            await updateEventAgenda(selectedEventObj.id, newItems);
+            setItems(newItems);
+            toast.success("Session deleted successfully");
+        } catch (e) {
+            toast.error("Failed to delete session");
+        }
+    };
+
+    const handleSave = async () => {
+        if (!selectedEventObj) return;
+        if (!form.title || !form.startTime || !form.endTime) {
+            toast.error("Title, start time, and end time are required.");
+            return;
+        }
+
         setSaving(true);
-        setTimeout(() => {
-            if (editing) {
-                setItems(prev => prev.map(i => i._id === editing._id ? { ...i, ...form } : i));
-            } else {
-                setItems(prev => [...prev, { _id: `a${Date.now()}`, ...form }]);
-            }
-            setSaving(false);
+        let updatedItems: AgendaItem[];
+
+        if (editing) {
+            updatedItems = items.map(i => i._id === editing._id ? { ...i, ...form } : i);
+        } else {
+            const newItem: AgendaItem = { ...form, _id: `a${Date.now()}` };
+            updatedItems = [...items, newItem];
+        }
+
+        try {
+            await updateEventAgenda(selectedEventObj.id, updatedItems);
+            setItems(updatedItems);
+            toast.success(editing ? "Session updated" : "Session added");
             setShowModal(false);
-        }, 500);
+        } catch (e) {
+            toast.error("Failed to save session");
+        } finally {
+            setSaving(false);
+        }
     };
 
     return (
@@ -75,25 +132,43 @@ export default function Agenda() {
                     <h1 className="font-heading font-black text-2xl text-white">Agenda & Schedule</h1>
                     <p className="text-slate-500 mt-1 text-sm">Plan and organize your event timeline</p>
                 </div>
-                <button onClick={openAdd} className="btn-primary text-sm px-4 py-2.5">
-                    <Plus className="w-4 h-4" /> Add Session
-                </button>
+                {selectedEventObj && (
+                    <button onClick={openAdd} className="btn-primary text-sm px-4 py-2.5">
+                        <Plus className="w-4 h-4" /> Add Session
+                    </button>
+                )}
             </div>
 
             {/* Event Selector */}
             <div className="glass-card rounded-2xl px-5 py-4">
                 <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">Event</label>
-                <select value={selectedEvent} onChange={e => setSelectedEvent(e.target.value)} className="input-glass w-full md:w-96 text-sm py-2.5">
-                    {DUMMY_EVENTS.map(ev => <option key={ev.id} value={ev.id} style={{ background: '#0b0f1a' }}>{ev.title}</option>)}
-                </select>
+                {loadingEvents ? (
+                    <div className="input-glass w-full md:w-96 py-2.5 text-sm text-slate-500 flex items-center gap-2">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" /> Loading events…
+                    </div>
+                ) : events.length === 0 ? (
+                    <p className="text-slate-500 text-sm">No events found. Create an event first.</p>
+                ) : (
+                    <select
+                        value={selectedEventObj?.id || ''}
+                        onChange={handleEventSelect}
+                        className="input-glass w-full md:w-96 text-sm py-2.5"
+                    >
+                        {events.map(ev => (
+                            <option key={ev.event_id} value={ev.event_id} style={{ background: '#0b0f1a' }}>
+                                {ev.title}
+                            </option>
+                        ))}
+                    </select>
+                )}
             </div>
 
-            {loading ? (
+            {loadingAgenda ? (
                 <div className="flex items-center justify-center py-16 gap-3 text-slate-400">
                     <Loader2 className="w-5 h-5 animate-spin text-brand-400" />
                     <span className="text-sm">Loading agenda…</span>
                 </div>
-            ) : sortedItems.length === 0 ? (
+            ) : (!selectedEventObj) ? null : sortedItems.length === 0 ? (
                 <div className="glass-card rounded-2xl py-16 text-center">
                     <CalendarDays className="w-10 h-10 text-slate-700 mx-auto mb-3" />
                     <p className="text-slate-500 text-sm">No sessions yet. Add the first one!</p>
@@ -127,8 +202,8 @@ export default function Agenda() {
                                                 </span>
                                                 <h3 className="font-heading font-bold text-white text-sm">{item.title}</h3>
                                             </div>
-                                            <p className="text-xs text-slate-400 mb-2">{item.description}</p>
-                                            <div className="flex items-center gap-4 flex-wrap">
+                                            {item.description && <p className="text-xs text-slate-400 mb-2">{item.description}</p>}
+                                            <div className="flex items-center gap-4 flex-wrap mt-1">
                                                 {item.speaker && (
                                                     <span className="flex items-center gap-1.5 text-xs text-slate-500">
                                                         <User className="w-3 h-3" /> {item.speaker}
@@ -174,22 +249,22 @@ export default function Agenda() {
 
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Session Title</label>
+                                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Session Title *</label>
                                 <input type="text" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="e.g. Opening Keynote" className="input-glass w-full text-sm py-2.5" />
                             </div>
                             <div>
-                                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Type</label>
+                                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Type *</label>
                                 <select value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value as AgendaItem['type'] }))} className="input-glass w-full text-sm py-2.5">
                                     {Object.entries(TYPE_COLORS).map(([k, v]) => <option key={k} value={k} style={{ background: '#0b0f1a' }}>{v.label}</option>)}
                                 </select>
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Start Time</label>
+                                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Start Time *</label>
                                     <input type="time" value={form.startTime} onChange={e => setForm(f => ({ ...f, startTime: e.target.value }))} className="input-glass w-full text-sm py-2.5" />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">End Time</label>
+                                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">End Time *</label>
                                     <input type="time" value={form.endTime} onChange={e => setForm(f => ({ ...f, endTime: e.target.value }))} className="input-glass w-full text-sm py-2.5" />
                                 </div>
                             </div>

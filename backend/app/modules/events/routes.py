@@ -35,6 +35,7 @@ EVENT_PUBLIC_PROJECTION = {
     "end_date": 1,
     "banner_url": 1,
     "status": 1,
+    "agenda": 1,
     "created_at": 1,
 }
 
@@ -144,3 +145,37 @@ async def get_event(event_id: str):
         raise HTTPException(status_code=404, detail="Event not found")
 
     return _serialize_event(event)
+
+
+# ================= UPDATE AGENDA =================
+from app.modules.events.schemas import AgendaItem
+
+@router.put("/{event_id}/agenda")
+async def update_event_agenda(
+    event_id: str,
+    agenda: List[AgendaItem],
+    current_user=Depends(get_current_user(required_role="ORGANIZER")),
+):
+    try:
+        obj_id = ObjectId(event_id)
+    except InvalidId:
+        raise HTTPException(status_code=400, detail="Invalid event id")
+
+    # Verify event belongs to organizer
+    event = await db.events.find_one({
+        "_id": obj_id,
+        "organizer_id": current_user["_id"]
+    })
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found or not yours")
+
+    # Save agenda as list of dicts
+    agenda_dicts = [item.model_dump(by_alias=True) for item in agenda]
+    
+    await db.events.update_one(
+        {"_id": obj_id},
+        {"$set": {"agenda": agenda_dicts}}
+    )
+
+    return {"message": "Agenda updated successfully"}
+

@@ -21,5 +21,6 @@ class EventDB(BaseModel):
 
     banner_url: Optional[str]
     status: str  # DRAFT | PUBLISHED | CANCELLED
+    agenda: Optional[List[dict]] = []
 
     created_at: datetime = Field(default_factory=datetime.utcnow)

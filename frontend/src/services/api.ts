@@ -134,6 +134,11 @@ export const updateEvent = (eventId: string, payload: any) =>
 export const deleteEvent = (eventId: string) =>
   api.delete(`/events/${eventId}`);
 
+export const updateEventAgenda = async (eventId: string, agenda: any[]) => {
+  const res = await api.put(`/events/${eventId}/agenda`, agenda);
+  return res.data;
+};
+
 // ─── Ticket Management ───────────────────────────────────────────────────────
 export const getEventTickets = async (eventId: string) => {
   const res = await api.get(`/tickets/event/${eventId}`);
@@ -260,5 +265,21 @@ export const checkMySurveyResponse = async (eventId: string) => {
 
 export const submitSurveyResponse = async (eventId: string, responses: any[]) => {
   const res = await api.post(`/surveys/event/${eventId}/respond`, { responses });
+  return res.data;
+};
+
+// ================= EMAIL BLAST =================
+export const sendEmailBlast = async (payload: {
+  event_id: string;
+  target: string;
+  subject: string;
+  body: string;
+}) => {
+  const res = await api.post('/organizers/me/email-blast', payload);
+  return res.data;
+};
+
+export const getEmailBlastHistory = async () => {
+  const res = await api.get('/organizers/me/email-blast/history');
   return res.data;
 };

@@ -3,6 +3,17 @@ from typing import List, Optional
 from pydantic import BaseModel, Field, field_validator
 
 
+class AgendaItem(BaseModel):
+    id: str = Field(alias="_id")
+    title: str
+    startTime: str
+    endTime: str
+    speaker: Optional[str] = ""
+    room: Optional[str] = ""
+    description: Optional[str] = ""
+    type: str  # TALK | WORKSHOP | BREAK | PANEL
+
+
 # ================= REQUEST SCHEMAS =================
 
 class EventCreate(BaseModel):
@@ -18,8 +29,9 @@ class EventCreate(BaseModel):
     start_date: datetime
     end_date: datetime
 
-    banner_url: Optional[str]
+    banner_url: Optional[str] = None
     status: str  # DRAFT | PUBLISHED
+    agenda: Optional[List[AgendaItem]] = []
 
     @field_validator("start_date", "end_date", mode="before")
     @classmethod
@@ -51,6 +63,7 @@ class EventUpdate(BaseModel):
 
     banner_url: Optional[str] = None
     status: Optional[str] = None
+    agenda: Optional[List[AgendaItem]] = None
 
     @field_validator("start_date", "end_date", mode="before")
     @classmethod
@@ -92,6 +105,7 @@ class EventOut(BaseModel):
 
     banner_url: Optional[str]
     status: str
+    agenda: Optional[List[AgendaItem]] = []
     created_at: datetime
 
 

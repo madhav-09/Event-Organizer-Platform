@@ -1,24 +1,21 @@
-import { useState } from 'react';
-import { Send, Users, CheckCircle, Clock, Loader2, Mail, ChevronDown } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Send, Users, CheckCircle, Clock, Loader2, Mail, AlertCircle } from 'lucide-react';
+import { getMyEvents, sendEmailBlast, getEmailBlastHistory } from '../../services/api';
+
+interface OrganizerEvent {
+    event_id: string;
+    title: string;
+}
 
 interface SentEmail {
     id: string;
     subject: string;
     target: string;
-    sentAt: string;
+    sent_at: string;
     recipients: number;
+    failed?: number;
+    event_title?: string;
 }
-
-const DUMMY_EVENTS = [
-    { id: 'e1', title: 'Tech Summit 2026' },
-    { id: 'e2', title: 'Startup Pitch Night' },
-];
-
-const DUMMY_SENT: SentEmail[] = [
-    { id: 's1', subject: 'Event Reminder – Tomorrow is the big day!', target: 'All Attendees', sentAt: '2026-03-01T10:00:00Z', recipients: 320 },
-    { id: 's2', subject: 'Check-in instructions for VIP attendees', target: 'Checked In', sentAt: '2026-03-02T09:30:00Z', recipients: 45 },
-    { id: 's3', subject: 'You still haven\'t checked in – don\'t miss out!', target: 'Not Checked In', sentAt: '2026-03-02T14:00:00Z', recipients: 275 },
-];
 
 const TARGET_OPTIONS = [
     { value: 'all', label: 'All Attendees', icon: Users },
@@ -27,33 +24,75 @@ const TARGET_OPTIONS = [
 ];
 
 export default function EmailBlast() {
-    const [selectedEvent, setSelectedEvent] = useState('e1');
+    const [events, setEvents] = useState<OrganizerEvent[]>([]);
+    const [selectedEvent, setSelectedEvent] = useState('');
     const [subject, setSubject] = useState('');
     const [body, setBody] = useState('');
     const [target, setTarget] = useState('all');
     const [sending, setSending] = useState(false);
-    const [sent, setSent] = useState(false);
-    const [sentHistory, setSentHistory] = useState<SentEmail[]>(DUMMY_SENT);
+    const [sentStatus, setSentStatus] = useState<'idle' | 'success' | 'error'>('idle');
+    const [statusMessage, setStatusMessage] = useState('');
+    const [sentHistory, setSentHistory] = useState<SentEmail[]>([]);
+    const [loadingHistory, setLoadingHistory] = useState(true);
+    const [loadingEvents, setLoadingEvents] = useState(true);
 
-    const handleSend = () => {
-        if (!subject.trim() || !body.trim()) return;
+    // Load events and history on mount
+    useEffect(() => {
+        (async () => {
+            try {
+                const evts = await getMyEvents();
+                setEvents(evts);
+                if (evts.length > 0) setSelectedEvent(evts[0].event_id);
+            } catch {
+                // ignore
+            } finally {
+                setLoadingEvents(false);
+            }
+        })();
+
+        (async () => {
+            try {
+                const history = await getEmailBlastHistory();
+                setSentHistory(history);
+            } catch {
+                // ignore
+            } finally {
+                setLoadingHistory(false);
+            }
+        })();
+    }, []);
+
+    const handleSend = async () => {
+        if (!subject.trim() || !body.trim() || !selectedEvent) return;
         setSending(true);
-        setTimeout(() => {
-            const newEntry: SentEmail = {
-                id: `s${Date.now()}`,
+        setSentStatus('idle');
+        try {
+            const result = await sendEmailBlast({
+                event_id: selectedEvent,
+                target,
                 subject,
-                target: TARGET_OPTIONS.find(t => t.value === target)?.label || 'All Attendees',
-                sentAt: new Date().toISOString(),
-                recipients: Math.floor(Math.random() * 200) + 50,
-            };
-            setSentHistory(prev => [newEntry, ...prev]);
-            setSending(false);
-            setSent(true);
+                body,
+            });
+            setSentStatus('success');
+            setStatusMessage(result.message || `Sent to ${result.recipients} recipient(s)`);
             setSubject('');
             setBody('');
-            setTimeout(() => setSent(false), 3000);
-        }, 1500);
+            // Refresh history
+            const history = await getEmailBlastHistory();
+            setSentHistory(history);
+            setTimeout(() => setSentStatus('idle'), 4000);
+        } catch (err: any) {
+            setSentStatus('error');
+            setStatusMessage(
+                err?.response?.data?.detail || 'Failed to send email blast. Please try again.'
+            );
+            setTimeout(() => setSentStatus('idle'), 5000);
+        } finally {
+            setSending(false);
+        }
     };
+
+    const canSend = !sending && sentStatus !== 'success' && subject.trim() && body.trim() && selectedEvent;
 
     return (
         <div className="space-y-8">
@@ -70,12 +109,42 @@ export default function EmailBlast() {
                         <h3 className="font-heading font-bold text-white">Compose Message</h3>
                     </div>
                     <div className="p-6 space-y-5">
+                        {/* Status Banner */}
+                        {sentStatus === 'success' && (
+                            <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm">
+                                <CheckCircle className="w-4 h-4 shrink-0" />
+                                {statusMessage}
+                            </div>
+                        )}
+                        {sentStatus === 'error' && (
+                            <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
+                                <AlertCircle className="w-4 h-4 shrink-0" />
+                                {statusMessage}
+                            </div>
+                        )}
+
                         {/* Event */}
                         <div>
                             <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Event</label>
-                            <select value={selectedEvent} onChange={e => setSelectedEvent(e.target.value)} className="input-glass w-full text-sm py-2.5">
-                                {DUMMY_EVENTS.map(ev => <option key={ev.id} value={ev.id} style={{ background: '#0b0f1a' }}>{ev.title}</option>)}
-                            </select>
+                            {loadingEvents ? (
+                                <div className="input-glass w-full py-2.5 text-sm text-slate-500 flex items-center gap-2">
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin" /> Loading events…
+                                </div>
+                            ) : events.length === 0 ? (
+                                <p className="text-slate-500 text-sm">No events found. Create an event first.</p>
+                            ) : (
+                                <select
+                                    value={selectedEvent}
+                                    onChange={e => setSelectedEvent(e.target.value)}
+                                    className="input-glass w-full text-sm py-2.5"
+                                >
+                                    {events.map(ev => (
+                                        <option key={ev.event_id} value={ev.event_id} style={{ background: '#0b0f1a' }}>
+                                            {ev.title}
+                                        </option>
+                                    ))}
+                                </select>
+                            )}
                         </div>
 
                         {/* Target Audience */}
@@ -83,12 +152,15 @@ export default function EmailBlast() {
                             <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Send To</label>
                             <div className="grid grid-cols-3 gap-2">
                                 {TARGET_OPTIONS.map(({ value, label, icon: Icon }) => (
-                                    <button key={value} onClick={() => setTarget(value)}
+                                    <button
+                                        key={value}
+                                        onClick={() => setTarget(value)}
                                         className={`flex flex-col items-center gap-1.5 py-3 rounded-xl text-xs font-semibold transition-all ${target === value
-                                                ? 'text-brand-300 border border-brand-500/40'
-                                                : 'text-slate-500 border border-white/8 hover:text-slate-300'
+                                            ? 'text-brand-300 border border-brand-500/40'
+                                            : 'text-slate-500 border border-white/8 hover:text-slate-300'
                                             }`}
-                                        style={{ background: target === value ? 'rgba(108,71,236,0.15)' : 'rgba(255,255,255,0.04)' }}>
+                                        style={{ background: target === value ? 'rgba(108,71,236,0.15)' : 'rgba(255,255,255,0.04)' }}
+                                    >
                                         <Icon className={`w-4 h-4 ${target === value ? 'text-brand-400' : 'text-slate-600'}`} />
                                         {label}
                                     </button>
@@ -99,26 +171,37 @@ export default function EmailBlast() {
                         {/* Subject */}
                         <div>
                             <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Subject</label>
-                            <input type="text" placeholder="e.g. Important update about your ticket" value={subject}
+                            <input
+                                type="text"
+                                placeholder="e.g. Important update about your ticket"
+                                value={subject}
                                 onChange={e => setSubject(e.target.value)}
-                                className="input-glass w-full text-sm py-2.5" />
+                                className="input-glass w-full text-sm py-2.5"
+                            />
                         </div>
 
                         {/* Body */}
                         <div>
                             <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Message</label>
-                            <textarea rows={8} placeholder="Write your message here…" value={body}
+                            <textarea
+                                rows={8}
+                                placeholder="Write your message here…"
+                                value={body}
                                 onChange={e => setBody(e.target.value)}
-                                className="input-glass w-full text-sm py-2.5 resize-none" />
+                                className="input-glass w-full text-sm py-2.5 resize-none"
+                            />
                         </div>
 
                         {/* Send Button */}
-                        <button onClick={handleSend} disabled={sending || sent || !subject.trim() || !body.trim()}
-                            className={`w-full btn-primary justify-center py-3 text-sm font-semibold transition-all ${sent ? '!bg-emerald-600' : ''
-                                }`}>
+                        <button
+                            onClick={handleSend}
+                            disabled={!canSend}
+                            className={`w-full btn-primary justify-center py-3 text-sm font-semibold transition-all ${sentStatus === 'success' ? '!bg-emerald-600' : ''
+                                }`}
+                        >
                             {sending ? (
                                 <><Loader2 className="w-4 h-4 animate-spin" /> Sending…</>
-                            ) : sent ? (
+                            ) : sentStatus === 'success' ? (
                                 <><CheckCircle className="w-4 h-4" /> Email Sent Successfully!</>
                             ) : (
                                 <><Send className="w-4 h-4" /> Send Email Blast</>
@@ -134,17 +217,30 @@ export default function EmailBlast() {
                         <h3 className="font-heading font-bold text-white">Sent History</h3>
                     </div>
                     <div className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
-                        {sentHistory.length === 0 ? (
+                        {loadingHistory ? (
+                            <div className="py-10 flex justify-center text-slate-500 text-sm">
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                            </div>
+                        ) : sentHistory.length === 0 ? (
                             <div className="py-10 text-center text-slate-500 text-sm">No emails sent yet</div>
                         ) : sentHistory.map(email => (
                             <div key={email.id} className="px-5 py-4 hover:bg-white/3 transition-colors">
                                 <p className="font-semibold text-white text-sm truncate">{email.subject}</p>
+                                {email.event_title && (
+                                    <p className="text-xs text-slate-500 truncate mt-0.5">{email.event_title}</p>
+                                )}
                                 <div className="flex items-center gap-3 mt-1.5 flex-wrap">
                                     <span className="text-xs text-brand-400">{email.target}</span>
                                     <span className="text-xs text-slate-500">·</span>
-                                    <span className="text-xs text-slate-500">{email.recipients} recipients</span>
+                                    <span className="text-xs text-slate-500">{email.recipients} sent</span>
+                                    {email.failed ? (
+                                        <>
+                                            <span className="text-xs text-slate-500">·</span>
+                                            <span className="text-xs text-red-400">{email.failed} failed</span>
+                                        </>
+                                    ) : null}
                                 </div>
-                                <p className="text-xs text-slate-600 mt-1">{new Date(email.sentAt).toLocaleString()}</p>
+                                <p className="text-xs text-slate-600 mt-1">{new Date(email.sent_at).toLocaleString()}</p>
                             </div>
                         ))}
                     </div>

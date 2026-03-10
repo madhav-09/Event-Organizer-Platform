@@ -1,9 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Body
+from pydantic import BaseModel
 from app.common.utils.dependencies import get_current_user
+from app.common.utils.email import send_email
 from app.core.database import db
 from app.modules.organizers.models import Organizer, OrganizerApply
 from bson import ObjectId
 from datetime import datetime
+import asyncio
 
 router = APIRouter(prefix="/organizers", tags=["organizers"])
 
@@ -443,3 +446,133 @@ async def recent_bookings(
         })
 
     return bookings
+
+
+# ================= EMAIL BLAST =================
+class EmailBlastRequest(BaseModel):
+    event_id: str
+    target: str  # all | checked_in | not_checked_in
+    subject: str
+    body: str
+
+
+@router.post("/me/email-blast")
+async def send_email_blast(
+    payload: EmailBlastRequest,
+    current_user=Depends(get_current_user(required_role="ORGANIZER"))
+):
+    # 1. Verify event belongs to organizer
+    event = await db.events.find_one({
+        "_id": ObjectId(payload.event_id),
+        "organizer_id": current_user["_id"]
+    })
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found or not yours")
+
+    # 2. Build booking filter by target
+    booking_filter: dict = {"event_id": payload.event_id, "status": "CONFIRMED"}
+    if payload.target == "checked_in":
+        booking_filter["checked_in"] = True
+    elif payload.target == "not_checked_in":
+        booking_filter["checked_in"] = {"$ne": True}
+    # "all" = no extra filter
+
+    # 3. Collect unique attendee emails
+    recipients = []
+    seen_user_ids = set()
+    cursor = db.bookings.find(booking_filter)
+    async for booking in cursor:
+        uid = str(booking["user_id"])
+        if uid in seen_user_ids:
+            continue
+        seen_user_ids.add(uid)
+        user = await db.users.find_one(
+            {"_id": ObjectId(uid)},
+            {"name": 1, "email": 1}
+        )
+        if user and user.get("email"):
+            recipients.append({"name": user.get("name", "Attendee"), "email": user["email"]})
+
+    if not recipients:
+        raise HTTPException(status_code=400, detail="No recipients found for selected target")
+
+    # 4. Get organizer name
+    organizer = await db.organizers.find_one({
+        "$or": [
+            {"user_id": current_user["_id"]},
+            {"user_id": str(current_user["_id"])}
+        ]
+    })
+    organizer_name = organizer.get("brand_name") or current_user.get("name", "Event Organizer") if organizer else current_user.get("name", "Event Organizer")
+
+    # 5. Send emails concurrently (best-effort — log failures)
+    success_count = 0
+    failed_count = 0
+
+    async def _send_one(recipient: dict):
+        nonlocal success_count, failed_count
+        try:
+            await send_email(
+                to_email=recipient["email"],
+                subject=payload.subject,
+                template_name="email_blast.html",
+                context={
+                    "subject": payload.subject,
+                    "body": payload.body,
+                    "attendee_name": recipient["name"],
+                    "event_name": event["title"],
+                    "organizer_name": organizer_name,
+                },
+            )
+            success_count += 1
+        except Exception as e:
+            failed_count += 1
+            print(f"Email blast failed for {recipient['email']}: {e}")
+
+    await asyncio.gather(*[_send_one(r) for r in recipients])
+
+    # 6. Store blast record in DB
+    target_label = {"all": "All Attendees", "checked_in": "Checked In", "not_checked_in": "Not Checked In"}.get(payload.target, payload.target)
+    blast_record = {
+        "organizer_id": str(current_user["_id"]),
+        "event_id": payload.event_id,
+        "event_title": event["title"],
+        "subject": payload.subject,
+        "body": payload.body,
+        "target": payload.target,
+        "target_label": target_label,
+        "recipients": success_count,
+        "failed": failed_count,
+        "sent_at": datetime.utcnow(),
+    }
+    await db.email_blasts.insert_one(blast_record)
+
+    return {
+        "message": f"Email blast sent to {success_count} recipient(s)",
+        "recipients": success_count,
+        "failed": failed_count,
+    }
+
+
+@router.get("/me/email-blast/history")
+async def get_email_blast_history(
+    current_user=Depends(get_current_user(required_role="ORGANIZER"))
+):
+    history = []
+    cursor = db.email_blasts.find(
+        {"organizer_id": str(current_user["_id"])}
+    ).sort("sent_at", -1).limit(50)
+
+    async for doc in cursor:
+        history.append({
+            "id": str(doc["_id"]),
+            "event_id": doc.get("event_id"),
+            "event_title": doc.get("event_title", ""),
+            "subject": doc["subject"],
+            "target": doc.get("target_label", doc.get("target", "")),
+            "recipients": doc.get("recipients", 0),
+            "failed": doc.get("failed", 0),
+            "sent_at": doc["sent_at"].isoformat(),
+        })
+
+    return history

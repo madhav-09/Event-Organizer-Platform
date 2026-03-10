@@ -49,6 +49,16 @@ interface Event {
   start_date: string;
   end_date: string;
   banner_url: string;
+  agenda?: {
+    _id: string;
+    title: string;
+    startTime: string;
+    endTime: string;
+    speaker?: string;
+    room?: string;
+    description?: string;
+    type: 'TALK' | 'WORKSHOP' | 'BREAK' | 'PANEL';
+  }[];
 }
 
 export default function EventDetail() {
@@ -311,8 +321,55 @@ export default function EventDetail() {
             <p className="text-slate-400 leading-relaxed whitespace-pre-line">{event.description}</p>
           </div>
 
+          {/* Agenda Section */}
+          {event.agenda && event.agenda.length > 0 && (
+            <div className="glass-card rounded-2xl p-6 animate-fade-up delay-150" style={{ animationFillMode: 'both' }}>
+              <div className="flex items-center gap-2 mb-6">
+                <Calendar className="w-5 h-5 text-brand-400" />
+                <h2 className="font-heading font-bold text-white text-xl">Event Schedule</h2>
+              </div>
+              <div className="space-y-0 relative before:absolute before:inset-0 before:ml-4 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-px before:bg-gradient-to-b before:from-transparent before:via-white/10 before:to-transparent">
+                {[...event.agenda]
+                  .sort((a, b) => a.startTime.localeCompare(b.startTime))
+                  .map((item) => {
+                    const typeColors: Record<string, { bg: string, text: string }> = {
+                      TALK: { bg: 'rgba(108,71,236,0.15)', text: '#c4b5fd' },
+                      WORKSHOP: { bg: 'rgba(59,130,246,0.15)', text: '#93c5fd' },
+                      PANEL: { bg: 'rgba(245,158,11,0.15)', text: '#fcd34d' },
+                      BREAK: { bg: 'rgba(16,185,129,0.12)', text: '#6ee7b7' },
+                    };
+                    const color = typeColors[item.type] || typeColors.TALK;
+
+                    return (
+                      <div key={item._id} className={`relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active`}>
+                        {/* Icon */}
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full border-4 border-[#0b0f1a] bg-slate-800 text-slate-500 shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow flex-none transition-colors duration-300 group-hover:bg-brand-500 group-hover:text-white z-10 ml-0 md:ml-auto">
+                          <div className="w-2 h-2 rounded-full" style={{ background: color.text }} />
+                        </div>
+                        {/* Card */}
+                        <div className={`w-[calc(100%-3rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border border-white/5 bg-white/5 backdrop-blur-sm transition-all duration-300 hover:bg-white/10 hover:-translate-y-1 mb-6`}>
+                          <div className="flex items-center justify-between gap-4 mb-2">
+                            <span className="font-heading font-bold text-white text-base">{item.title}</span>
+                            <span className="text-xs font-semibold px-2 py-0.5 rounded-md shrink-0" style={{ background: color.bg, color: color.text }}>
+                              {item.type}
+                            </span>
+                          </div>
+                          {item.description && <p className="text-sm text-slate-400 mb-3">{item.description}</p>}
+                          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
+                            <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-brand-400" /> {item.startTime} - {item.endTime}</span>
+                            {item.speaker && <span className="flex items-center gap-1.5"><Users className="w-3.5 h-3.5 text-brand-400" /> {item.speaker}</span>}
+                            {item.room && <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-brand-400" /> {item.room}</span>}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          )}
+
           {/* Social Share */}
-          <div className="glass-card rounded-2xl p-6 animate-fade-up delay-150" style={{ animationFillMode: 'both' }}>
+          <div className="glass-card rounded-2xl p-6 animate-fade-up delay-200" style={{ animationFillMode: 'both' }}>
             <div className="flex items-center gap-2 mb-4">
               <Share2 className="w-4 h-4 text-brand-400" />
               <h2 className="font-heading font-bold text-white text-base">Share This Event</h2>
