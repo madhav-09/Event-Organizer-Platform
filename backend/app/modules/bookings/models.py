@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 
@@ -8,8 +8,9 @@ class Booking(BaseModel):
     event_id: str
     ticket_id: str
     quantity: int
-    discount_code: Optional[str] = None   # ← new: applied coupon code
-    status: str = "PENDING"  # PENDING | CONFIRMED | CANCELLED
+    addons: List[dict] = []  # List of {addon_id: str, quantity: int, price: float}
+    discount_code: Optional[str] = None
+    status: str = "PENDING"
     checked_in: bool = False
     checked_in_at: Optional[datetime] = None
-    created_at: datetime = datetime.utcnow()
+    created_at: datetime = Field(default_factory=datetime.utcnow)

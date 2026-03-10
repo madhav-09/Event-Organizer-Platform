@@ -1,274 +1,251 @@
-import React, { useState } from 'react';
-import { FaPlus, FaEdit, FaTrash, FaPlusCircle } from 'react-icons/fa';
+import { useState, useEffect, useCallback } from 'react';
+import { Plus, Edit2, Trash2, Box, X, Loader2, ChevronDown, Image as ImageIcon } from 'lucide-react';
+import {
+  getMyEvents,
+  getEventAddons,
+  createEventAddon,
+  deleteAddon as apiDeleteAddon,
+} from '../../services/api';
+import toast from 'react-hot-toast';
 
-interface Addon {
-  _id: string;
+interface BackendAddon {
+  id: string;
+  event_id: string;
+  name: string;
+  description?: string;
+  price: number;
+  total_quantity: number;
+  sold_quantity: number;
+  image_url?: string;
+  created_at: string;
+}
+
+interface OrgEvent {
+  event_id: string;
+  title: string;
+}
+
+interface AddonForm {
   name: string;
   description: string;
   price: number;
-  quantityTotal: number;
-  quantitySold: number;
-  image: string | null;
+  total_quantity: number;
+  image_url: string;
 }
 
-const dummyAddons: Addon[] = [
-  {
-    _id: 'a1',
-    name: 'Event T-Shirt',
-    description: 'High-quality cotton t-shirt with event logo.',
-    price: 15.00,
-    quantityTotal: 100,
-    quantitySold: 30,
-    image: 'https://via.placeholder.com/100.png?text=T-Shirt',
-  },
-  {
-    _id: 'a2',
-    name: 'VIP Parking Pass',
-    description: 'Guaranteed parking spot near the venue entrance.',
-    price: 10.00,
-    quantityTotal: 50,
-    quantitySold: 20,
-    image: 'https://via.placeholder.com/100.png?text=Parking+Pass',
-  },
+const EMPTY_FORM: AddonForm = { name: '', description: '', price: 0, total_quantity: 50, image_url: '' };
+
+const ACCENT_COLORS = [
+  { bg: 'rgba(59,130,246,0.15)', border: 'rgba(59,130,246,0.3)', text: '#93c5fd' },
+  { bg: 'rgba(108,71,236,0.15)', border: 'rgba(108,71,236,0.3)', text: '#c4b5fd' },
+  { bg: 'rgba(16,185,129,0.15)', border: 'rgba(16,185,129,0.3)', text: '#6ee7b7' },
 ];
 
-const Addons = () => {
-  const [addons, setAddons] = useState<Addon[]>(dummyAddons);
-  const [showAddEditModal, setShowAddEditModal] = useState(false);
-  const [editingAddon, setEditingAddon] = useState<Addon | null>(null);
+export default function Addons() {
+  const [events, setEvents] = useState<OrgEvent[]>([]);
+  const [selectedEventId, setSelectedEventId] = useState<string>('');
+  const [addons, setAddons] = useState<BackendAddon[]>([]);
+  const [eventsLoading, setEventsLoading] = useState(true);
+  const [addonsLoading, setAddonsLoading] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [form, setForm] = useState<AddonForm>(EMPTY_FORM);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
-  const handleAddEditAddon = (addon: Addon) => {
-    if (editingAddon) {
-      setAddons((prev) => prev.map((a) => (a._id === addon._id ? addon : a)));
-    } else {
-      setAddons((prev) => [...prev, { ...addon, _id: `a${prev.length + 1}` }]);
+  useEffect(() => {
+    getMyEvents()
+      .then((evts: OrgEvent[]) => {
+        setEvents(evts);
+        if (evts.length > 0) setSelectedEventId(evts[0].event_id);
+      })
+      .catch(() => toast.error('Failed to load your events'))
+      .finally(() => setEventsLoading(false));
+  }, []);
+
+  const loadAddons = useCallback(async (eventId: string) => {
+    if (!eventId) { setAddons([]); return; }
+    setAddonsLoading(true);
+    try {
+      const data = await getEventAddons(eventId);
+      setAddons(data ?? []);
+    } catch {
+      toast.error('Failed to load add-ons');
+      setAddons([]);
+    } finally {
+      setAddonsLoading(false);
     }
-    setShowAddEditModal(false);
-    setEditingAddon(null);
+  }, []);
+
+  useEffect(() => {
+    if (selectedEventId) loadAddons(selectedEventId);
+  }, [selectedEventId, loadAddons]);
+
+  const openAdd = () => {
+    if (!selectedEventId) { toast.error('Please select an event first'); return; }
+    setForm(EMPTY_FORM);
+    setShowModal(true);
   };
 
-  const handleDeleteAddon = (id: string) => {
-    setAddons((prev) => prev.filter((a) => a._id !== id));
-  };
+  const handleSave = async () => {
+    if (!form.name.trim()) { toast.error('Name is required'); return; }
+    if (form.price < 0) { toast.error('Price must be 0 or more'); return; }
+    if (!selectedEventId) { toast.error('No event selected'); return; }
 
-  const openEditModal = (addon: Addon) => {
-    setEditingAddon(addon);
-    setShowAddEditModal(true);
-  };
-
-  const openAddModal = () => {
-    setEditingAddon(null);
-    setShowAddEditModal(true);
-  };
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (editingAddon) {
-          setEditingAddon((prev) => ({
-            ...prev!,
-            image: reader.result as string,
-          }));
-        } else {
-          // For new addon, will be handled when form is submitted
-          // For now, just store in a temp state or directly in the form handler if creating new
-          console.log('New addon image uploaded:', reader.result);
-        }
-      };
-      reader.readAsDataURL(file);
+    setSaving(true);
+    try {
+      await createEventAddon(selectedEventId, {
+        ...form,
+        name: form.name.trim(),
+      });
+      toast.success('Add-on created!');
+      loadAddons(selectedEventId);
+      setShowModal(false);
+    } catch (e: any) {
+      toast.error('Failed to save add-on');
+    } finally {
+      setSaving(false);
     }
   };
+
+  const handleDelete = async (addon: BackendAddon) => {
+    if (!confirm(`Delete "${addon.name}"?`)) return;
+    setDeleting(addon.id);
+    try {
+      await apiDeleteAddon(addon.id);
+      setAddons(prev => prev.filter(x => x.id !== addon.id));
+      toast.success('Add-on deleted');
+    } catch {
+      toast.error('Failed to delete');
+    } finally {
+      setDeleting(null);
+    }
+  };
+
+  const selectedEvent = events.find(e => e.event_id === selectedEventId);
 
   return (
-    <div className="container mx-auto p-6">
-      <h2 className="text-3xl font-bold text-gray-800 mb-6">Add-ons</h2>
-
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={openAddModal}
-          className="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-md shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-        >
-          <FaPlus className="inline-block mr-2" /> Add New Add-on
+    <div className="space-y-8">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="font-heading font-black text-2xl text-white">Add-ons & Merch</h1>
+          <p className="text-slate-500 mt-1 text-sm">Create and manage event merchandise, parking passes, or extras</p>
+        </div>
+        <button onClick={openAdd} disabled={!selectedEventId || eventsLoading}
+          className="btn-primary text-sm px-4 py-2.5">
+          <Plus className="w-4 h-4" />
+          Create Add-on
         </button>
       </div>
 
-      <div className="overflow-x-auto bg-white shadow-md rounded-lg">
-        <table className="min-w-full leading-normal">
-          <thead>
-            <tr>
-              <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Image
-              </th>
-              <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Name
-              </th>
-              <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Description
-              </th>
-              <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Price
-              </th>
-              <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Quantity (Sold/Total)
-              </th>
-              <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {addons.map((addon) => (
-              <tr key={addon._id}>
-                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                  {addon.image ? (
-                    <img src={addon.image} alt={addon.name} className="w-16 h-16 object-cover rounded-md" />
-                  ) : (
-                    <div className="w-16 h-16 bg-gray-200 rounded-md flex items-center justify-center text-gray-500">
-                      <FaPlusCircle size={24} />
-                    </div>
-                  )}
-                </td>
-                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                  <p className="text-gray-900 whitespace-no-wrap">{addon.name}</p>
-                </td>
-                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                  <p className="text-gray-900 whitespace-no-wrap">{addon.description}</p>
-                </td>
-                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                  <p className="text-gray-900 whitespace-no-wrap">₹{addon.price.toFixed(2)}</p>
-                </td>
-                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                  <p className="text-gray-900 whitespace-no-wrap">
-                    {addon.quantitySold} / {addon.quantityTotal}
-                  </p>
-                </td>
-                <td className="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                  <div className="flex space-x-3">
-                    <button
-                      onClick={() => openEditModal(addon)}
-                      className="text-blue-600 hover:text-blue-900"
-                      title="Edit Add-on"
-                    >
-                      <FaEdit size={18} />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteAddon(addon._id)}
-                      className="text-red-600 hover:text-red-900"
-                      title="Delete Add-on"
-                    >
-                      <FaTrash size={18} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="glass-card rounded-2xl px-5 py-4">
+        <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+          Select Event
+        </label>
+        {eventsLoading ? (
+          <div className="flex items-center gap-2 text-slate-400 text-sm">
+            <Loader2 className="w-4 h-4 animate-spin" /> Loading…
+          </div>
+        ) : (
+          <div className="relative w-full max-w-xs">
+            <select
+              value={selectedEventId}
+              onChange={e => setSelectedEventId(e.target.value)}
+              className="input-glass w-full text-sm py-2.5 pr-9 appearance-none"
+            >
+              {events.map(ev => (
+                <option key={ev.event_id} value={ev.event_id} style={{ background: '#0b0f1a' }}>
+                  {ev.title}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+          </div>
+        )}
       </div>
 
-      {/* Add/Edit Add-on Modal */}
-      {showAddEditModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full" id="addon-modal">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <h3 className="text-lg font-bold mb-4">{editingAddon ? 'Edit Add-on' : 'Add New Add-on'}</h3>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const form = e.target as HTMLFormElement;
-                const newAddon: Addon = {
-                  _id: editingAddon?._id || `a${addons.length + 1}`,
-                  name: form.addonName.value,
-                  description: form.addonDescription.value,
-                  price: parseFloat(form.addonPrice.value),
-                  quantityTotal: parseInt(form.quantityTotal.value),
-                  quantitySold: editingAddon?.quantitySold || 0,
-                  image: editingAddon?.image || null, // Image handling can be more complex
-                };
-                handleAddEditAddon(newAddon);
-              }}
-              className="space-y-4"
-            >
+      <div className="glass-card rounded-2xl overflow-hidden">
+        <div className="px-6 py-4 border-b flex items-center gap-2" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+          <Box className="w-4 h-4 text-brand-400" />
+          <h3 className="font-heading font-bold text-white">
+            Available Add-ons {selectedEvent ? `— ${selectedEvent.title}` : ''}
+          </h3>
+        </div>
+
+        {addonsLoading ? (
+          <div className="flex items-center justify-center py-16 gap-3 text-slate-400">
+            <Loader2 className="w-5 h-5 animate-spin text-brand-400" />
+            <span className="text-sm">Loading add-ons…</span>
+          </div>
+        ) : addons.length === 0 ? (
+          <div className="py-16 text-center text-slate-500">
+            <Box className="w-10 h-10 mx-auto mb-3 opacity-20" />
+            <p className="text-sm">No items created for this event yet.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead>
+                <tr className="border-b border-white/5">
+                  {['Item', 'Price', 'Stock (Sold/Total)', 'Actions'].map(h => (
+                    <th key={h} className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {addons.map((a, i) => (
+                  <tr key={a.id} className="transition-colors hover:bg-white/[0.02] border-b border-white/5">
+                    <td className="px-5 py-4 font-semibold text-white">{a.name}</td>
+                    <td className="px-5 py-4 text-brand-300">₹{a.price}</td>
+                    <td className="px-5 py-4 text-slate-400">{a.sold_quantity} / {a.total_quantity}</td>
+                    <td className="px-5 py-4">
+                      <button onClick={() => handleDelete(a)} disabled={deleting === a.id}
+                        className="p-2 rounded-lg bg-white/5 text-slate-400 hover:text-red-400 transition-colors">
+                        {deleting === a.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="glass-card rounded-2xl w-full max-w-md p-6 space-y-5">
+            <h3 className="font-heading font-bold text-white text-lg flex items-center gap-2">
+              <Plus className="w-5 h-5 text-brand-400" /> Create New Add-on
+            </h3>
+            <div className="space-y-4">
               <div>
-                <label htmlFor="addonName" className="block text-sm font-medium text-gray-700">Add-on Name</label>
-                <input
-                  type="text"
-                  name="addonName"
-                  id="addonName"
-                  defaultValue={editingAddon?.name || ''}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  required
-                />
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5 px-1">Item Name</label>
+                <input type="text" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className="input-glass w-full text-sm py-2.5" placeholder="e.g. Event T-Shirt" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5 px-1">Price (₹)</label>
+                  <input type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: Number(e.target.value) }))} className="input-glass w-full text-sm py-2.5" />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5 px-1">Total Stock</label>
+                  <input type="number" value={form.total_quantity} onChange={e => setForm(f => ({ ...f, total_quantity: Number(e.target.value) }))} className="input-glass w-full text-sm py-2.5" />
+                </div>
               </div>
               <div>
-                <label htmlFor="addonDescription" className="block text-sm font-medium text-gray-700">Description</label>
-                <textarea
-                  name="addonDescription"
-                  id="addonDescription"
-                  rows={3}
-                  defaultValue={editingAddon?.description || ''}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500"
-                ></textarea>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5 px-1">Description</label>
+                <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className="input-glass w-full text-sm py-2.5 h-20" placeholder="Size, color, inclusions..." />
               </div>
-              <div>
-                <label htmlFor="addonPrice" className="block text-sm font-medium text-gray-700">Price</label>
-                <input
-                  type="number"
-                  name="addonPrice"
-                  id="addonPrice"
-                  step="0.01"
-                  defaultValue={editingAddon?.price || ''}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="quantityTotal" className="block text-sm font-medium text-gray-700">Total Quantity</label>
-                <input
-                  type="number"
-                  name="quantityTotal"
-                  id="quantityTotal"
-                  defaultValue={editingAddon?.quantityTotal || ''}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="addonImage" className="block text-sm font-medium text-gray-700">Image</label>
-                <input
-                  type="file"
-                  name="addonImage"
-                  id="addonImage"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
-                />
-                {editingAddon?.image && (
-                  <img src={editingAddon.image} alt="Add-on" className="mt-2 w-24 h-24 object-cover rounded-md" />
-                )}
-              </div>
-              <div className="flex justify-end space-x-4">
-                <button
-                  type="button"
-                  onClick={() => setShowAddEditModal(false)}
-                  className="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
-                >
-                  {editingAddon ? 'Save Changes' : 'Add Add-on'}
-                </button>
-              </div>
-            </form>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setShowModal(false)} className="flex-1 py-2.5 text-xs font-bold text-slate-400 hover:text-white uppercase tracking-widest">Cancel</button>
+              <button onClick={handleSave} disabled={saving} className="flex-1 btn-primary justify-center py-2.5 text-xs font-black uppercase tracking-widest">
+                {saving ? 'Creating...' : 'Create Item'}
+              </button>
+            </div>
           </div>
         </div>
       )}
     </div>
   );
-};
-
-export default Addons;
+}

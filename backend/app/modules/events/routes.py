@@ -3,6 +3,7 @@ from fastapi.exceptions import RequestValidationError
 from typing import List, Optional
 from bson import ObjectId
 from bson.errors import InvalidId
+from datetime import datetime
 import logging
 
 logger = logging.getLogger(__name__)
@@ -13,7 +14,10 @@ from app.modules.events.schemas import (
     EventCreate,
     EventUpdate,
     EventOut,
+    AddonCreate,
+    AddonOut,
 )
+from app.modules.events.addon_models import AddonDB
 from app.modules.events.service import (
     create_event_service,
     update_event_service,
@@ -178,4 +182,74 @@ async def update_event_agenda(
     )
 
     return {"message": "Agenda updated successfully"}
+
+
+# ================= ADDONS =================
+
+@router.get("/{event_id}/addons", response_model=List[AddonOut])
+async def list_event_addons(event_id: str):
+    try:
+        obj_id = ObjectId(event_id)
+    except:
+        raise HTTPException(status_code=400, detail="Invalid event id")
+
+    cursor = db.addons.find({"event_id": str(obj_id)})
+    addons = await cursor.to_list(length=100)
+    for a in addons:
+        a["id"] = str(a.pop("_id"))
+    return addons
+
+
+@router.post("/{event_id}/addons")
+async def create_event_addon(
+    event_id: str,
+    payload: AddonCreate,
+    current_user=Depends(get_current_user(required_role="ORGANIZER")),
+):
+    try:
+        obj_id = ObjectId(event_id)
+    except:
+        raise HTTPException(status_code=400, detail="Invalid event id")
+
+    # Verify event belongs to organizer
+    event = await db.events.find_one({
+        "_id": obj_id,
+        "organizer_id": current_user["_id"]
+    })
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found or not yours")
+
+    addon_data = payload.model_dump()
+    addon_data["event_id"] = str(obj_id)
+    addon_data["sold_quantity"] = 0
+    addon_data["created_at"] = datetime.utcnow()
+
+    result = await db.addons.insert_one(addon_data)
+    return {"id": str(result.inserted_id), "message": "Addon created"}
+
+
+@router.delete("/addons/{addon_id}")
+async def delete_addon(
+    addon_id: str,
+    current_user=Depends(get_current_user(required_role="ORGANIZER")),
+):
+    try:
+        obj_id = ObjectId(addon_id)
+    except:
+        raise HTTPException(status_code=400, detail="Invalid addon id")
+
+    # Find addon to check ownership through event
+    addon = await db.addons.find_one({"_id": obj_id})
+    if not addon:
+        raise HTTPException(status_code=404, detail="Addon not found")
+
+    event = await db.events.find_one({
+        "_id": ObjectId(addon["event_id"]),
+        "organizer_id": current_user["_id"]
+    })
+    if not event:
+        raise HTTPException(status_code=403, detail="Not authorized to delete this addon")
+
+    await db.addons.delete_one({"_id": obj_id})
+    return {"message": "Addon deleted"}
 

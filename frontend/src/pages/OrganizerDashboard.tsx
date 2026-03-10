@@ -10,12 +10,13 @@ import Tickets from "./organizer/Tickets";
 import Discounts from "./organizer/Discounts";
 import EmailBlast from "./organizer/EmailBlast";
 import Agenda from "./organizer/Agenda";
+import Addons from "./organizer/Addons";
 import Survey from "./organizer/Survey";
 import Certificates from "./organizer/Certificates";
 
 const VALID_SECTIONS = [
   "overview", "events", "attendees", "profile",
-  "tickets", "discounts",
+  "tickets", "discounts", "addons",
   "email-blast", "agenda", "survey", "certificates",
 ];
 
@@ -47,6 +48,7 @@ const OrganizerDashboard = () => {
       case "profile": return <OrganizerProfile />;
       case "tickets": return <Tickets />;
       case "discounts": return <Discounts />;
+      case "addons": return <Addons />;
       case "email-blast": return <EmailBlast />;
       case "agenda": return <Agenda />;
       case "survey": return <Survey />;

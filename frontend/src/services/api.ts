@@ -108,8 +108,13 @@ export const getMyBookings = async () => {
 export const deleteMyBooking = (booking_id: string) =>
   api.delete(`/users/me/bookings/${booking_id}`);
 
-export const createBooking = (ticket_id: string, quantity: number) =>
-  api.post("/bookings/", { ticket_id, quantity });
+export const createBooking = (payload: {
+  event_id: string;
+  ticket_id: string;
+  quantity: number;
+  addons?: Array<{ addon_id: string; quantity: number }>;
+  discount_code?: string;
+}) => api.post("/bookings/", payload);
 
 export const createPaymentOrder = (booking_id: string) =>
   api.post(`/payments/create-order/${booking_id}`);
@@ -330,4 +335,20 @@ export const downloadCertificate = async (cert_id: string, filename = 'Certifica
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+};
+
+// ================= ADDONS =================
+export const getEventAddons = async (eventId: string) => {
+  const res = await api.get(`/events/${eventId}/addons`);
+  return res.data;
+};
+
+export const createEventAddon = async (eventId: string, payload: any) => {
+  const res = await api.post(`/events/${eventId}/addons`, payload);
+  return res.data;
+};
+
+export const deleteAddon = async (addonId: string) => {
+  const res = await api.delete(`/events/addons/${addonId}`);
+  return res.data;
 };

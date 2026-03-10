@@ -101,6 +101,7 @@ const OrganizerLayout = ({ children, activeSection, onSelectSection }: Props) =>
           {[
             { key: 'tickets', label: 'Ticket Types', emoji: '🎟️' },
             { key: 'discounts', label: 'Discount Codes', emoji: '🏷️' },
+            { key: 'addons', label: 'Add-ons / Merch', emoji: '📦' },
           ].map(({ key, label, emoji }) => (
             <button
               key={key}

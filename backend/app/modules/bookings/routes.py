@@ -26,6 +26,35 @@ async def create_booking(
         raise HTTPException(404, "Event not found")
 
     total = ticket["price"] * data.quantity
+    
+    # ------------------------------------------
+    # ADDONS / MERCH
+    # ------------------------------------------
+    addons_info = []
+    if data.addons:
+        for item in data.addons:
+            addon_id = item.get("addon_id")
+            qty = item.get("quantity", 0)
+            if not addon_id or qty <= 0:
+                continue
+                
+            addon = await db.addons.find_one({"_id": ObjectId(addon_id)})
+            if not addon:
+                raise HTTPException(404, f"Addon {addon_id} not found")
+            
+            # Verify event match
+            if str(addon["event_id"]) != str(event["_id"]):
+                raise HTTPException(400, f"Addon {addon_id} does not belong to this event")
+
+            item_price = addon["price"]
+            total += item_price * qty
+            addons_info.append({
+                "addon_id": addon_id,
+                "name": addon["name"],
+                "quantity": qty,
+                "price": item_price
+            })
+
     discount_applied = 0
     discount_info = None
 
@@ -33,20 +62,16 @@ async def create_booking(
     # APPLY DISCOUNT
     # ------------------------------------------
     if data.discount_code:
-
         code_upper = data.discount_code.strip().upper()
         discount_doc = await db.discount_codes.find_one({"code": code_upper})
 
         if discount_doc:
-
             now = datetime.utcnow()
-
             is_expired = discount_doc.get("expires_at") and discount_doc["expires_at"] < now
             is_exhausted = discount_doc.get("usage_limit") and discount_doc.get("used_count", 0) >= discount_doc["usage_limit"]
             wrong_event = discount_doc.get("event_id") and str(discount_doc["event_id"]) != str(event["_id"])
 
             if not is_expired and not is_exhausted and not wrong_event:
-
                 if discount_doc["type"] == "PERCENTAGE":
                     discount_applied = round(total * discount_doc["value"] / 100, 2)
                 else:
@@ -89,6 +114,7 @@ async def create_booking(
         "event_id": str(event["_id"]),
         "user_id": current_user["_id"],
         "quantity": data.quantity,
+        "addons": addons_info,
         "discount_code": data.discount_code,
         "discount_applied": discount_applied,
         "total_amount": total,

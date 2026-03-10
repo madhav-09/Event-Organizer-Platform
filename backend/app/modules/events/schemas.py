@@ -121,3 +121,25 @@ class EventTicketOut(BaseModel):
 
 class EventWithTicketsOut(EventOut):
     tickets: List[EventTicketOut] = Field(default_factory=list)
+
+
+# ================= ADDON SCHEMAS =================
+
+class AddonCreate(BaseModel):
+    name: str
+    description: Optional[str] = None
+    price: float
+    total_quantity: int
+    image_url: Optional[str] = None
+
+
+class AddonOut(BaseModel):
+    id: str
+    event_id: str
+    name: str
+    description: Optional[str] = None
+    price: float
+    total_quantity: int
+    sold_quantity: int
+    image_url: Optional[str] = None
+    created_at: datetime

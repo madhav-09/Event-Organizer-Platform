@@ -74,6 +74,10 @@ export default function EventDetail() {
   const [error, setError] = useState<string | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
 
+  // ── Add-ons state ────────────────────────────────────────────────────────
+  const [addons, setAddons] = useState<any[]>([]);
+  const [selectedAddons, setSelectedAddons] = useState<Record<string, number>>({});
+
   // ── Discount state ────────────────────────────────────────────────────────
   const [discountCode, setDiscountCode] = useState('');
   const [appliedDiscount, setAppliedDiscount] = useState<{ code: string; type: string; value: number; message: string } | null>(null);
@@ -86,12 +90,14 @@ export default function EventDetail() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [eventRes, ticketRes] = await Promise.all([
+        const [eventRes, ticketRes, addonRes] = await Promise.all([
           api.get(`/events/${id}`),
           api.get(`/tickets/event/${id}`),
+          api.get(`/events/${id}/addons`),
         ]);
         setEvent(eventRes.data);
         setTickets(ticketRes.data);
+        setAddons(addonRes.data);
       } catch {
         setError("Failed to load event");
       } finally {
@@ -155,15 +161,24 @@ export default function EventDetail() {
   };
 
   const handleCheckout = async () => {
-    if (!selectedTicket) return;
+    if (!selectedTicket || !user) {
+      if (!user) toast.error("Please login to book tickets");
+      return;
+    }
     const available = selectedTicket.quantity - selectedTicket.sold;
     if (quantity < 1 || quantity > available) return;
     try {
       setProcessing(true);
+
+      const addonPayload = Object.entries(selectedAddons)
+        .filter(([_, qty]) => qty > 0)
+        .map(([addon_id, qty]) => ({ addon_id, quantity: qty }));
+
       const bookingRes = await api.post("/bookings/", {
         event_id: String(event!.id),   // fixed: API returns 'id' not '_id'
         ticket_id: String(selectedTicket._id),
         quantity,
+        addons: addonPayload,
         discount_code: appliedDiscount ? appliedDiscount.code : undefined,
       });
       const bookingId = bookingRes.data.booking_id;
@@ -177,7 +192,7 @@ export default function EventDetail() {
         const options: RazorpayOptions = {
           key, amount, currency: "INR",
           name: "Event Organizer",
-          description: event!.title,
+          description: `${event!.title}${addonPayload.length > 0 ? ' + Add-ons' : ''}`,
           order_id,
           handler: async (response) => {
             await api.post("/payments/verify", {
@@ -187,16 +202,27 @@ export default function EventDetail() {
               signature: response.razorpay_signature,
             });
             toast.success("Payment successful! Ticket sent to your email.");
+            navigate('/my-bookings');
           },
           theme: { color: "#6c47ec" },
         };
         new window.Razorpay(options).open();
       }
-    } catch {
-      toast.error("Payment failed. Please try again.");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.detail || "Payment failed. Please try again.");
     } finally {
       setProcessing(false);
     }
+  };
+
+  const updateAddonQty = (id: string, delta: number) => {
+    const addon = addons.find(a => a.id === id);
+    if (!addon) return;
+    setSelectedAddons(prev => {
+      const cur = prev[id] || 0;
+      const next = Math.max(0, Math.min(cur + delta, addon.total_quantity - addon.sold_quantity));
+      return { ...prev, [id]: next };
+    });
   };
 
   const handleSelectTicket = (ticket: Ticket) => {
@@ -207,12 +233,18 @@ export default function EventDetail() {
 
   const available = selectedTicket ? selectedTicket.quantity - selectedTicket.sold : 0;
   const basePrice = selectedTicket ? selectedTicket.price * quantity : 0;
+
+  const addonsPrice = Object.entries(selectedAddons).reduce((acc, [id, qty]) => {
+    const addon = addons.find(a => a.id === id);
+    return acc + (addon ? addon.price * qty : 0);
+  }, 0);
+
   const discountAmount = appliedDiscount
     ? appliedDiscount.type === 'PERCENTAGE'
       ? Math.round(basePrice * appliedDiscount.value / 100)
       : Math.min(appliedDiscount.value, basePrice)
     : 0;
-  const totalPrice = Math.max(0, basePrice - discountAmount);
+  const totalPrice = Math.max(0, basePrice + addonsPrice - discountAmount);
 
   if (loading) {
     return (
@@ -496,13 +528,69 @@ export default function EventDetail() {
                   </div>
                 </div>
                 <p className="text-slate-500 text-xs">{available} tickets available</p>
+              </div>
+            )}
 
-                {/* Price summary */}
-                <div className="mt-3 pt-3 border-t border-white/5 space-y-1.5">
+            {/* Add-ons Section */}
+            {selectedTicket && addons.length > 0 && (
+              <div className="mb-4 space-y-3">
+                <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                  <Tag className="w-3 h-3 text-brand-400" />
+                  Enhance Your Experience
+                </h4>
+                <div className="space-y-2">
+                  {addons.map((addon) => {
+                    const qty = selectedAddons[addon.id] || 0;
+                    const left = addon.total_quantity - addon.sold_quantity;
+                    return (
+                      <div key={addon.id} className="p-3 rounded-xl border border-white/5 bg-white/5 hover:bg-white/8 transition-all">
+                        <div className="flex justify-between items-center">
+                          <div className="flex-1">
+                            <p className="text-white text-sm font-medium">{addon.name}</p>
+                            <p className="text-brand-300 text-xs font-semibold">₹{addon.price}</p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => updateAddonQty(addon.id, -1)}
+                              disabled={qty === 0}
+                              className="w-7 h-7 rounded-lg flex items-center justify-center text-white disabled:opacity-30 border border-white/10 hover:bg-white/5 transition-colors"
+                            >
+                              <ChevronDown className="w-3.5 h-3.5" />
+                            </button>
+                            <span className="text-white font-bold w-5 text-center text-sm">{qty}</span>
+                            <button
+                              onClick={() => updateAddonQty(addon.id, 1)}
+                              disabled={qty >= left}
+                              className="w-7 h-7 rounded-lg flex items-center justify-center text-white disabled:opacity-30 border border-white/10 hover:bg-white/5 transition-colors"
+                            >
+                              <ChevronUp className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                        {left < 10 && left > 0 && (
+                          <p className="text-[10px] text-amber-500 mt-1">Only {left} left</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Price summary */}
+            {selectedTicket && (
+              <div className="mb-4 p-4 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                <div className="space-y-1.5">
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-slate-400">Subtotal</span>
+                    <span className="text-slate-400">Tickets Subtotal</span>
                     <span className="text-slate-300">₹{basePrice}</span>
                   </div>
+                  {addonsPrice > 0 && (
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-slate-400">Add-ons Subtotal</span>
+                      <span className="text-slate-300">₹{addonsPrice}</span>
+                    </div>
+                  )}
                   {appliedDiscount && (
                     <div className="flex justify-between items-center text-sm">
                       <span className="text-emerald-400 flex items-center gap-1">
@@ -512,8 +600,9 @@ export default function EventDetail() {
                       <span className="text-emerald-400">-₹{discountAmount}</span>
                     </div>
                   )}
+
                   <div className="flex justify-between items-center pt-1.5 border-t border-white/5">
-                    <span className="text-slate-400 text-sm">Total</span>
+                    <span className="text-slate-400 text-sm">Total Amount</span>
                     <span className="text-white font-bold text-xl">₹{totalPrice}</span>
                   </div>
                 </div>
@@ -593,6 +682,6 @@ export default function EventDetail() {
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 }
