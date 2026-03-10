@@ -1,269 +1,75 @@
 # Event Organizer Platform
 
-A full-scale **Online Event Management Platform** inspired by **Townscript**, built for scalability from **MVP to enterprise level**. The platform enables users to discover, book, and attend events, while empowering organizers to create, manage, and monetize events efficiently.
+A high-performance, full-scale **Online Event Management Platform** inspired by **Townscript**, designed for modern event businesses. This platform enables users to discover, book, and attend events, while providing organizers with a premium, glassmorphic dashboard to manage registrations, ticketing, and attendee engagement.
 
 ---
 
-## 🚀 Tech Stack
+## 🌟 Key Features
+
+### 👤 Attendees
+- **Discovery**: Search and filter events by city, category, date, and price.
+- **Dynamic Search**: High-performance hero search with real-time suggestions.
+- **Easy Booking**: Seamless multi-step checkout with coupon support and automatic pricing.
+- **E-Tickets**: Receive QR-coded tickets via email (PDF) with the ability to download from the profile.
+- **Verification**: Built-in QR scanner for organizers to check in attendees at the venue.
+- **Wishlist & Reviews**: Save favorite events and leave feedback after the event.
+
+### 🏢 Organizers (Premium Dashboard)
+- **Glassmorphic UI**: Sleek, modern dashboard with dark theme and interactive analytics.
+- **Event Lifecycle**: Create, edit, publish, or cancel events with banner uploads via Cloudinary.
+- **Ticket Management**: Define multiple ticket tiers (General, VIP, etc.) with custom pricing and quantity limits.
+- **Sales Tracking**: Real-time overview of ticket sales, revenue, and attendee lists.
+- **Certificate Distribution**: Automatically generate and distribute branded PDF certificates with QR verification for participants, speakers, and volunteers.
+- **Communication**: Email Blast system to send bulk updates or announcements to all registered attendees.
+- **Agenda Manager**: Build and manage detailed event schedules and sessions.
+
+### �️ Administrators
+- **Moderation**: Approve or flag events and organizers.
+- **User Management**: Comprehensive control over platform users and permissions.
+- **Finance**: Track total platform revenue, commission handling, and payments.
+
+---
+
+## �️ Tech Stack
 
 ### Frontend
-
-* React.js
-* Tailwind CSS
-* React Router
-* Context API / Zustand
-* Axios
-
-### Backend
-
-* FastAPI (Python)
-* MongoDB (Mongoose / Motor)
-* JWT Authentication
-* Background Jobs (Celery / APScheduler)
-
-### Integrations
-
-* Razorpay / Stripe / PayPal
-* Google Maps
-* SendGrid / SES (Email)
-* SMS & WhatsApp APIs
-* Zoom / Google Meet
-
----
-
-## 👥 User Roles
-
-* Guest
-* Attendee / Customer
-* Event Organizer
-* Admin / Super Admin
-* Support / Operations Team (optional)
-
----
-
-## 🌍 Core Features
-
-### Public / Guest
-
-* Browse & search events
-* Filter by location, date, category, price
-* Event detail pages
-* Organizer preview
-* Social sharing
-* Sign up / login
-
-### Attendee
-
-* Profile & account management
-* Personalized event discovery
-* Ticket booking & secure checkout
-* Multiple payment options
-* E-tickets with QR codes
-* Booking history & refunds
-* Reviews & ratings
-
-### Event Organizer
-
-* Organizer verification & KYC
-* Event creation & publishing
-* Ticket & pricing management
-* Attendee management
-* Sales & revenue analytics
-* Marketing tools
-* Check-in & access control
-
-### Admin Panel
-
-* User & organizer management
-* Event moderation
-* Payments & commission handling
-* Platform configuration
-* Analytics & reports
-* Support & dispute resolution
-
----
-
-## 🔐 Security & Compliance
-
-* JWT / OAuth authentication
-* Role-based access control (RBAC)
-* Encrypted sensitive data
-* PCI-DSS compliant payments
-* GDPR & data privacy compliance
-* Rate limiting & abuse prevention
-
----
-
-## 🧠 Advanced / Optional Features
-
-* AI-based recommendations
-* Dynamic pricing
-* Mobile apps (Android / iOS)
-* Face recognition check-in
-* NFT / digital tickets
-* Virtual expo & booths
-
----
-
-## 💰 Monetization Models
-
-* Ticket commission
-* Organizer subscriptions
-* Featured event promotions
-* Ads & sponsorships
-* Premium analytics
-
----
-
-## 📁 Project Structure
-
-```
-Event-Organizer-Platform/
-├── docker-compose.yml
-├── README.md
-│
-├── frontend/
-│   ├── index.html
-│   ├── package.json
-│   ├── vite.config.ts
-│   ├── tsconfig.json
-│   ├── tsconfig.app.json
-│   ├── tsconfig.node.json
-│   ├── tailwind.config.js
-│   ├── postcss.config.js
-│   ├── eslint.config.js
-│   ├── Dockerfile
-│   ├── .gitignore
-│   ├── .dockerignore
-│   └── src/
-│       ├── main.tsx
-│       ├── App.tsx
-│       ├── App.css
-│       ├── index.css
-│       ├── assets/
-│       │   └── react.svg
-│       ├── components/
-│       │   ├── Navbar.tsx
-│       │   ├── Footer.tsx
-│       │   ├── EventCard.tsx
-│       │   ├── HeroSearch.tsx
-│       │   ├── CityGrid.tsx
-│       │   ├── Categoryfilter.tsx
-│       │   ├── Breadcrumbs.tsx
-│       │   ├── BookingModal.tsx
-│       │   └── ProtectedRoute.tsx
-│       ├── context/
-│       │   └── AuthContext.tsx
-│       ├── layout/
-│       │   ├── PublicLayout.tsx
-│       │   └── OrganizerLayout.tsx
-│       ├── pages/
-│       │   ├── Home.tsx
-│       │   ├── Login.tsx
-│       │   ├── EventDetail.tsx
-│       │   ├── CreateEvent.tsx
-│       │   ├── MyBookings.tsx
-│       │   ├── MyEvents.tsx
-│       │   ├── ApplyOrganizer.tsx
-│       │   ├── OrganizerDashboard.tsx
-│       │   ├── admin/
-│       │   │   ├── AdminLayout.tsx
-│       │   │   ├── AdminDashboard.tsx
-│       │   │   ├── UsersList.tsx
-│       │   │   ├── Organizers.tsx
-│       │   │   ├── Events.tsx
-│       │   │   └── Analytics.tsx
-│       │   └── organizer/
-│       │       ├── ManageEvent.tsx
-│       │       ├── EditEvent.tsx
-│       │       ├── Overview.tsx
-│       │       ├── Details.tsx
-│       │       ├── Forms.tsx
-│       │       ├── Tickets.tsx
-│       │       ├── Addons.tsx
-│       │       ├── Discounts.tsx
-│       │       ├── EventBookings.tsx
-│       │       ├── Settings.tsx
-│       │       └── attendees/
-│       │           ├── AttendeesPage.tsx
-│       │           ├── AttendeesTable.tsx
-│       │           ├── EventSelector.tsx
-│       │           └── QrScannerModal.tsx
-│       └── services/
-│           ├── api.ts
-│           ├── auth_api.ts
-│           └── organizerAnalytics.ts
-│
-└── backend/
-    ├── requirements.txt
-    ├── test_email.py
-    ├── Dockerfile
-    ├── .gitignore
-    ├── .dockerignore
-    ├── tickets/                    # Generated ticket PDFs
-    └── app/
-        ├── main.py
-        ├── core/
-        │   ├── config.py
-        │   ├── database.py
-        │   └── payment.py
-        ├── common/
-        │   ├── razorpay_client.py
-        │   └── utils/
-        │       ├── security.py
-        │       ├── jwt.py
-        │       ├── email.py
-        │       ├── pdf.py
-        │       ├── qr.py
-        │       └── dependencies.py
-        ├── modules/
-        │   ├── users/
-        │   │   ├── models.py
-        │   │   └── routes.py
-        │   ├── events/
-        │   │   ├── models.py
-        │   │   ├── routes.py
-        │   │   ├── schemas.py
-        │   │   └── service.py
-        │   ├── tickets/
-        │   │   ├── models.py
-        │   │   ├── routes.py
-        │   │   └── service.py
-        │   ├── bookings/
-        │   │   ├── models.py
-        │   │   ├── routes.py
-        │   │   └── service.py
-        │   ├── payments/
-        │   │   ├── models.py
-        │   │   ├── routes.py
-        │   │   └── webhook.py
-        │   ├── organizers/
-        │   │   ├── models.py
-        │   │   └── routes.py
-        │   └── admin/
-        │       └── routes.py
-        └── templates/
-            └── email/
-                ├── ticket_booking.html
-                └── event_created.html
-```
-
----
-
-## ⚙️ Setup Instructions
+- **Framework**: React 18 (Vite) with TypeScript
+- **Styling**: Tailwind CSS (Glassmorphism & Dark Theme)
+- **State/Routing**: React Router 7, Context API
+- **Animations**: Framer Motion
+- **Icons/UI**: Lucide React, React Icons
+- **Charts**: Recharts
 
 ### Backend
+- **Language**: Python 3.10+
+- **Framework**: FastAPI (High-performance, Async)
+- **Database**: MongoDB (via Motor Async Driver)
+- **PDF/Media**: ReportLab (PDFs), Cloudinary (Images & Certificate storage)
+- **Tasks**: Asyncio-based background workers for cleanup and scheduling.
+- **Security**: JWT Authentication, Bcrypt password hashing.
 
+---
+
+## 🚀 Setup & Installation
+
+### Prerequisites
+- Python 3.10+
+- Node.js 18+
+- MongoDB instance (Local or Atlas)
+- Cloudinary Account (for media uploads)
+- Razorpay Account (for payments - optional for testing)
+
+### 1. Backend Setup
 ```bash
 cd backend
 python -m venv venv
-source venv/bin/activate
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
+cp .env.example .env      # Configure your environment variables
 uvicorn app.main:app --reload
 ```
 
-### Frontend
-
+### 2. Frontend Setup
 ```bash
 cd frontend
 npm install
@@ -272,28 +78,57 @@ npm run dev
 
 ---
 
-## 📦 Deployment & Ops
+## ⚙️ Configuration (Environment Variables)
 
-* Cloud hosting (AWS / GCP / Azure)
-* CI/CD pipelines
-* Monitoring & logging
-* Backup & disaster recovery
+### Backend `.env`
+Key variables required for full functionality:
+- `MONGO_URI`: Your MongoDB connection string.
+- `CLOUDINARY_URL`: Configuration for media storage.
+- `SMTP_CONFIG`: Host, Port, User, and Pass for email notifications.
+- `RAZORPAY_KEYS`: API keys for payment processing.
+
+*See [docs/ENVIRONMENT.md](docs/ENVIRONMENT.md) for a detailed list.*
 
 ---
 
-## 📌 Roadmap
+## 📁 Project Structure
 
-* MVP launch
-* Organizer subscriptions
-* Mobile apps
-* AI & analytics enhancements
+```
+Event-Organizer-Platform/
+├── backend/
+│   ├── app/
+│   │   ├── core/           # Configuration & DB connection
+│   │   ├── modules/        # Business logic (Auth, Events, Bookings, etc.)
+│   │   ├── common/         # Email, PDF, QR utilities
+│   │   └── templates/      # Jinja2 Email & PDF templates
+│   └── tests/              # Backend test suites
+├── frontend/
+│   ├── src/
+│   │   ├── components/     # Reusable UI components
+│   │   ├── layout/         # Public & Organizer layouts
+│   │   ├── pages/          # Main application pages
+│   │   ├── context/        # Auth & Application state
+│   │   └── services/       # API integration layers
+└── docs/                   # Extended documentation
+```
+
+---
+
+## 📌 Development Status
+
+- [x] MVP Core (Auth, Events, Bookings)
+- [x] Organizer Dashboard (Glassmorphism Overhaul)
+- [x] QR Code Check-in System
+- [x] Certificate Distribution System
+- [x] Email Blast & Agenda Tools
+- [ ] Mobile App Integration (Planned)
+- [ ] AI-based Event Recommendations (Planned)
 
 ---
 
 ## 📄 License
 
-This project is intended for **startup & learning purposes**. Licensing can be added based on business requirements.
+This project is open-source for learning and development purposes.
 
 ---
 
-**Built to scale. Designed for real-world event businesses.**

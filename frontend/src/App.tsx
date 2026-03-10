@@ -149,7 +149,11 @@ const App = () => {
 
         <Route
           path="/organizer/events/:eventId/bookings"
-          element={<EventBookings />}
+          element={
+            <ProtectedRoute role="ORGANIZER">
+              <EventBookings />
+            </ProtectedRoute>
+          }
         />
 
 
