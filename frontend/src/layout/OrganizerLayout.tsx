@@ -101,7 +101,6 @@ const OrganizerLayout = ({ children, activeSection, onSelectSection }: Props) =>
           {[
             { key: 'tickets', label: 'Ticket Types', emoji: '🎟️' },
             { key: 'discounts', label: 'Discount Codes', emoji: '🏷️' },
-            { key: 'waitlist', label: 'Waitlist', emoji: '⏳' },
           ].map(({ key, label, emoji }) => (
             <button
               key={key}
@@ -121,7 +120,6 @@ const OrganizerLayout = ({ children, activeSection, onSelectSection }: Props) =>
           {[
             { key: 'email-blast', label: 'Email Blast', emoji: '📧' },
             { key: 'agenda', label: 'Agenda & Schedule', emoji: '📅' },
-            { key: 'speakers', label: 'Speakers', emoji: '🎤' },
             { key: 'survey', label: 'Feedback Survey', emoji: '📝' },
             { key: 'certificates', label: 'Certificates', emoji: '🏅' },
           ].map(({ key, label, emoji }) => (
