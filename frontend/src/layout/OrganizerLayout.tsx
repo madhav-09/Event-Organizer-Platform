@@ -123,6 +123,7 @@ const OrganizerLayout = ({ children, activeSection, onSelectSection }: Props) =>
             { key: 'agenda', label: 'Agenda & Schedule', emoji: '📅' },
             { key: 'speakers', label: 'Speakers', emoji: '🎤' },
             { key: 'survey', label: 'Feedback Survey', emoji: '📝' },
+            { key: 'certificates', label: 'Certificates', emoji: '🏅' },
           ].map(({ key, label, emoji }) => (
             <button
               key={key}

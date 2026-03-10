@@ -2,7 +2,7 @@ import axios from 'axios';
 import type { InternalAxiosRequestConfig } from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://event-organizer-platform.onrender.com',
+  // baseURL: 'https://event-organizer-platform.onrender.com',
   baseURL: 'http://localhost:8000',
 });
 
@@ -279,7 +279,55 @@ export const sendEmailBlast = async (payload: {
   return res.data;
 };
 
+
 export const getEmailBlastHistory = async () => {
   const res = await api.get('/organizers/me/email-blast/history');
   return res.data;
+};
+
+// ================= CERTIFICATES =================
+export const getCertificateTemplates = async () => {
+  const res = await api.get('/certificates/templates');
+  return res.data;
+};
+
+export const generateCertificates = async (event_id: string, role: string) => {
+  const res = await api.post('/certificates/generate', { event_id, role });
+  return res.data;
+};
+
+export const sendCertificates = async (event_id: string, role?: string) => {
+  const res = await api.post('/certificates/send', { event_id, role });
+  return res.data;
+};
+
+export const getEventCertificates = async (event_id: string, role?: string) => {
+  const params = role ? { role } : {};
+  const res = await api.get(`/certificates/event/${event_id}`, { params });
+  return res.data;
+};
+
+export const getMyCertificates = async () => {
+  const res = await api.get('/certificates/my');
+  return res.data;
+};
+
+export const verifyCertificate = async (cert_id: string) => {
+  const res = await api.get(`/certificates/verify/${cert_id}`);
+  return res.data;
+};
+
+// Downloads the cert PDF via the authenticated streaming endpoint
+export const downloadCertificate = async (cert_id: string, filename = 'Certificate.pdf') => {
+  const res = await api.get(`/certificates/download/${cert_id}`, {
+    responseType: 'blob',
+  });
+  const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 };

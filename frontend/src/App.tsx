@@ -20,6 +20,7 @@ import EditEvent from "./pages/organizer/EditEvent";
 import EventBookings from "./pages/organizer/EventBookings";
 
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import VerifyCertificate from "./pages/VerifyCertificate";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import PublicLayout from "./layout/PublicLayout";
@@ -105,6 +106,9 @@ const App = () => {
         </Route>
 
         <Route path="/apply-organizer" element={<ApplyOrganizer />} />
+
+        {/* ================= PUBLIC CERT VERIFY ================= */}
+        <Route path="/verify-certificate/:id" element={<VerifyCertificate />} />
 
         {/* ================= ORGANIZER ================= */}
         <Route

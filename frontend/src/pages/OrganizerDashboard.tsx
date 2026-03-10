@@ -13,11 +13,12 @@ import EmailBlast from "./organizer/EmailBlast";
 import Agenda from "./organizer/Agenda";
 import Speakers from "./organizer/Speakers";
 import Survey from "./organizer/Survey";
+import Certificates from "./organizer/Certificates";
 
 const VALID_SECTIONS = [
   "overview", "events", "attendees", "profile",
   "tickets", "discounts", "waitlist",
-  "email-blast", "agenda", "speakers", "survey",
+  "email-blast", "agenda", "speakers", "survey", "certificates",
 ];
 
 const OrganizerDashboard = () => {
@@ -53,6 +54,7 @@ const OrganizerDashboard = () => {
       case "agenda": return <Agenda />;
       case "speakers": return <Speakers />;
       case "survey": return <Survey />;
+      case "certificates": return <Certificates />;
       default: return <Overview />;
     }
   };

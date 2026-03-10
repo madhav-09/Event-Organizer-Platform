@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Calendar, MapPin, Ticket, ExternalLink, AlertCircle, Trash2,
-  CheckCircle, Clock, XCircle, ShoppingBag, Loader, MessageSquare
+  CheckCircle, Clock, XCircle, ShoppingBag, Loader, MessageSquare,
+  Award, Download
 } from "lucide-react";
-import { getMyBookings, deleteMyBooking } from "../services/api";
+import { getMyBookings, deleteMyBooking, getMyCertificates, downloadCertificate } from "../services/api";
 import toast from "react-hot-toast";
 
 interface Booking {
@@ -66,11 +67,15 @@ function BookingCardSkeleton() {
 }
 
 export default function MyBookings() {
+  const [activeTab, setActiveTab] = useState<'bookings' | 'certificates'>('bookings');
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
+  const [certs, setCerts] = useState<any[]>([]);
+  const [certsLoading, setCertsLoading] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -87,6 +92,16 @@ export default function MyBookings() {
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
   }, []);
+
+  // Fetch certs when tab switches
+  useEffect(() => {
+    if (activeTab !== 'certificates') return;
+    setCertsLoading(true);
+    getMyCertificates()
+      .then(setCerts)
+      .catch(() => toast.error('Failed to load certificates'))
+      .finally(() => setCertsLoading(false));
+  }, [activeTab]);
 
   const handleDelete = async (bookingId: string) => {
     setDeletingId(bookingId);
@@ -106,162 +121,229 @@ export default function MyBookings() {
     <div className="min-h-screen py-16 px-4 sm:px-6 lg:px-8" style={{ background: 'var(--bg-primary)' }}>
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="mb-10 animate-fade-up" style={{ animationFillMode: 'both' }}>
-          <div className="flex items-center gap-3 mb-3">
+        <div className="mb-8 animate-fade-up" style={{ animationFillMode: 'both' }}>
+          <div className="flex items-center gap-3 mb-5">
             <div className="w-10 h-10 rounded-xl flex items-center justify-center"
               style={{ background: 'rgba(108,71,236,0.15)', border: '1px solid rgba(108,71,236,0.25)' }}>
               <Ticket className="w-5 h-5 text-brand-400" />
             </div>
             <div>
-              <h1 className="font-heading font-black text-2xl sm:text-3xl text-white">My Bookings</h1>
-              <p className="text-slate-500 text-sm">All your event bookings in one place</p>
+              <h1 className="font-heading font-black text-2xl sm:text-3xl text-white">My Dashboard</h1>
+              <p className="text-slate-500 text-sm">Bookings & certificates in one place</p>
             </div>
+          </div>
+
+          {/* Tabs */}
+          <div className="flex gap-2">
+            {([
+              { key: 'bookings', label: 'My Bookings', icon: <Ticket className="w-4 h-4" /> },
+              { key: 'certificates', label: 'My Certificates', icon: <Award className="w-4 h-4" /> },
+            ] as const).map(t => (
+              <button
+                key={t.key}
+                onClick={() => setActiveTab(t.key)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all`}
+                style={{
+                  background: activeTab === t.key ? 'rgba(108,71,236,0.25)' : 'rgba(255,255,255,0.05)',
+                  border: `1px solid ${activeTab === t.key ? 'rgba(108,71,236,0.4)' : 'rgba(255,255,255,0.08)'}`,
+                  color: activeTab === t.key ? '#c4b5fd' : '#64748b',
+                }}
+              >
+                {t.icon} {t.label}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Content */}
-        {loading ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => <BookingCardSkeleton key={i} />)}
-          </div>
-        ) : error ? (
-          <div className="text-center py-20 glass-card rounded-2xl">
-            <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <p className="text-red-400">{error}</p>
-          </div>
-        ) : bookings.length === 0 ? (
-          <div className="text-center py-24 glass-card rounded-2xl animate-fade-up" style={{ animationFillMode: 'both' }}>
-            <ShoppingBag className="w-16 h-16 text-slate-700 mx-auto mb-5" />
-            <h3 className="font-heading font-bold text-xl text-white mb-3">No bookings yet</h3>
-            <p className="text-slate-500 text-sm mb-8">Discover and book events near you</p>
-            <Link to="/" className="btn-primary mx-auto">
-              Browse Events
-            </Link>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {bookings.map((booking, i) => {
-              const statusConfig = STATUS_CONFIG[booking.status] ?? STATUS_CONFIG.PENDING;
-              const isDeleting = deletingId === booking.booking_id;
-              const isPastEvent = new Date(booking.event.date) < new Date();
+        {/* Bookings Tab */}
+        {activeTab === 'bookings' && (
+          <>
+            {loading ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => <BookingCardSkeleton key={i} />)}
+              </div>
+            ) : error ? (
+              <div className="text-center py-20 glass-card rounded-2xl">
+                <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+                <p className="text-red-400">{error}</p>
+              </div>
+            ) : bookings.length === 0 ? (
+              <div className="text-center py-24 glass-card rounded-2xl animate-fade-up" style={{ animationFillMode: 'both' }}>
+                <ShoppingBag className="w-16 h-16 text-slate-700 mx-auto mb-5" />
+                <h3 className="font-heading font-bold text-xl text-white mb-3">No bookings yet</h3>
+                <p className="text-slate-500 text-sm mb-8">Discover and book events near you</p>
+                <Link to="/" className="btn-primary mx-auto">
+                  Browse Events
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {bookings.map((booking, i) => {
+                  const statusConfig = STATUS_CONFIG[booking.status] ?? STATUS_CONFIG.PENDING;
+                  const isDeleting = deletingId === booking.booking_id;
+                  const isPastEvent = new Date(booking.event.date) < new Date();
 
-              return (
-                <div
-                  key={booking.booking_id}
-                  className={`glass-card rounded-2xl overflow-hidden transition-all duration-300 animate-fade-up ${isDeleting ? "opacity-50 scale-98 pointer-events-none" : ""
-                    }`}
-                  style={{ animationDelay: `${i * 60}ms`, animationFillMode: 'both' }}
-                >
-                  <div className="flex flex-col sm:flex-row">
-                    {/* Banner */}
-                    <div className="relative sm:w-40 h-32 sm:h-auto flex-shrink-0 overflow-hidden bg-surface-700">
-                      {booking.event.banner_url ? (
-                        <img
-                          src={booking.event.banner_url}
-                          alt={booking.event.title}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="absolute inset-0 bg-gradient-to-br from-brand-700 to-indigo-900 opacity-50" />
-                      )}
-                      {isPastEvent && (
-                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                          <span className="text-xs text-slate-300 font-medium px-2 py-1 rounded-lg"
-                            style={{ background: 'rgba(0,0,0,0.6)' }}>Past Event</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Details */}
-                    <div className="flex-1 p-5 flex flex-col justify-between">
-                      <div>
-                        <div className="flex items-start justify-between gap-3 mb-3">
-                          <div>
-                            <span className={`${statusConfig.className} inline-flex items-center gap-1.5 mb-2`}>
-                              {statusConfig.icon}
-                              {statusConfig.label}
-                            </span>
-                            <Link
-                              to={`/event/${booking.event.id}`}
-                              className="block font-heading font-bold text-white text-base hover:text-brand-300 transition-colors leading-snug"
-                            >
-                              {booking.event.title}
-                              <ExternalLink className="inline w-3.5 h-3.5 ml-1.5 text-slate-500" />
-                            </Link>
-                          </div>
-                          <div className="text-right flex-shrink-0">
-                            <p className="font-bold text-white text-lg">₹{booking.total_amount}</p>
-                            <p className="text-slate-500 text-xs">{booking.quantity}× {booking.ticket.title}</p>
-                          </div>
-                        </div>
-
-                        <div className="flex flex-wrap gap-3 text-xs text-slate-400">
-                          <span className="flex items-center gap-1.5">
-                            <Calendar className="w-3.5 h-3.5 text-brand-400" />
-                            {formatDate(booking.event.date)} at {formatTime(booking.event.date)}
-                          </span>
-                          <span className="flex items-center gap-1.5">
-                            <MapPin className="w-3.5 h-3.5 text-brand-400" />
-                            {booking.event.location}{booking.event.city ? `, ${booking.event.city}` : ""}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Actions */}
-                      {!isPastEvent && (
-                        <div className="mt-4 flex items-center justify-end">
-                          {confirmDeleteId === booking.booking_id ? (
-                            <div className="flex items-center gap-3 text-sm">
-                              <span className="text-slate-400">Cancel this booking?</span>
-                              <button
-                                onClick={() => handleDelete(booking.booking_id)}
-                                className="px-3 py-1.5 rounded-lg text-red-400 font-medium"
-                                style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)' }}
-                              >
-                                Yes, cancel
-                              </button>
-                              <button
-                                onClick={() => setConfirmDeleteId(null)}
-                                className="px-3 py-1.5 rounded-lg text-slate-400"
-                                style={{ background: 'rgba(255,255,255,0.06)' }}
-                              >
-                                Keep
-                              </button>
-                            </div>
+                  return (
+                    <div
+                      key={booking.booking_id}
+                      className={`glass-card rounded-2xl overflow-hidden transition-all duration-300 animate-fade-up ${isDeleting ? "opacity-50 scale-98 pointer-events-none" : ""
+                        }`}
+                      style={{ animationDelay: `${i * 60}ms`, animationFillMode: 'both' }}
+                    >
+                      <div className="flex flex-col sm:flex-row">
+                        {/* Banner */}
+                        <div className="relative sm:w-40 h-32 sm:h-auto flex-shrink-0 overflow-hidden bg-surface-700">
+                          {booking.event.banner_url ? (
+                            <img
+                              src={booking.event.banner_url}
+                              alt={booking.event.title}
+                              className="w-full h-full object-cover"
+                            />
                           ) : (
-                            <button
-                              onClick={() => setConfirmDeleteId(booking.booking_id)}
-                              disabled={isDeleting}
-                              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm text-red-400 hover:text-red-300 transition-colors"
-                              style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)' }}
-                            >
-                              {isDeleting ? (
-                                <Loader className="w-3.5 h-3.5 animate-spin" />
-                              ) : (
-                                <Trash2 className="w-3.5 h-3.5" />
-                              )}
-                              Cancel Booking
-                            </button>
+                            <div className="absolute inset-0 bg-gradient-to-br from-brand-700 to-indigo-900 opacity-50" />
+                          )}
+                          {isPastEvent && (
+                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                              <span className="text-xs text-slate-300 font-medium px-2 py-1 rounded-lg"
+                                style={{ background: 'rgba(0,0,0,0.6)' }}>Past Event</span>
+                            </div>
                           )}
                         </div>
-                      )}
-                      {isPastEvent && booking.status === 'CONFIRMED' && (
-                        <div className="mt-4 flex items-center justify-end">
-                          <Link
-                            to={`/events/${booking.event.id}/feedback`}
-                            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-brand-300 hover:text-white transition-colors"
-                            style={{ background: 'rgba(108,71,236,0.15)', border: '1px solid rgba(108,71,236,0.3)' }}
-                          >
-                            <MessageSquare className="w-4 h-4" />
-                            Leave Feedback
-                          </Link>
+
+                        {/* Details */}
+                        <div className="flex-1 p-5 flex flex-col justify-between">
+                          <div>
+                            <div className="flex items-start justify-between gap-3 mb-3">
+                              <div>
+                                <span className={`${statusConfig.className} inline-flex items-center gap-1.5 mb-2`}>
+                                  {statusConfig.icon}
+                                  {statusConfig.label}
+                                </span>
+                                <Link
+                                  to={`/event/${booking.event.id}`}
+                                  className="block font-heading font-bold text-white text-base hover:text-brand-300 transition-colors leading-snug"
+                                >
+                                  {booking.event.title}
+                                  <ExternalLink className="inline w-3.5 h-3.5 ml-1.5 text-slate-500" />
+                                </Link>
+                              </div>
+                              <div className="text-right flex-shrink-0">
+                                <p className="font-bold text-white text-lg">₹{booking.total_amount}</p>
+                                <p className="text-slate-500 text-xs">{booking.quantity}× {booking.ticket.title}</p>
+                              </div>
+                            </div>
+
+                            <div className="flex flex-wrap gap-3 text-xs text-slate-400">
+                              <span className="flex items-center gap-1.5">
+                                <Calendar className="w-3.5 h-3.5 text-brand-400" />
+                                {formatDate(booking.event.date)} at {formatTime(booking.event.date)}
+                              </span>
+                              <span className="flex items-center gap-1.5">
+                                <MapPin className="w-3.5 h-3.5 text-brand-400" />
+                                {booking.event.location}{booking.event.city ? `, ${booking.event.city}` : ""}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Actions */}
+                          {!isPastEvent && (
+                            <div className="mt-4 flex items-center justify-end">
+                              {confirmDeleteId === booking.booking_id ? (
+                                <div className="flex items-center gap-3 text-sm">
+                                  <span className="text-slate-400">Cancel this booking?</span>
+                                  <button
+                                    onClick={() => handleDelete(booking.booking_id)}
+                                    className="px-3 py-1.5 rounded-lg text-red-400 font-medium"
+                                    style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)' }}
+                                  >
+                                    Yes, cancel
+                                  </button>
+                                  <button
+                                    onClick={() => setConfirmDeleteId(null)}
+                                    className="px-3 py-1.5 rounded-lg text-slate-400"
+                                    style={{ background: 'rgba(255,255,255,0.06)' }}
+                                  >
+                                    Keep
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={() => setConfirmDeleteId(booking.booking_id)}
+                                  disabled={isDeleting}
+                                  className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm text-red-400 hover:text-red-300 transition-colors"
+                                  style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)' }}
+                                >
+                                  {isDeleting ? (
+                                    <Loader className="w-3.5 h-3.5 animate-spin" />
+                                  ) : (
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  )}
+                                  Cancel Booking
+                                </button>
+                              )}
+                            </div>
+                          )}
+                          {isPastEvent && booking.status === 'CONFIRMED' && (
+                            <div className="mt-4 flex items-center justify-end">
+                              <Link
+                                to={`/events/${booking.event.id}/feedback`}
+                                className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-brand-300 hover:text-white transition-colors"
+                                style={{ background: 'rgba(108,71,236,0.15)', border: '1px solid rgba(108,71,236,0.3)' }}
+                              >
+                                <MessageSquare className="w-4 h-4" />
+                                Leave Feedback
+                              </Link>
+                            </div>
+                          )}
                         </div>
-                      )}
+                      </div>
                     </div>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Certificates Tab */}
+        {activeTab === 'certificates' && (
+          <div className="space-y-4">
+            {certsLoading ? (
+              <div className="flex items-center justify-center py-20 gap-3 text-slate-400">
+                <Loader className="w-5 h-5 animate-spin text-brand-400" />
+                <span className="text-sm">Loading certificates…</span>
+              </div>
+            ) : certs.length === 0 ? (
+              <div className="text-center py-24 glass-card rounded-2xl">
+                <Award className="w-16 h-16 text-slate-700 mx-auto mb-5" />
+                <h3 className="font-heading font-bold text-xl text-white mb-2">No certificates yet</h3>
+                <p className="text-slate-500 text-sm">Certificates you receive will appear here</p>
+              </div>
+            ) : (
+              certs.map((cert: any) => (
+                <div key={cert.id} className="glass-card rounded-2xl p-5 flex items-center gap-5">
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
+                    style={{ background: 'rgba(108,71,236,0.15)', border: '1px solid rgba(108,71,236,0.25)' }}>🏅</div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white font-bold text-sm truncate">{cert.certificate_type}</p>
+                    <p className="text-slate-400 text-xs mt-0.5">{cert.event_name} · {cert.event_date}</p>
+                    <span className="inline-block mt-1.5 text-xs px-2 py-0.5 rounded-md font-semibold"
+                      style={{ background: 'rgba(108,71,236,0.15)', color: '#c4b5fd' }}>
+                      {cert.role.charAt(0) + cert.role.slice(1).toLowerCase()}
+                    </span>
                   </div>
+                  <button
+                    onClick={() =>
+                      downloadCertificate(cert.id, `Certificate_${cert.name || 'download'}.pdf`)
+                        .catch(() => toast.error('Download failed'))
+                    }
+                    className="flex items-center gap-1.5 text-sm font-semibold text-brand-300 hover:text-brand-200 transition-colors flex-shrink-0"
+                  >
+                    <Download className="w-4 h-4" /> Download
+                  </button>
                 </div>
-              );
-            })}
+              ))
+            )}
           </div>
         )}
       </div>

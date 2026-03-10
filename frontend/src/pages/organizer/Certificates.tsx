@@ -1,0 +1,300 @@
+import { useState, useEffect } from 'react';
+import {
+    Award, Send, Download, RefreshCw, Filter, Loader2, CheckCircle2,
+    Users, Mic, HelpCircle, ShoppingBag, Calendar
+} from 'lucide-react';
+import { getMyEvents, generateCertificates, sendCertificates, getEventCertificates, downloadCertificate } from '../../services/api';
+import toast from 'react-hot-toast';
+
+type Role = 'ATTENDEE' | 'SPEAKER' | 'VOLUNTEER' | 'VENDOR';
+
+interface Certificate {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    certificate_type: string;
+    certificate_url: string;
+    status: 'generated' | 'sent';
+    created_at: string;
+}
+
+const ROLES: { value: Role; label: string; icon: JSX.Element; color: string }[] = [
+    { value: 'ATTENDEE', label: 'Attendees', color: 'rgba(108,71,236,0.15)', icon: <Users className="w-4 h-4" /> },
+    { value: 'SPEAKER', label: 'Speakers', color: 'rgba(59,130,246,0.15)', icon: <Mic className="w-4 h-4" /> },
+    { value: 'VOLUNTEER', label: 'Volunteers', color: 'rgba(16,185,129,0.15)', icon: <HelpCircle className="w-4 h-4" /> },
+    { value: 'VENDOR', label: 'Vendors', color: 'rgba(245,158,11,0.15)', icon: <ShoppingBag className="w-4 h-4" /> },
+];
+
+const ROLE_TEXT_COLOR: Record<Role, string> = {
+    ATTENDEE: '#c4b5fd',
+    SPEAKER: '#93c5fd',
+    VOLUNTEER: '#6ee7b7',
+    VENDOR: '#fcd34d',
+};
+
+export default function Certificates() {
+    const [events, setEvents] = useState<any[]>([]);
+    const [selectedEventId, setSelectedEventId] = useState('');
+    const [activeRole, setActiveRole] = useState<Role>('ATTENDEE');
+    const [certs, setCerts] = useState<Certificate[]>([]);
+
+    const [loadingEvents, setLoadingEvents] = useState(true);
+    const [loadingCerts, setLoadingCerts] = useState(false);
+    const [generating, setGenerating] = useState(false);
+    const [sending, setSending] = useState(false);
+
+    // Load organizer events
+    useEffect(() => {
+        getMyEvents()
+            .then((data: any[]) => {
+                setEvents(data);
+                if (data.length > 0) {
+                    setSelectedEventId(data[0].event_id);
+                }
+            })
+            .catch(() => toast.error('Failed to load events'))
+            .finally(() => setLoadingEvents(false));
+    }, []);
+
+    // Reload certs when event or role changes
+    useEffect(() => {
+        if (!selectedEventId) return;
+        fetchCerts();
+    }, [selectedEventId, activeRole]);
+
+    const fetchCerts = async () => {
+        if (!selectedEventId) return;
+        setLoadingCerts(true);
+        try {
+            const data = await getEventCertificates(selectedEventId, activeRole);
+            setCerts(data);
+        } catch (e) {
+            toast.error('Failed to load certificates');
+        } finally {
+            setLoadingCerts(false);
+        }
+    };
+
+    const handleGenerate = async () => {
+        if (!selectedEventId) return;
+        setGenerating(true);
+        try {
+            const res = await generateCertificates(selectedEventId, activeRole);
+            toast.success(res.message || 'Certificates generated!');
+            await fetchCerts();
+        } catch (e: any) {
+            toast.error(e?.response?.data?.detail || 'Generation failed');
+        } finally {
+            setGenerating(false);
+        }
+    };
+
+    const handleSend = async () => {
+        if (!selectedEventId) return;
+        setSending(true);
+        try {
+            const res = await sendCertificates(selectedEventId, activeRole);
+            toast.success(res.message || 'Certificates queued for sending!');
+            await fetchCerts();
+        } catch (e: any) {
+            toast.error(e?.response?.data?.detail || 'Send failed');
+        } finally {
+            setSending(false);
+        }
+    };
+
+    const handleEventChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const id = e.target.value;
+        setSelectedEventId(id);
+    };
+
+    const sentCount = certs.filter(c => c.status === 'sent').length;
+    const genCount = certs.length;
+
+    return (
+        <div className="space-y-8">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h1 className="font-heading font-black text-2xl text-white flex items-center gap-3">
+                        <span className="w-9 h-9 rounded-xl flex items-center justify-center text-base"
+                            style={{ background: 'rgba(108,71,236,0.2)', border: '1px solid rgba(108,71,236,0.35)' }}>
+                            🏅
+                        </span>
+                        Certificates
+                    </h1>
+                    <p className="text-slate-500 mt-1 text-sm pl-12">Generate & distribute achievement certificates</p>
+                </div>
+
+                {selectedEventId && (
+                    <div className="flex flex-wrap gap-2 pl-12 sm:pl-0">
+                        <button
+                            onClick={handleGenerate}
+                            disabled={generating}
+                            className="btn-primary text-sm px-4 py-2.5 gap-2"
+                        >
+                            {generating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Award className="w-4 h-4" />}
+                            {generating ? 'Generating…' : 'Generate'}
+                        </button>
+                        <button
+                            onClick={handleSend}
+                            disabled={sending || genCount === 0}
+                            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white disabled:opacity-40 transition-all hover:scale-105"
+                            style={{ background: 'rgba(16,185,129,0.2)', border: '1px solid rgba(16,185,129,0.3)' }}
+                        >
+                            {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                            {sending ? 'Sending…' : 'Send Emails'}
+                        </button>
+                        <button
+                            onClick={fetchCerts}
+                            disabled={loadingCerts}
+                            className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-white transition-colors"
+                            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+                            title="Refresh"
+                        >
+                            <RefreshCw className={`w-4 h-4 ${loadingCerts ? 'animate-spin' : ''}`} />
+                        </button>
+                    </div>
+                )}
+            </div>
+
+            {/* Event Selector */}
+            <div className="glass-card rounded-2xl px-5 py-4">
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">
+                    <Calendar className="inline w-3.5 h-3.5 mr-1" /> Event
+                </label>
+                {loadingEvents ? (
+                    <div className="flex items-center gap-2 text-sm text-slate-500">
+                        <Loader2 className="w-4 h-4 animate-spin" /> Loading events…
+                    </div>
+                ) : events.length === 0 ? (
+                    <p className="text-slate-500 text-sm">No events found. Create an event first.</p>
+                ) : (
+                    <select
+                        value={selectedEventId}
+                        onChange={handleEventChange}
+                        className="input-glass w-full md:w-96 text-sm py-2.5"
+                    >
+                        {events.map(ev => (
+                            <option key={ev.event_id} value={ev.event_id} style={{ background: '#0b0f1a' }}>
+                                {ev.title}
+                            </option>
+                        ))}
+                    </select>
+                )}
+            </div>
+
+            {/* Stats Row */}
+            {selectedEventId && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {[
+                        { label: 'Generated', value: genCount, color: '#c4b5fd', bg: 'rgba(108,71,236,0.1)' },
+                        { label: 'Sent', value: sentCount, color: '#6ee7b7', bg: 'rgba(16,185,129,0.1)' },
+                        { label: 'Pending', value: genCount - sentCount, color: '#fcd34d', bg: 'rgba(245,158,11,0.1)' },
+                        { label: 'Role', value: activeRole, color: '#93c5fd', bg: 'rgba(59,130,246,0.1)' },
+                    ].map(s => (
+                        <div key={s.label} className="glass-card rounded-xl p-4"
+                            style={{ border: `1px solid ${s.bg.replace('0.1', '0.25')}` }}>
+                            <p className="text-xs text-slate-500 mb-1">{s.label}</p>
+                            <p className="font-heading font-bold text-lg" style={{ color: s.color }}>{s.value}</p>
+                        </div>
+                    ))}
+                </div>
+            )}
+
+            {/* Role Tabs */}
+            <div className="flex flex-wrap gap-2">
+                {ROLES.map(r => (
+                    <button
+                        key={r.value}
+                        onClick={() => setActiveRole(r.value)}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all`}
+                        style={{
+                            background: activeRole === r.value ? r.color.replace('0.15', '0.3') : r.color,
+                            border: `1px solid ${activeRole === r.value ? ROLE_TEXT_COLOR[r.value] + '55' : 'transparent'}`,
+                            color: ROLE_TEXT_COLOR[r.value],
+                        }}
+                    >
+                        {r.icon} {r.label}
+                    </button>
+                ))}
+            </div>
+
+            {/* Certs Table */}
+            {!selectedEventId ? (
+                <div className="glass-card rounded-2xl py-20 text-center">
+                    <Award className="w-12 h-12 text-slate-700 mx-auto mb-3" />
+                    <p className="text-slate-500 text-sm">Select an event to manage certificates</p>
+                </div>
+            ) : loadingCerts ? (
+                <div className="flex items-center justify-center py-20 gap-3 text-slate-400">
+                    <Loader2 className="w-5 h-5 animate-spin text-brand-400" />
+                    <span className="text-sm">Loading certificates…</span>
+                </div>
+            ) : certs.length === 0 ? (
+                <div className="glass-card rounded-2xl py-20 text-center">
+                    <Award className="w-12 h-12 text-slate-700 mx-auto mb-3" />
+                    <p className="text-slate-500 text-sm mb-2">No certificates generated yet for this role.</p>
+                    <p className="text-slate-600 text-xs">Click "Generate" to create certificates for all {activeRole.toLowerCase()}s.</p>
+                </div>
+            ) : (
+                <div className="glass-card rounded-2xl overflow-hidden">
+                    <div className="px-5 py-3.5 border-b flex items-center justify-between"
+                        style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+                        <span className="text-sm font-semibold text-white">{certs.length} certificates</span>
+                        <span className="flex items-center gap-1.5 text-xs text-slate-500">
+                            <Filter className="w-3.5 h-3.5" /> Filtered by: {activeRole}
+                        </span>
+                    </div>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                            <thead>
+                                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                                    {['Name', 'Email', 'Type', 'Status', 'Action'].map(h => (
+                                        <th key={h} className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{h}</th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {certs.map((cert, i) => (
+                                    <tr key={cert.id}
+                                        className="hover:bg-white/3 transition-colors"
+                                        style={{ borderBottom: i < certs.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                                        <td className="px-5 py-3.5 text-white font-medium">{cert.name}</td>
+                                        <td className="px-5 py-3.5 text-slate-400">{cert.email}</td>
+                                        <td className="px-5 py-3.5 text-slate-400 text-xs">{cert.certificate_type}</td>
+                                        <td className="px-5 py-3.5">
+                                            {cert.status === 'sent' ? (
+                                                <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-400"
+                                                    style={{ background: 'rgba(16,185,129,0.1)', padding: '3px 10px', borderRadius: 6, width: 'fit-content' }}>
+                                                    <CheckCircle2 className="w-3 h-3" /> Sent
+                                                </span>
+                                            ) : (
+                                                <span className="text-xs font-semibold text-amber-400"
+                                                    style={{ background: 'rgba(245,158,11,0.1)', padding: '3px 10px', borderRadius: 6, display: 'inline-block' }}>
+                                                    Generated
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td className="px-5 py-3.5">
+                                            <button
+                                                onClick={() =>
+                                                    downloadCertificate(cert.id, `Certificate_${cert.name}.pdf`)
+                                                        .catch(() => toast.error('Download failed'))
+                                                }
+                                                className="flex items-center gap-1.5 text-xs font-semibold text-brand-300 hover:text-brand-200 transition-colors"
+                                            >
+                                                <Download className="w-3.5 h-3.5" /> Download
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
