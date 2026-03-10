@@ -64,22 +64,25 @@ export default function HeroSearch({
   };
 
   return (
-    <section className="relative overflow-hidden flex items-center py-8 sm:py-10">
-      {/* Ambient background */}
-      <div className="absolute inset-0 bg-surface-900" />
-      <div className="absolute inset-0 bg-hero-gradient" />
+    <section className="relative flex items-center py-8 sm:py-10" style={{ zIndex: 50 }}>
+      {/* Background Wrapper with overflow-hidden */}
+      <div className="absolute inset-0 overflow-hidden z-0 rounded-b-[2.5rem]">
+        {/* Ambient background */}
+        <div className="absolute inset-0 bg-surface-900" />
+        <div className="absolute inset-0 bg-hero-gradient" />
 
-      {/* Subtle blobs */}
-      <div className="absolute top-[-20%] left-[-5%] w-72 h-72 rounded-full opacity-20 animate-blob"
-        style={{ background: 'radial-gradient(circle, rgba(108,71,236,0.6) 0%, transparent 70%)' }} />
-      <div className="absolute bottom-[-20%] right-[-5%] w-72 h-72 rounded-full opacity-15 animate-blob-delay"
-        style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.6) 0%, transparent 70%)' }} />
+        {/* Subtle blobs */}
+        <div className="absolute top-[-20%] left-[-5%] w-72 h-72 rounded-full opacity-20 animate-blob"
+          style={{ background: 'radial-gradient(circle, rgba(108,71,236,0.6) 0%, transparent 70%)' }} />
+        <div className="absolute bottom-[-20%] right-[-5%] w-72 h-72 rounded-full opacity-15 animate-blob-delay"
+          style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.6) 0%, transparent 70%)' }} />
 
-      {/* Dotted grid */}
-      <div className="absolute inset-0 opacity-10" style={{
-        backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)',
-        backgroundSize: '40px 40px',
-      }} />
+        {/* Dotted grid */}
+        <div className="absolute inset-0 opacity-10" style={{
+          backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)',
+          backgroundSize: '40px 40px',
+        }} />
+      </div>
 
       {/* Content */}
       <div className="relative z-10 w-full max-w-3xl mx-auto px-4 sm:px-6">

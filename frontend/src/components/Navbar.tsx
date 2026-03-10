@@ -86,7 +86,7 @@ export default function Navbar() {
   return (
     <>
       <header
-        className="fixed inset-x-0 top-0 z-50 transition-all duration-300"
+        className="fixed inset-x-0 top-0 z-[60] transition-all duration-300"
         style={{
           height: 'var(--navbar-height)',
           background: scrolled
@@ -285,7 +285,7 @@ export default function Navbar() {
       {/* Mobile menu overlay */}
       {showMobileMenu && (
         <div
-          className="fixed inset-0 z-40 md:hidden animate-fade-in"
+          className="fixed inset-0 z-[60] md:hidden animate-fade-in"
           onClick={closeMobile}
           style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
         />
@@ -293,7 +293,7 @@ export default function Navbar() {
 
       {/* Mobile drawer */}
       <div
-        className={`fixed top-0 right-0 bottom-0 z-50 md:hidden w-80 max-w-full transition-transform duration-300 ${showMobileMenu ? "translate-x-0" : "translate-x-full"
+        className={`fixed top-0 right-0 bottom-0 z-[60] md:hidden w-80 max-w-full transition-transform duration-300 ${showMobileMenu ? "translate-x-0" : "translate-x-full"
           }`}
         style={{
           background: 'rgba(11, 15, 26, 0.98)',
