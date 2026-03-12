@@ -424,3 +424,138 @@ async def download_certificate(
             "Content-Disposition": f'attachment; filename="Certificate_{safe_name}.pdf"'
         },
     )
+
+
+# ─── PARTICIPANTS (Volunteers / Vendors) ──────────────────────────────────────
+
+class ParticipantCreate(BaseModel):
+    event_id: str
+    role: str          # VOLUNTEER | VENDOR
+    name: str
+    email: str
+    phone: Optional[str] = None          # mobile number
+    organization: Optional[str] = None   # company / NGO / university
+    designation: Optional[str] = None    # job title / role within the event
+    category: Optional[str] = None       # vendor category (food, AV, décor …)
+    notes: Optional[str] = None          # any extra notes
+
+
+@router.post("/participants")
+async def add_participant(
+    payload: ParticipantCreate,
+    current_user=Depends(get_current_user(required_role="ORGANIZER")),
+):
+    """Manually add a volunteer or vendor to an event."""
+    role = payload.role.upper()
+    if role not in ("VOLUNTEER", "VENDOR"):
+        raise HTTPException(status_code=400, detail="Role must be VOLUNTEER or VENDOR")
+
+    try:
+        event_oid = ObjectId(payload.event_id)
+    except InvalidId:
+        raise HTTPException(status_code=400, detail="Invalid event_id")
+
+    # Verify event belongs to organizer
+    event = await db.events.find_one({
+        "_id": event_oid,
+        "$or": [
+            {"organizer_id": current_user["_id"]},
+            {"organizer_id": str(current_user["_id"])},
+        ]
+    })
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found or not yours")
+
+    # Prevent duplicate (same email + role + event)
+    existing = await db.event_participants.find_one({
+        "event_id": payload.event_id,
+        "role": role,
+        "email": payload.email,
+    })
+    if existing:
+        raise HTTPException(status_code=409, detail="Participant with this email already added for this role")
+
+    doc = {
+        "event_id": payload.event_id,
+        "role": role,
+        "name": payload.name,
+        "email": payload.email,
+        "phone": payload.phone or "",
+        "organization": payload.organization or "",
+        "designation": payload.designation or "",
+        "category": payload.category or "",
+        "notes": payload.notes or "",
+        "added_by": str(current_user["_id"]),
+        "created_at": datetime.utcnow(),
+    }
+    result = await db.event_participants.insert_one(doc)
+    return {"id": str(result.inserted_id), "message": "Participant added successfully"}
+
+
+@router.get("/participants/{event_id}")
+async def list_participants(
+    event_id: str,
+    role: Optional[str] = None,
+    current_user=Depends(get_current_user(required_role="ORGANIZER")),
+):
+    """List volunteers/vendors added to an event."""
+    try:
+        event_oid = ObjectId(event_id)
+    except InvalidId:
+        raise HTTPException(status_code=400, detail="Invalid event_id")
+
+    event = await db.events.find_one({
+        "_id": event_oid,
+        "$or": [
+            {"organizer_id": current_user["_id"]},
+            {"organizer_id": str(current_user["_id"])},
+        ]
+    })
+    if not event:
+        raise HTTPException(status_code=404, detail="Event not found or not yours")
+
+    query: dict = {"event_id": event_id}
+    if role:
+        query["role"] = role.upper()
+
+    participants = await db.event_participants.find(query).sort("created_at", -1).to_list(length=1000)
+    for p in participants:
+        p["id"] = str(p.pop("_id"))
+        p["created_at"] = p["created_at"].isoformat() if hasattr(p.get("created_at"), "isoformat") else str(p.get("created_at", ""))
+    return participants
+
+
+@router.delete("/participants/{participant_id}")
+async def remove_participant(
+    participant_id: str,
+    current_user=Depends(get_current_user(required_role="ORGANIZER")),
+):
+    """Remove a volunteer or vendor from an event."""
+    try:
+        oid = ObjectId(participant_id)
+    except InvalidId:
+        raise HTTPException(status_code=400, detail="Invalid participant_id")
+
+    participant = await db.event_participants.find_one({"_id": oid})
+    if not participant:
+        raise HTTPException(status_code=404, detail="Participant not found")
+
+    # Verify the event belongs to this organizer
+    event_id = participant.get("event_id", "")
+    try:
+        event_oid = ObjectId(event_id)
+        event = await db.events.find_one({
+            "_id": event_oid,
+            "$or": [
+                {"organizer_id": current_user["_id"]},
+                {"organizer_id": str(current_user["_id"])},
+            ]
+        })
+        if not event:
+            raise HTTPException(status_code=403, detail="Not your event")
+    except InvalidId:
+        raise HTTPException(status_code=403, detail="Cannot verify event ownership")
+
+    await db.event_participants.delete_one({"_id": oid})
+    return {"message": "Participant removed"}
+

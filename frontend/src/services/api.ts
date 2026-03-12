@@ -337,6 +337,33 @@ export const downloadCertificate = async (cert_id: string, filename = 'Certifica
   URL.revokeObjectURL(url);
 };
 
+
+// ================= PARTICIPANTS (Volunteers / Vendors) =================
+export const addParticipant = async (payload: {
+  event_id: string;
+  role: 'VOLUNTEER' | 'VENDOR';
+  name: string;
+  email: string;
+  phone?: string;
+  organization?: string;
+  designation?: string;
+  category?: string;
+  notes?: string;
+}) => {
+  const res = await api.post('/certificates/participants', payload);
+  return res.data;
+};
+
+export const getParticipants = async (event_id: string, role: string) => {
+  const res = await api.get(`/certificates/participants/${event_id}`, { params: { role } });
+  return res.data;
+};
+
+export const deleteParticipant = async (participant_id: string) => {
+  const res = await api.delete(`/certificates/participants/${participant_id}`);
+  return res.data;
+};
+
 // ================= ADDONS =================
 export const getEventAddons = async (eventId: string) => {
   const res = await api.get(`/events/${eventId}/addons`);
