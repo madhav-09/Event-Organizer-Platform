@@ -4,8 +4,9 @@ import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import {
   FileText, MapPin, Ticket, Image, ChevronRight, ChevronLeft,
-  Loader2, Upload, Check, AlertCircle,
+  Loader2, Upload, Check,
 } from "lucide-react";
+import toast from "react-hot-toast";
 
 /* ═══════════════════ TYPES ═══════════════════ */
 
@@ -59,7 +60,6 @@ export default function CreateEvent() {
 
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [image, setImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isFree, setIsFree] = useState(true);
@@ -124,13 +124,13 @@ export default function CreateEvent() {
   const handlePublish = async () => {
     try {
       setLoading(true);
-      setError(null);
       const banner_url = await uploadImage();
       const eventRes = await createEvent({ ...eventData, banner_url, status: "PUBLISHED" });
       await createTicket({ event_id: eventRes.data.event_id, ...ticket, price: isFree ? 0 : ticket.price });
+      toast.success("Event created successfully!");
       navigate(`/event/${eventRes.data.event_id}`);
     } catch {
-      setError("Failed to create event. Please try again.");
+      toast.error("Failed to create event. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -183,15 +183,6 @@ export default function CreateEvent() {
             );
           })}
         </div>
-
-        {/* Error banner */}
-        {error && (
-          <div className="flex items-center gap-3 mb-6 px-4 py-3 rounded-xl text-sm text-red-400 border border-red-500/30"
-            style={{ background: 'rgba(239,68,68,0.1)' }}>
-            <AlertCircle className="w-4 h-4 flex-shrink-0" />
-            {error}
-          </div>
-        )}
 
         {/* Step card */}
         <div className="glass-card rounded-2xl overflow-hidden animate-fade-up" style={{ animationDelay: '160ms' }}>

@@ -4,7 +4,7 @@ import api from "../../services/api";
 import toast from "react-hot-toast";
 import {
   Calendar, MapPin, Search, Eye, Send, XCircle, FileText,
-  Loader2, AlertCircle, Users, CalendarDays,
+  Loader2, Users, CalendarDays,
 } from "lucide-react";
 
 type Event = {
@@ -50,7 +50,6 @@ export default function AdminEvents() {
   const [events, setEvents] = useState<Event[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [actionId, setActionId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -59,7 +58,7 @@ export default function AdminEvents() {
   const limit = 15;
 
   const fetchEvents = () => {
-    setLoading(true); setError(null);
+    setLoading(true);
     const params: Record<string, string | number> = { skip: page * limit, limit };
     if (statusFilter) params.status = statusFilter;
     if (searchQuery) params.q = searchQuery;
@@ -67,7 +66,7 @@ export default function AdminEvents() {
       .then((res) => { setEvents(res.data?.events ?? []); setTotal(res.data?.total ?? 0); })
       .catch((err) => {
         const msg = err?.response?.data?.detail || "Failed to load events";
-        setError(Array.isArray(msg) ? msg[0]?.msg : msg);
+        toast.error(Array.isArray(msg) ? msg[0]?.msg : msg);
         setEvents([]);
       })
       .finally(() => setLoading(false));
@@ -165,12 +164,6 @@ export default function AdminEvents() {
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="w-8 h-8 animate-spin text-brand-400" />
-        </div>
-      ) : error ? (
-        <div className="glass-card rounded-2xl p-8 text-center">
-          <AlertCircle className="w-10 h-10 text-red-400 mx-auto mb-3" />
-          <p className="text-red-400 mb-2">{error}</p>
-          <button onClick={fetchEvents} className="text-sm text-brand-400 hover:text-brand-300 underline">Retry</button>
         </div>
       ) : events.length === 0 ? (
         <div className="glass-card rounded-2xl p-16 text-center">

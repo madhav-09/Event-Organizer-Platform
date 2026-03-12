@@ -7,6 +7,7 @@ import type { RegisterPayload, LoginPayload } from '../services/auth_api';
 import type { AxiosError } from 'axios';
 import { useAuth } from '../context/AuthContext';
 import logo from '../assets/logo.png';
+import toast from 'react-hot-toast';
 
 interface FormData {
   name: string;
@@ -20,8 +21,6 @@ export default function Login() {
 
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState<FormData>({ name: '', email: '', password: '' });
@@ -29,19 +28,17 @@ export default function Login() {
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    if (error) setError(null);
   };
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
 
     try {
       if (isSignUp) {
         const payload: RegisterPayload = { name: formData.name, email: formData.email, password: formData.password };
         await registerUser(payload);
-        setSuccess('Account created! You can now sign in.');
+        toast.success('Account created! You can now sign in.');
         setIsSignUp(false);
         setFormData({ name: '', email: formData.email, password: '' });
         return;
@@ -50,6 +47,7 @@ export default function Login() {
       const payload: LoginPayload = { email: formData.email, password: formData.password };
       const res = await loginUser(payload);
       login(res.data);
+      toast.success('Signed in successfully');
 
       const role = res.data.user.role;
       if (role === 'ADMIN') navigate('/admin');
@@ -58,9 +56,11 @@ export default function Login() {
     } catch (err: unknown) {
       const axiosErr = err as AxiosError<any>;
       const detail = axiosErr.response?.data?.detail;
-      if (Array.isArray(detail)) setError(detail[0]?.msg || 'Invalid input');
-      else if (typeof detail === 'string') setError(detail);
-      else setError(axiosErr.message || 'Something went wrong');
+      let msg = 'Something went wrong';
+      if (Array.isArray(detail)) msg = detail[0]?.msg || 'Invalid input';
+      else if (typeof detail === 'string') msg = detail;
+      else msg = axiosErr.message || 'Something went wrong';
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -147,27 +147,13 @@ export default function Login() {
             <p className="text-slate-400 text-sm">
               {isSignUp ? 'Start discovering amazing events today.' : "Don't have an account? "}
               {!isSignUp && (
-                <button onClick={() => { setIsSignUp(true); setError(null); setSuccess(null); }}
+                <button onClick={() => { setIsSignUp(true); }}
                   className="text-brand-400 hover:text-brand-300 font-medium transition-colors">
                   Sign up free
                 </button>
               )}
             </p>
           </div>
-
-          {/* Status messages */}
-          {error && (
-            <div className="mb-5 px-4 py-3 rounded-xl text-sm text-red-300 animate-slide-down"
-              style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)' }}>
-              {error}
-            </div>
-          )}
-          {success && (
-            <div className="mb-5 px-4 py-3 rounded-xl text-sm text-emerald-300 animate-slide-down"
-              style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.25)' }}>
-              {success}
-            </div>
-          )}
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -253,7 +239,7 @@ export default function Login() {
           {isSignUp && (
             <p className="mt-6 text-center text-sm text-slate-500">
               Already have an account?{' '}
-              <button onClick={() => { setIsSignUp(false); setError(null); setSuccess(null); }}
+              <button onClick={() => { setIsSignUp(false); }}
                 className="text-brand-400 hover:text-brand-300 font-medium transition-colors">
                 Sign in
               </button>

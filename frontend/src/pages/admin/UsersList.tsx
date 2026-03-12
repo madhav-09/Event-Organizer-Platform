@@ -32,17 +32,15 @@ const KYC_BADGE: Record<string, string> = {
 export default function UsersList() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [actionId, setActionId] = useState<string | null>(null);
 
   const fetchUsers = () => {
     setLoading(true);
-    setError(null);
     api.get("/admin/users")
       .then((res) => setUsers(Array.isArray(res.data) ? res.data : []))
       .catch((err) => {
         const msg = err?.response?.data?.detail || "Failed to load users";
-        setError(Array.isArray(msg) ? msg[0]?.msg : msg);
+        toast.error(Array.isArray(msg) ? msg[0]?.msg : msg);
         setUsers([]);
       })
       .finally(() => setLoading(false));
@@ -109,11 +107,6 @@ export default function UsersList() {
       {loading ? (
         <div className="flex items-center justify-center py-24">
           <Loader2 className="w-8 h-8 animate-spin text-brand-400" />
-        </div>
-      ) : error ? (
-        <div className="glass-card rounded-2xl p-6 text-center">
-          <p className="text-red-400 mb-3">{error}</p>
-          <button onClick={fetchUsers} className="text-sm text-brand-400 hover:text-brand-300 underline">Retry</button>
         </div>
       ) : (
         <div className="glass-card rounded-2xl overflow-hidden">

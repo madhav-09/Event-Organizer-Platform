@@ -43,7 +43,6 @@ export default function Home() {
   const [events, setEvents] = useState<Event[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const { user } = useAuth();
   const [wishlistIds, setWishlistIds] = useState<Set<string>>(new Set());
 
@@ -52,12 +51,11 @@ export default function Home() {
 
   const fetchEvents = async (params?: { q?: string; city?: string | null }) => {
     setLoading(true);
-    setError(null);
     try {
       const res = await api.get<Event[]>("/users/search", { params });
       setEvents(res.data);
     } catch {
-      setError("Failed to load events");
+      toast.error("Failed to load events");
     } finally {
       setLoading(false);
     }
@@ -145,10 +143,6 @@ export default function Home() {
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => <EventCardSkeleton key={i} />)}
-          </div>
-        ) : error ? (
-          <div className="text-center py-20">
-            <p className="text-red-400">{error}</p>
           </div>
         ) : filteredEvents.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">

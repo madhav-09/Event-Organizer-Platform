@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Calendar, MapPin, Ticket, Heart, AlertCircle, Loader, Sparkles } from "lucide-react";
+import { Calendar, MapPin, Ticket, Heart, Loader, Sparkles } from "lucide-react";
 import { getMyWishlist, removeFromWishlist } from "../services/api";
 import toast from "react-hot-toast";
 
@@ -33,14 +33,13 @@ function WishlistSkeleton() {
 export default function MyWishlist() {
     const [events, setEvents] = useState<EventWithTickets[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
     const [removingId, setRemovingId] = useState<string | null>(null);
 
     useEffect(() => {
         let cancelled = false;
         getMyWishlist()
-            .then((data) => { if (!cancelled) { setEvents(data || []); setError(null); } })
-            .catch((err) => { if (!cancelled) setError(err?.response?.data?.detail || "Failed to load wishlist"); })
+            .then((data) => { if (!cancelled) { setEvents(data || []); } })
+            .catch((err) => { if (!cancelled) toast.error(err?.response?.data?.detail || "Failed to load wishlist"); })
             .finally(() => { if (!cancelled) setLoading(false); });
         return () => { cancelled = true; };
     }, []);
@@ -78,11 +77,6 @@ export default function MyWishlist() {
                 {loading ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                         {[1, 2, 3, 4].map((i) => <WishlistSkeleton key={i} />)}
-                    </div>
-                ) : error ? (
-                    <div className="text-center py-20 glass-card rounded-2xl">
-                        <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-                        <p className="text-red-400">{error}</p>
                     </div>
                 ) : events.length === 0 ? (
                     <div className="text-center py-24 glass-card rounded-2xl animate-fade-up" style={{ animationFillMode: 'both' }}>

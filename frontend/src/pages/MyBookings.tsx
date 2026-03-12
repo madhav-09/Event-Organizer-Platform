@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  Calendar, MapPin, Ticket, ExternalLink, AlertCircle, Trash2,
+  Calendar, MapPin, Ticket, ExternalLink, Trash2,
   CheckCircle, Clock, XCircle, ShoppingBag, Loader, MessageSquare,
   Award, Download
 } from "lucide-react";
@@ -162,16 +162,11 @@ export default function MyBookings() {
               <div className="space-y-4">
                 {[1, 2, 3].map((i) => <BookingCardSkeleton key={i} />)}
               </div>
-            ) : error ? (
-              <div className="text-center py-20 glass-card rounded-2xl">
-                <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-                <p className="text-red-400">{error}</p>
-              </div>
-            ) : bookings.length === 0 ? (
+            ) : (bookings.length === 0 || error) ? (
               <div className="text-center py-24 glass-card rounded-2xl animate-fade-up" style={{ animationFillMode: 'both' }}>
                 <ShoppingBag className="w-16 h-16 text-slate-700 mx-auto mb-5" />
-                <h3 className="font-heading font-bold text-xl text-white mb-3">No bookings yet</h3>
-                <p className="text-slate-500 text-sm mb-8">Discover and book events near you</p>
+                <h3 className="font-heading font-bold text-xl text-white mb-3">{error ? "Couldn't load bookings" : "No bookings yet"}</h3>
+                <p className="text-slate-500 text-sm mb-8">{error ? "Please try again later" : "Discover and book events near you"}</p>
                 <Link to="/" className="btn-primary mx-auto">
                   Browse Events
                 </Link>
