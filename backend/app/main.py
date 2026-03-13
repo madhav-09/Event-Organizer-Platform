@@ -60,6 +60,9 @@ origins = [
     "http://35.154.225.67",
     "http://35.154.225.67:80",
     "http://35.154.225.67:8000",
+    "http://13.234.15.222",
+    "http://13.234.15.222:80",
+    "http://13.234.15.222:8000",
 
     # Production domain
     "https://event-organizer-platform.vercel.app",
