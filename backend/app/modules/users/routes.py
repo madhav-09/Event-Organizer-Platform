@@ -367,6 +367,27 @@ async def get_wishlist(current_user=Depends(get_current_user())):
 
 
 # ================= SEARCH EVENTS =================
+@router.get("/stats")
+async def get_public_stats():
+    total_events = await db.events.count_documents({"status": "PUBLISHED"})
+    total_organizers = await db.organizers.count_documents({})
+    
+    # Get distinct cities for published events
+    cities = await db.events.distinct("city", {"status": "PUBLISHED"})
+    total_cities = len([c for c in cities if c and c.strip()])
+    
+    total_vendors = await db.event_participants.count_documents({"role": "VENDOR"})
+    total_volunteers = await db.event_participants.count_documents({"role": "VOLUNTEER"})
+    
+    return {
+        "total_events": total_events,
+        "total_organizers": total_organizers,
+        "total_cities": total_cities,
+        "total_vendors": total_vendors,
+        "total_volunteers": total_volunteers,
+        "total_sponsors": 50,  # Dummy stat as requested
+    }
+
 @router.get("/search", response_model=List[EventWithTicketsOut])
 async def search_events(
     q: Optional[str] = Query(None),

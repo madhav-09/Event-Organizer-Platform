@@ -7,7 +7,7 @@ import { TrendingUp, Calendar, ArrowRight } from "lucide-react";
 import api from "../services/api";
 import { useSearchParams, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { getMyWishlist, addToWishlist, removeFromWishlist } from "../services/api";
+import { getMyWishlist, addToWishlist, removeFromWishlist, getPublicStats } from "../services/api";
 import toast from "react-hot-toast";
 
 interface Ticket {
@@ -46,6 +46,14 @@ export default function Home() {
   const [showPast, setShowPast] = useState(false);
   const { user } = useAuth();
   const [wishlistIds, setWishlistIds] = useState<Set<string>>(new Set());
+  const [stats, setStats] = useState({
+    total_events: 0,
+    total_organizers: 0,
+    total_cities: 0,
+    total_vendors: 0,
+    total_volunteers: 0,
+    total_sponsors: 0
+  });
 
   const [searchParams] = useSearchParams();
   const city = searchParams.get("city");
@@ -64,6 +72,9 @@ export default function Home() {
 
   useEffect(() => {
     fetchEvents({ city, show_past: showPast });
+    getPublicStats()
+      .then(setStats)
+      .catch(console.error);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [city, showPast]);
 
@@ -115,7 +126,10 @@ export default function Home() {
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
-      <HeroSearch onSearch={(params) => fetchEvents({ q: params?.q, city, show_past: showPast })} />
+      <HeroSearch 
+        onSearch={(params) => fetchEvents({ q: params?.q, city, show_past: showPast })} 
+        stats={stats}
+      />
       <CategoryFilter selected={selectedCategory} onSelect={setSelectedCategory} />
 
       {/* Events section */}

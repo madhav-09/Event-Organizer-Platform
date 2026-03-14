@@ -379,3 +379,8 @@ export const deleteAddon = async (addonId: string) => {
   const res = await api.delete(`/events/addons/${addonId}`);
   return res.data;
 };
+
+export const getPublicStats = async () => {
+  const res = await api.get('/users/stats');
+  return res.data;
+};
