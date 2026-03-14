@@ -25,6 +25,17 @@ async def create_booking(
     if not event:
         raise HTTPException(404, "Event not found")
 
+    # Prevent booking past events
+    now = datetime.utcnow()
+    # Handle both naive and timezone-aware datetime objects
+    start_date = event.get("start_date")
+    if start_date:
+        if start_date.tzinfo is not None:
+            import pytz
+            now = now.replace(tzinfo=pytz.UTC)
+        if start_date < now:
+            raise HTTPException(400, "Cannot book tickets for past events")
+
     total = ticket["price"] * data.quantity
     
     # ------------------------------------------

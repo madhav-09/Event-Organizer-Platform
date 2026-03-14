@@ -68,8 +68,8 @@ export default function HeroSearch({
       {/* Background Wrapper with overflow-hidden */}
       <div className="absolute inset-0 overflow-hidden z-0 rounded-b-[2.5rem]">
         {/* Ambient background */}
-        <div className="absolute inset-0 bg-surface-900" />
-        <div className="absolute inset-0 bg-hero-gradient" />
+        <div className="absolute inset-0 bg-[var(--bg-secondary)]" />
+        <div className="absolute inset-0 bg-hero-gradient opacity-60 dark:opacity-100" />
 
         {/* Subtle blobs */}
         <div className="absolute top-[-20%] left-[-5%] w-72 h-72 rounded-full opacity-20 animate-blob"
@@ -93,7 +93,7 @@ export default function HeroSearch({
             <Sparkles className="w-3 h-3" />
             Discover Events Near You
           </div>
-          <h1 className="font-heading font-black text-4xl sm:text-6xl text-white leading-tight">
+          <h1 className="font-heading font-black text-4xl sm:text-6xl text-[var(--text-primary)] leading-tight">
             Find Your Next{' '}
             <span className="gradient-text">Unforgettable</span>{' '}
             Experience
@@ -111,7 +111,7 @@ export default function HeroSearch({
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                   placeholder="Search events, venues, cities..."
-                  className="flex-1 bg-transparent py-3 outline-none text-white placeholder-slate-500 text-base"
+                  className="flex-1 bg-transparent py-3 outline-none text-[var(--text-primary)] placeholder-slate-500 text-base"
                   autoComplete="off"
                 />
                 {loading && (
@@ -142,7 +142,7 @@ export default function HeroSearch({
                   key={`${item}-${i}`}
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => handleSearch(item)}
-                  className="flex items-center gap-3 w-full text-left px-5 py-3.5 text-slate-300 hover:text-white hover:bg-white/5 transition-colors border-b border-white/5 last:border-0"
+                  className="flex items-center gap-3 w-full text-left px-5 py-3.5 text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-hover)] transition-colors border-b border-[var(--glass-border)] last:border-0"
                 >
                   <Search className="w-4 h-4 text-brand-400 flex-shrink-0" />
                   {item}

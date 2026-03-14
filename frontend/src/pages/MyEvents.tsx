@@ -155,8 +155,8 @@ export default function MyEvents() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading font-black text-2xl sm:text-3xl text-white">My Events</h1>
-          <p className="text-slate-500 text-sm mt-0.5">{events.length} event{events.length !== 1 ? "s" : ""} created</p>
+          <h1 className="font-heading font-black text-2xl sm:text-3xl text-[var(--text-primary)]">My Events</h1>
+          <p className="text-[var(--text-secondary)] text-sm mt-0.5">{events.length} event{events.length !== 1 ? "s" : ""} created</p>
         </div>
         <button
           onClick={() => navigate("/create-event")}
@@ -169,9 +169,9 @@ export default function MyEvents() {
       {/* Empty state */}
       {!events.length && (
         <div className="glass-card rounded-2xl text-center py-20 space-y-3">
-          <Calendar className="w-12 h-12 text-slate-600 mx-auto" />
-          <p className="text-slate-300 text-lg font-semibold">No events yet</p>
-          <p className="text-slate-500 text-sm">Click "New Event" to create your first one.</p>
+          <Calendar className="w-12 h-12 text-[var(--text-muted)] mx-auto" />
+          <p className="text-[var(--text-primary)] text-lg font-semibold">No events yet</p>
+          <p className="text-[var(--text-secondary)] text-sm">Click "New Event" to create your first one.</p>
         </div>
       )}
 
@@ -194,10 +194,10 @@ export default function MyEvents() {
 
       {/* Edit loading overlay */}
       {editLoading && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,0,0.6)] backdrop-blur-sm">
           <div className="glass-card rounded-2xl px-8 py-6 flex items-center gap-3">
             <Loader2 className="w-5 h-5 animate-spin text-brand-400" />
-            <span className="text-sm text-slate-200">Loading event…</span>
+            <span className="text-sm text-[var(--text-primary)]">Loading event…</span>
           </div>
         </div>
       )}
@@ -241,8 +241,8 @@ function EventCard({
                 {cfg.label}
               </span>
             </div>
-            <h2 className="font-heading font-bold text-lg text-white truncate">{event.title}</h2>
-            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1.5 text-xs text-slate-500">
+            <h2 className="font-heading font-bold text-lg text-[var(--text-primary)] truncate">{event.title}</h2>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1.5 text-xs text-[var(--text-secondary)]">
               <span className="flex items-center gap-1"><Calendar className="w-3 h-3" /> {formatDate(event.date)}</span>
               {event.location && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" /> {event.location}</span>}
               <span className="flex items-center gap-1"><Users className="w-3 h-3" /> {event.total_bookings} booking{event.total_bookings !== 1 ? "s" : ""}</span>
@@ -267,32 +267,32 @@ function EventCard({
             <button
               onClick={onDuplicate}
               title="Duplicate Event"
-              className="p-2 text-slate-500 hover:text-amber-300 rounded-xl transition-colors"
-              style={{ background: 'rgba(255,255,255,0.05)' }}
+              className="p-2 text-[var(--text-muted)] hover:text-amber-300 rounded-xl transition-colors"
+              style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}
             >
               <Copy className="w-4 h-4" />
             </button>
             <button
               onClick={onViewBookings}
               title="View Bookings"
-              className="p-2 text-slate-500 hover:text-brand-300 rounded-xl transition-colors"
-              style={{ background: 'rgba(255,255,255,0.05)' }}
+              className="p-2 text-[var(--text-muted)] hover:text-brand-300 rounded-xl transition-colors"
+              style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}
             >
               <Eye className="w-4 h-4" />
             </button>
             <button
               onClick={onEdit}
               title="Edit Event"
-              className="p-2 text-slate-500 hover:text-blue-300 rounded-xl transition-colors"
-              style={{ background: 'rgba(255,255,255,0.05)' }}
+              className="p-2 text-[var(--text-muted)] hover:text-blue-300 rounded-xl transition-colors"
+              style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}
             >
               <Edit2 className="w-4 h-4" />
             </button>
             <button
               onClick={onDelete}
               title="Delete Event"
-              className="p-2 text-slate-500 hover:text-red-400 rounded-xl transition-colors"
-              style={{ background: 'rgba(255,255,255,0.05)' }}
+              className="p-2 text-[var(--text-muted)] hover:text-red-400 rounded-xl transition-colors"
+              style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}
             >
               <Trash2 className="w-4 h-4" />
             </button>
@@ -309,7 +309,7 @@ function EventCard({
 
       {/* Tickets panel */}
       {isExpanded && (
-        <div className="border-t px-5 py-4" style={{ borderColor: 'rgba(255,255,255,0.07)', background: 'rgba(255,255,255,0.02)' }}>
+        <div className="border-t px-5 py-4" style={{ borderColor: 'var(--glass-border)', background: 'var(--glass-bg)' }}>
           <TicketManager eventId={event.event_id} />
         </div>
       )}
@@ -363,12 +363,12 @@ function TicketManager({ eventId }: { eventId: string }) {
     toast.success("Ticket deleted");
   };
 
-  if (loading) return <p className="text-sm text-slate-500 py-2">Loading tickets…</p>;
+  if (loading) return <p className="text-sm text-[var(--text-muted)] py-2">Loading tickets…</p>;
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-1.5">
+        <h3 className="text-sm font-semibold text-[var(--text-primary)] flex items-center gap-1.5">
           <Ticket className="w-3.5 h-3.5 text-brand-400" /> Ticket Types ({tickets.length})
         </h3>
         <button onClick={openAdd}
@@ -379,8 +379,8 @@ function TicketManager({ eventId }: { eventId: string }) {
       </div>
 
       {showForm && (
-        <div className="rounded-xl p-4 space-y-3" style={{ background: 'rgba(108,71,236,0.08)', border: '1px solid rgba(108,71,236,0.2)' }}>
-          <p className="text-sm font-semibold text-white">{editingTicket ? "Edit Ticket" : "New Ticket Type"}</p>
+        <div className="rounded-xl p-4 space-y-3" style={{ background: 'var(--glass-hover)', border: '1px solid var(--glass-border)' }}>
+          <p className="text-sm font-semibold text-[var(--text-primary)]">{editingTicket ? "Edit Ticket" : "New Ticket Type"}</p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="sm:col-span-3">
               <label className="text-xs text-slate-500 mb-1 block">Ticket Name *</label>
@@ -400,7 +400,7 @@ function TicketManager({ eventId }: { eventId: string }) {
           </div>
           <div className="flex justify-end gap-2">
             <button onClick={() => setShowForm(false)}
-              className="px-3 py-1.5 text-xs text-slate-400 rounded-xl border border-white/10 hover:text-white transition-colors">
+              className="px-3 py-1.5 text-xs text-[var(--text-muted)] rounded-xl border border-[var(--glass-border)] hover:text-[var(--text-primary)] transition-colors">
               Cancel
             </button>
             <button onClick={handleSave} disabled={saving}
@@ -480,11 +480,11 @@ function EditEventModal({ event, onClose, onSave }: {
       <div className="glass-card rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl"
         style={{ border: '1px solid rgba(255,255,255,0.12)' }}>
         {/* Modal header */}
-        <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-          <h2 className="font-heading font-bold text-white text-lg">Edit Event</h2>
+        <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid var(--glass-border)' }}>
+          <h2 className="font-heading font-bold text-[var(--text-primary)] text-lg">Edit Event</h2>
           <button onClick={onClose}
-            className="p-2 text-slate-500 hover:text-white rounded-xl transition-colors"
-            style={{ background: 'rgba(255,255,255,0.05)' }}>
+            className="p-2 text-[var(--text-muted)] hover:text-[var(--text-primary)] rounded-xl transition-colors"
+            style={{ background: 'var(--glass-bg)' }}>
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -492,23 +492,23 @@ function EditEventModal({ event, onClose, onSave }: {
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-6">
           {/* Basic Info section */}
           <div className="space-y-4">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Basic Info</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Basic Info</p>
             <div>
-              <label className="text-xs font-medium text-slate-500 mb-1 block">Event Title</label>
+              <label className="text-xs font-medium text-[var(--text-secondary)] mb-1 block">Event Title</label>
               <input className={inputCls} value={form.title} onChange={(e) => set("title", e.target.value)} required />
             </div>
             <div>
-              <label className="text-xs font-medium text-slate-500 mb-1 block">Description</label>
+              <label className="text-xs font-medium text-[var(--text-secondary)] mb-1 block">Description</label>
               <textarea className={`${inputCls} resize-none`} rows={3} value={form.description ?? ""}
                 onChange={(e) => set("description", e.target.value)} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-medium text-slate-500 mb-1 block">Category</label>
+                <label className="text-xs font-medium text-[var(--text-secondary)] mb-1 block">Category</label>
                 <input className={inputCls} value={form.category ?? ""} onChange={(e) => set("category", e.target.value)} />
               </div>
               <div>
-                <label className="text-xs font-medium text-slate-500 mb-1 block">Tags (comma-separated)</label>
+                <label className="text-xs font-medium text-[var(--text-secondary)] mb-1 block">Tags (comma-separated)</label>
                 <input className={inputCls} value={form.tags?.join(", ") ?? ""}
                   onChange={(e) => set("tags", e.target.value.split(",").map(t => t.trim()).filter(Boolean))} />
               </div>
@@ -517,24 +517,24 @@ function EditEventModal({ event, onClose, onSave }: {
 
           {/* Date & Location section */}
           <div className="space-y-4">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Date & Location</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">Date & Location</p>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-medium text-slate-500 mb-1 block">Start Date & Time</label>
+                <label className="text-xs font-medium text-[var(--text-secondary)] mb-1 block">Start Date & Time</label>
                 <input type="datetime-local" className={inputCls} value={toLocal(form.start_date)}
                   onChange={(e) => set("start_date", e.target.value)} />
               </div>
               <div>
-                <label className="text-xs font-medium text-slate-500 mb-1 block">End Date & Time</label>
+                <label className="text-xs font-medium text-[var(--text-secondary)] mb-1 block">End Date & Time</label>
                 <input type="datetime-local" className={inputCls} value={toLocal(form.end_date)}
                   onChange={(e) => set("end_date", e.target.value)} />
               </div>
               <div>
-                <label className="text-xs font-medium text-slate-500 mb-1 block">City</label>
+                <label className="text-xs font-medium text-[var(--text-secondary)] mb-1 block">City</label>
                 <input className={inputCls} value={form.city ?? ""} onChange={(e) => set("city", e.target.value)} />
               </div>
               <div>
-                <label className="text-xs font-medium text-slate-500 mb-1 block">Venue</label>
+                <label className="text-xs font-medium text-[var(--text-secondary)] mb-1 block">Venue</label>
                 <input className={inputCls} value={form.venue ?? ""} onChange={(e) => set("venue", e.target.value)} />
               </div>
             </div>
@@ -542,7 +542,7 @@ function EditEventModal({ event, onClose, onSave }: {
 
           <div className="flex justify-end gap-3 pt-2">
             <button type="button" onClick={onClose}
-              className="px-4 py-2 text-sm text-slate-400 rounded-xl border border-white/10 hover:text-white transition-colors">
+              className="px-4 py-2 text-sm text-[var(--text-muted)] rounded-xl border border-[var(--glass-border)] hover:text-[var(--text-primary)] transition-colors">
               Cancel
             </button>
             <button type="submit" disabled={saving}

@@ -127,8 +127,8 @@ export default function Addons() {
     <div className="space-y-8">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="font-heading font-black text-2xl text-white">Add-ons & Merch</h1>
-          <p className="text-slate-500 mt-1 text-sm">Create and manage event merchandise, parking passes, or extras</p>
+          <h1 className="font-heading font-black text-2xl text-[var(--text-primary)]">Add-ons & Merch</h1>
+          <p className="text-[var(--text-secondary)] mt-1 text-sm">Create and manage event merchandise, parking passes, or extras</p>
         </div>
         <button onClick={openAdd} disabled={!selectedEventId || eventsLoading}
           className="btn-primary text-sm px-4 py-2.5">
@@ -138,11 +138,11 @@ export default function Addons() {
       </div>
 
       <div className="glass-card rounded-2xl px-5 py-4">
-        <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+        <label className="block text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">
           Select Event
         </label>
         {eventsLoading ? (
-          <div className="flex items-center gap-2 text-slate-400 text-sm">
+          <div className="flex items-center gap-2 text-[var(--text-muted)] text-sm">
             <Loader2 className="w-4 h-4 animate-spin" /> Loading…
           </div>
         ) : (
@@ -153,31 +153,31 @@ export default function Addons() {
               className="input-glass w-full text-sm py-2.5 pr-9 appearance-none"
             >
               {events.map(ev => (
-                <option key={ev.event_id} value={ev.event_id} style={{ background: '#0b0f1a' }}>
+                <option key={ev.event_id} value={ev.event_id} style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>
                   {ev.title}
                 </option>
               ))}
             </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)] pointer-events-none" />
           </div>
         )}
       </div>
 
       <div className="glass-card rounded-2xl overflow-hidden">
-        <div className="px-6 py-4 border-b flex items-center gap-2" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+        <div className="px-6 py-4 border-b flex items-center gap-2" style={{ borderColor: 'var(--glass-border)' }}>
           <Box className="w-4 h-4 text-brand-400" />
-          <h3 className="font-heading font-bold text-white">
+          <h3 className="font-heading font-bold text-[var(--text-primary)]">
             Available Add-ons {selectedEvent ? `— ${selectedEvent.title}` : ''}
           </h3>
         </div>
 
         {addonsLoading ? (
-          <div className="flex items-center justify-center py-16 gap-3 text-slate-400">
+          <div className="flex items-center justify-center py-16 gap-3 text-[var(--text-muted)]">
             <Loader2 className="w-5 h-5 animate-spin text-brand-400" />
             <span className="text-sm">Loading add-ons…</span>
           </div>
         ) : addons.length === 0 ? (
-          <div className="py-16 text-center text-slate-500">
+          <div className="py-16 text-center text-[var(--text-secondary)]">
             <Box className="w-10 h-10 mx-auto mb-3 opacity-20" />
             <p className="text-sm">No items created for this event yet.</p>
           </div>
@@ -185,21 +185,21 @@ export default function Addons() {
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead>
-                <tr className="border-b border-white/5">
+                <tr className="border-b border-[var(--glass-border)]">
                   {['Item', 'Price', 'Stock (Sold/Total)', 'Actions'].map(h => (
-                    <th key={h} className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase">{h}</th>
+                    <th key={h} className="px-5 py-3.5 text-left text-xs font-semibold text-[var(--text-muted)] uppercase">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {addons.map((a, i) => (
-                  <tr key={a.id} className="transition-colors hover:bg-white/[0.02] border-b border-white/5">
-                    <td className="px-5 py-4 font-semibold text-white">{a.name}</td>
+                  <tr key={a.id} className="transition-colors hover:bg-[var(--glass-hover)] border-b border-[var(--glass-border)]">
+                    <td className="px-5 py-4 font-semibold text-[var(--text-primary)]">{a.name}</td>
                     <td className="px-5 py-4 text-brand-300">₹{a.price}</td>
-                    <td className="px-5 py-4 text-slate-400">{a.sold_quantity} / {a.total_quantity}</td>
+                    <td className="px-5 py-4 text-[var(--text-secondary)]">{a.sold_quantity} / {a.total_quantity}</td>
                     <td className="px-5 py-4">
                       <button onClick={() => handleDelete(a)} disabled={deleting === a.id}
-                        className="p-2 rounded-lg bg-white/5 text-slate-400 hover:text-red-400 transition-colors">
+                        className="p-2 rounded-lg bg-[var(--glass-hover)] text-[var(--text-muted)] hover:text-red-400 transition-colors">
                         {deleting === a.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
                       </button>
                     </td>
@@ -214,31 +214,31 @@ export default function Addons() {
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
           <div className="glass-card rounded-2xl w-full max-w-md p-6 space-y-5">
-            <h3 className="font-heading font-bold text-white text-lg flex items-center gap-2">
+            <h3 className="font-heading font-bold text-[var(--text-primary)] text-lg flex items-center gap-2">
               <Plus className="w-5 h-5 text-brand-400" /> Create New Add-on
             </h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5 px-1">Item Name</label>
+                <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-1.5 px-1">Item Name</label>
                 <input type="text" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className="input-glass w-full text-sm py-2.5" placeholder="e.g. Event T-Shirt" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5 px-1">Price (₹)</label>
+                  <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-1.5 px-1">Price (₹)</label>
                   <input type="number" value={form.price} onChange={e => setForm(f => ({ ...f, price: Number(e.target.value) }))} className="input-glass w-full text-sm py-2.5" />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5 px-1">Total Stock</label>
+                  <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-1.5 px-1">Total Stock</label>
                   <input type="number" value={form.total_quantity} onChange={e => setForm(f => ({ ...f, total_quantity: Number(e.target.value) }))} className="input-glass w-full text-sm py-2.5" />
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1.5 px-1">Description</label>
+                <label className="block text-xs font-bold text-[var(--text-muted)] uppercase mb-1.5 px-1">Description</label>
                 <textarea value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} className="input-glass w-full text-sm py-2.5 h-20" placeholder="Size, color, inclusions..." />
               </div>
             </div>
             <div className="flex gap-3">
-              <button onClick={() => setShowModal(false)} className="flex-1 py-2.5 text-xs font-bold text-slate-400 hover:text-white uppercase tracking-widest">Cancel</button>
+              <button onClick={() => setShowModal(false)} className="flex-1 py-2.5 text-xs font-bold text-[var(--text-muted)] hover:text-[var(--text-primary)] uppercase tracking-widest">Cancel</button>
               <button onClick={handleSave} disabled={saving} className="flex-1 btn-primary justify-center py-2.5 text-xs font-black uppercase tracking-widest">
                 {saving ? 'Creating...' : 'Create Item'}
               </button>

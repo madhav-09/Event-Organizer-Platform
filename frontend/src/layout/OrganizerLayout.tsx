@@ -45,7 +45,7 @@ const OrganizerLayout = ({ children, activeSection, onSelectSection }: Props) =>
         style={{
           width: '260px',
           background: 'var(--bg-secondary)',
-          borderRight: '1px solid rgba(255,255,255,0.07)',
+          borderRight: '1px solid var(--glass-border)',
         }}
       >
         {/* Brand header */}
@@ -56,8 +56,8 @@ const OrganizerLayout = ({ children, activeSection, onSelectSection }: Props) =>
                 <img src={logo} alt="Logo" className="w-full h-full object-contain" />
               </div>
               <div>
-                <p className="text-white font-heading font-bold text-sm">Swasthya Chetna</p>
-                <p className="text-slate-500 text-xs">Organizer</p>
+                <p className="text-[var(--text-primary)] font-heading font-bold text-sm">Swasthya Chetna</p>
+                <p className="text-[var(--text-secondary)] text-xs">Organizer</p>
               </div>
             </div>
             <button
@@ -69,7 +69,7 @@ const OrganizerLayout = ({ children, activeSection, onSelectSection }: Props) =>
           </div>
           <button
             onClick={() => navigate("/")}
-            className="flex items-center gap-2 text-xs text-slate-500 hover:text-slate-300 transition-colors"
+            className="flex items-center gap-2 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             Back to Home
@@ -79,7 +79,7 @@ const OrganizerLayout = ({ children, activeSection, onSelectSection }: Props) =>
         {/* Navigation */}
         <nav className="flex-1 px-3 py-4 overflow-y-auto space-y-0.5">
           {/* ── Dashboard ── */}
-          <p className="text-xs font-semibold text-slate-600 uppercase tracking-widest px-3 pb-2 pt-1">
+          <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-widest px-3 pb-2 pt-1">
             Dashboard
           </p>
           {NAV_ITEMS.map(({ key, label, icon: Icon }) => (
@@ -94,8 +94,8 @@ const OrganizerLayout = ({ children, activeSection, onSelectSection }: Props) =>
           ))}
 
           {/* ── Ticketing ── */}
-          <div className="h-px my-2" style={{ background: 'rgba(255,255,255,0.06)' }} />
-          <p className="text-xs font-semibold text-slate-600 uppercase tracking-widest px-3 pb-2 pt-1">
+          <div className="h-px my-2" style={{ background: 'var(--glass-border)' }} />
+          <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-widest px-3 pb-2 pt-1">
             Ticketing
           </p>
           {[
@@ -114,8 +114,8 @@ const OrganizerLayout = ({ children, activeSection, onSelectSection }: Props) =>
           ))}
 
           {/* ── Event Tools ── */}
-          <div className="h-px my-2" style={{ background: 'rgba(255,255,255,0.06)' }} />
-          <p className="text-xs font-semibold text-slate-600 uppercase tracking-widest px-3 pb-2 pt-1">
+          <div className="h-px my-2" style={{ background: 'var(--glass-border)' }} />
+          <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-widest px-3 pb-2 pt-1">
             Event Tools
           </p>
           {[
@@ -135,8 +135,8 @@ const OrganizerLayout = ({ children, activeSection, onSelectSection }: Props) =>
           ))}
 
           {/* ── Quick Links ── */}
-          <div className="h-px my-2" style={{ background: 'rgba(255,255,255,0.06)' }} />
-          <p className="text-xs font-semibold text-slate-600 uppercase tracking-widest px-3 pb-2 pt-1">
+          <div className="h-px my-2" style={{ background: 'var(--glass-border)' }} />
+          <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-widest px-3 pb-2 pt-1">
             Quick Links
           </p>
           <button
@@ -149,7 +149,7 @@ const OrganizerLayout = ({ children, activeSection, onSelectSection }: Props) =>
         </nav>
 
         {/* Create Event CTA */}
-        <div className="p-3 border-t flex-shrink-0" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+        <div className="p-3 border-t flex-shrink-0" style={{ borderColor: 'var(--glass-border)' }}>
           <button
             onClick={() => navigate("/create-event")}
             className="btn-primary w-full justify-center text-sm py-2.5"
@@ -165,15 +165,15 @@ const OrganizerLayout = ({ children, activeSection, onSelectSection }: Props) =>
         {/* Mobile topbar */}
         <div
           className="md:hidden flex items-center gap-3 px-4 py-3 border-b flex-shrink-0"
-          style={{ background: 'var(--bg-secondary)', borderColor: 'rgba(255,255,255,0.07)', height: 'var(--navbar-height)' }}
+          style={{ background: 'var(--bg-secondary)', borderColor: 'var(--glass-border)', height: 'var(--navbar-height)' }}
         >
           <button
             onClick={() => setOpen(true)}
-            className="w-9 h-9 flex items-center justify-center rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+            className="w-9 h-9 flex items-center justify-center rounded-xl text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-hover)] transition-colors"
           >
             <Menu className="w-5 h-5" />
           </button>
-          <span className="font-heading font-bold text-white text-sm">Organizer Dashboard</span>
+          <span className="font-heading font-bold text-[var(--text-primary)] text-sm">Organizer Dashboard</span>
         </div>
 
         {/* Page content */}

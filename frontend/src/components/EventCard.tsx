@@ -115,7 +115,7 @@ function EventCard(props: EventCardProps) {
 
       {/* Body */}
       <div className="p-4">
-        <h3 className="font-heading font-bold text-white text-base leading-snug mb-3 line-clamp-2 group-hover:text-brand-300 transition-colors duration-200">
+        <h3 className="font-heading font-bold text-[var(--text-primary)] text-base leading-snug mb-3 line-clamp-2 group-hover:text-brand-300 transition-colors duration-200">
           {title}
         </h3>
 

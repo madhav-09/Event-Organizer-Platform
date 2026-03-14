@@ -19,8 +19,8 @@ interface CategoryFilterProps {
 
 export default function CategoryFilter({ selected, onSelect }: CategoryFilterProps) {
   return (
-    <div className="sticky top-0 z-40 border-b border-white/5"
-      style={{ background: 'rgba(11,15,26,0.85)', backdropFilter: 'blur(20px)' }}>
+    <div className="sticky top-0 z-40 border-b border-[var(--glass-border)]"
+      style={{ background: 'var(--glass)', backdropFilter: 'blur(20px)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide py-4">
           {categories.map(({ name, icon: Icon, color, glow }) => {
@@ -34,11 +34,11 @@ export default function CategoryFilter({ selected, onSelect }: CategoryFilterPro
                   transition-all duration-300 whitespace-nowrap border
                   ${isActive
                     ? `bg-gradient-to-r ${color} text-white border-transparent`
-                    : 'text-slate-400 hover:text-white border-white/10 hover:border-white/20'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] border-[var(--glass-border)] hover:border-[var(--brand)]'
                   }
                 `}
                 style={{
-                  background: isActive ? undefined : 'rgba(255,255,255,0.04)',
+                  background: isActive ? undefined : 'var(--btn-secondary-bg)',
                   boxShadow: isActive ? `0 0 20px -4px ${glow}` : undefined,
                   transform: isActive ? 'translateY(-1px)' : undefined,
                 }}

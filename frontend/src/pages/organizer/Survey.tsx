@@ -180,7 +180,7 @@ export default function Survey() {
             {/* Event + Tabs */}
             <div className="glass-card rounded-2xl px-5 py-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                 <div className="flex-1 w-full sm:w-auto">
-                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">Event</label>
+                    <label className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider block mb-2">Event</label>
                     {eventsLoading ? (
                         <div className="flex items-center gap-2 text-slate-400 text-sm py-2">
                             <Loader2 className="w-4 h-4 animate-spin" /> Loading events…
@@ -195,7 +195,7 @@ export default function Survey() {
                                 className="input-glass w-full text-sm py-2.5 pr-9 appearance-none"
                             >
                                 {events.map(ev => (
-                                    <option key={ev.event_id} value={ev.event_id} style={{ background: '#0b0f1a' }}>
+                                    <option key={ev.event_id} value={ev.event_id} style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>
                                         {ev.title}
                                     </option>
                                 ))}
@@ -222,9 +222,9 @@ export default function Survey() {
             </div>
 
             {!selectedEventId && !eventsLoading && (
-                <div className="py-16 text-center glass-card rounded-2xl">
-                    <ChevronDown className="w-10 h-10 text-slate-700 mx-auto mb-3" />
-                    <p className="text-slate-500 text-sm">Select an event above to manage its survey</p>
+                <div className="glass-card rounded-2xl py-16 text-center">
+                    <ClipboardCheck className="w-10 h-10 text-[var(--text-muted)] mx-auto mb-3" />
+                    <p className="text-[var(--text-secondary)] text-sm">Select an event to see feedback results</p>
                 </div>
             )}
 

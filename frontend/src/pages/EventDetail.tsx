@@ -272,6 +272,7 @@ export default function EventDetail() {
   const date = new Date(event.start_date).toDateString();
   const time = new Date(event.start_date).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   const totalAttending = tickets.reduce((a, b) => a + b.sold, 0);
+  const isPastEvent = new Date(event.start_date) < new Date();
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
@@ -326,7 +327,7 @@ export default function EventDetail() {
         <div className="lg:col-span-2 space-y-6">
           {/* Meta */}
           <div className="glass-card rounded-2xl p-6 animate-fade-up" style={{ animationFillMode: 'both' }}>
-            <h2 className="font-heading font-bold text-white text-xl mb-5">Event Details</h2>
+            <h2 className="font-heading font-bold text-[var(--text-primary)] text-xl mb-5">Event Details</h2>
             <div className="grid sm:grid-cols-3 gap-4">
               {[
                 { icon: Calendar, label: "Date", value: date },
@@ -339,8 +340,8 @@ export default function EventDetail() {
                     <Icon className="w-4 h-4 text-brand-400" />
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500 mb-0.5">{label}</p>
-                    <p className="text-white text-sm font-medium">{value}</p>
+                    <p className="text-xs text-[var(--text-muted)] mb-0.5">{label}</p>
+                    <p className="text-[var(--text-primary)] text-sm font-medium">{value}</p>
                   </div>
                 </div>
               ))}
@@ -349,8 +350,8 @@ export default function EventDetail() {
 
           {/* Description */}
           <div className="glass-card rounded-2xl p-6 animate-fade-up delay-100" style={{ animationFillMode: 'both' }}>
-            <h2 className="font-heading font-bold text-white text-xl mb-4">About This Event</h2>
-            <p className="text-slate-400 leading-relaxed whitespace-pre-line">{event.description}</p>
+            <h2 className="font-heading font-bold text-[var(--text-primary)] text-xl mb-4">About This Event</h2>
+            <p className="text-[var(--text-secondary)] leading-relaxed whitespace-pre-line">{event.description}</p>
           </div>
 
           {/* Agenda Section */}
@@ -358,7 +359,7 @@ export default function EventDetail() {
             <div className="glass-card rounded-2xl p-6 animate-fade-up delay-150" style={{ animationFillMode: 'both' }}>
               <div className="flex items-center gap-2 mb-6">
                 <Calendar className="w-5 h-5 text-brand-400" />
-                <h2 className="font-heading font-bold text-white text-xl">Event Schedule</h2>
+                <h2 className="font-heading font-bold text-[var(--text-primary)] text-xl">Event Schedule</h2>
               </div>
               <div className="space-y-0 relative before:absolute before:inset-0 before:ml-4 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-px before:bg-gradient-to-b before:from-transparent before:via-white/10 before:to-transparent">
                 {[...event.agenda]
@@ -379,15 +380,15 @@ export default function EventDetail() {
                           <div className="w-2 h-2 rounded-full" style={{ background: color.text }} />
                         </div>
                         {/* Card */}
-                        <div className={`w-[calc(100%-3rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border border-white/5 bg-white/5 backdrop-blur-sm transition-all duration-300 hover:bg-white/10 hover:-translate-y-1 mb-6`}>
+                        <div className={`w-[calc(100%-3rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border border-[var(--glass-border)] bg-[var(--btn-secondary-bg)] backdrop-blur-sm transition-all duration-300 hover:bg-[var(--glass-hover)] hover:-translate-y-1 mb-6`}>
                           <div className="flex items-center justify-between gap-4 mb-2">
-                            <span className="font-heading font-bold text-white text-base">{item.title}</span>
+                            <span className="font-heading font-bold text-[var(--text-primary)] text-base">{item.title}</span>
                             <span className="text-xs font-semibold px-2 py-0.5 rounded-md shrink-0" style={{ background: color.bg, color: color.text }}>
                               {item.type}
                             </span>
                           </div>
-                          {item.description && <p className="text-sm text-slate-400 mb-3">{item.description}</p>}
-                          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500">
+                          {item.description && <p className="text-sm text-[var(--text-secondary)] mb-3">{item.description}</p>}
+                          <div className="flex flex-wrap items-center gap-3 text-xs text-[var(--text-muted)]">
                             <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-brand-400" /> {item.startTime} - {item.endTime}</span>
                             {item.speaker && <span className="flex items-center gap-1.5"><Users className="w-3.5 h-3.5 text-brand-400" /> {item.speaker}</span>}
                             {item.room && <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5 text-brand-400" /> {item.room}</span>}
@@ -404,7 +405,7 @@ export default function EventDetail() {
           <div className="glass-card rounded-2xl p-6 animate-fade-up delay-200" style={{ animationFillMode: 'both' }}>
             <div className="flex items-center gap-2 mb-4">
               <Share2 className="w-4 h-4 text-brand-400" />
-              <h2 className="font-heading font-bold text-white text-base">Share This Event</h2>
+              <h2 className="font-heading font-bold text-[var(--text-primary)] text-base">Share This Event</h2>
             </div>
             <div className="flex flex-wrap gap-3">
               {[
@@ -444,7 +445,7 @@ export default function EventDetail() {
                   setTimeout(() => setLinkCopied(false), 2000);
                 }}
                 className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all hover:scale-105"
-                style={{ background: linkCopied ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.07)', border: `1px solid ${linkCopied ? 'rgba(16,185,129,0.3)' : 'rgba(255,255,255,0.12)'}`, color: linkCopied ? '#6ee7b7' : '#cbd5e1' }}>
+                style={{ background: linkCopied ? 'rgba(16,185,129,0.15)' : 'var(--btn-secondary-bg)', border: `1px solid ${linkCopied ? 'rgba(16,185,129,0.3)' : 'var(--glass-border)'}`, color: linkCopied ? '#6ee7b7' : 'var(--text-muted)' }}>
                 {linkCopied ? <CheckCheck className="w-4 h-4" /> : <Link2 className="w-4 h-4" />}
                 {linkCopied ? 'Copied!' : 'Copy Link'}
               </button>
@@ -455,11 +456,11 @@ export default function EventDetail() {
         {/* Right — Booking Sidebar */}
         <div className="animate-fade-up delay-200" style={{ animationFillMode: 'both' }}>
           <div className="glass-card rounded-2xl p-5 lg:sticky lg:top-8">
-            <h3 className="font-heading font-bold text-white text-lg mb-4">Select Ticket</h3>
+            <h3 className="font-heading font-bold text-[var(--text-primary)] text-lg mb-4">Select Ticket</h3>
 
             <div className="space-y-2.5 mb-5">
               {tickets.length === 0 && (
-                <p className="text-slate-500 text-sm text-center py-4">No tickets available</p>
+                <p className="text-[var(--text-muted)] text-sm text-center py-4">No tickets available</p>
               )}
               {tickets.map((ticket) => {
                 const avail = ticket.quantity - ticket.sold;
@@ -470,22 +471,22 @@ export default function EventDetail() {
                     onClick={() => handleSelectTicket(ticket)}
                     className={`p-4 rounded-xl cursor-pointer transition-all duration-200 border ${isSelected
                       ? "border-brand-500/50"
-                      : "border-white/8 hover:border-white/15"
+                      : "border-[var(--glass-border)] hover:border-brand-500/30"
                       }`}
                     style={{
                       background: isSelected
                         ? "rgba(108,71,236,0.15)"
-                        : "rgba(255,255,255,0.04)",
+                        : "var(--btn-secondary-bg)",
                     }}
                   >
                     <div className="flex justify-between items-start mb-1">
-                      <span className="text-white font-medium text-sm flex items-center gap-2">
+                      <span className="text-[var(--text-primary)] font-medium text-sm flex items-center gap-2">
                         {isSelected && <CheckCircle className="w-3.5 h-3.5 text-brand-400" />}
                         {ticket.title}
                       </span>
                       <span className="text-brand-300 font-bold text-sm">₹{ticket.price}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                    <div className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
                       <span>{avail} left</span>
                       {avail < 50 && avail > 0 && (
                         <span className="flex items-center gap-1 text-amber-400">
@@ -506,28 +507,28 @@ export default function EventDetail() {
             {selectedTicket && (
               <div className="mb-4 p-4 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-white text-sm font-medium">Quantity</span>
+                  <span className="text-[var(--text-primary)] text-sm font-medium">Quantity</span>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                      disabled={quantity <= 1}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-white disabled:opacity-30 transition-colors"
-                      style={{ background: 'rgba(255,255,255,0.08)' }}
+                      disabled={quantity <= 1 || isPastEvent}
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-primary)] disabled:opacity-30 transition-colors"
+                      style={{ background: 'var(--btn-secondary-bg)' }}
                     >
                       <ChevronDown className="w-4 h-4" />
                     </button>
-                    <span className="text-white font-bold w-8 text-center">{quantity}</span>
+                    <span className="text-[var(--text-primary)] font-bold w-8 text-center">{quantity}</span>
                     <button
                       onClick={() => setQuantity((q) => Math.min(available, q + 1))}
-                      disabled={quantity >= available}
-                      className="w-8 h-8 rounded-lg flex items-center justify-center text-white disabled:opacity-30 transition-colors"
-                      style={{ background: 'rgba(255,255,255,0.08)' }}
+                      disabled={quantity >= available || isPastEvent}
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-primary)] disabled:opacity-30 transition-colors"
+                      style={{ background: 'var(--btn-secondary-bg)' }}
                     >
                       <ChevronUp className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
-                <p className="text-slate-500 text-xs">{available} tickets available</p>
+                <p className="text-[var(--text-muted)] text-xs">{available} tickets available</p>
               </div>
             )}
 
@@ -543,25 +544,25 @@ export default function EventDetail() {
                     const qty = selectedAddons[addon.id] || 0;
                     const left = addon.total_quantity - addon.sold_quantity;
                     return (
-                      <div key={addon.id} className="p-3 rounded-xl border border-white/5 bg-white/5 hover:bg-white/8 transition-all">
+                      <div key={addon.id} className="p-3 rounded-xl border border-[var(--glass-border)] bg-[var(--btn-secondary-bg)] hover:bg-[var(--glass-hover)] transition-all">
                         <div className="flex justify-between items-center">
                           <div className="flex-1">
-                            <p className="text-white text-sm font-medium">{addon.name}</p>
+                            <p className="text-[var(--text-primary)] text-sm font-medium">{addon.name}</p>
                             <p className="text-brand-300 text-xs font-semibold">₹{addon.price}</p>
                           </div>
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => updateAddonQty(addon.id, -1)}
-                              disabled={qty === 0}
-                              className="w-7 h-7 rounded-lg flex items-center justify-center text-white disabled:opacity-30 border border-white/10 hover:bg-white/5 transition-colors"
+                              disabled={qty === 0 || isPastEvent}
+                              className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--text-primary)] disabled:opacity-30 border border-[var(--glass-border)] hover:bg-[var(--glass-hover)] transition-colors"
                             >
                               <ChevronDown className="w-3.5 h-3.5" />
                             </button>
-                            <span className="text-white font-bold w-5 text-center text-sm">{qty}</span>
+                            <span className="text-[var(--text-primary)] font-bold w-5 text-center text-sm">{qty}</span>
                             <button
                               onClick={() => updateAddonQty(addon.id, 1)}
-                              disabled={qty >= left}
-                              className="w-7 h-7 rounded-lg flex items-center justify-center text-white disabled:opacity-30 border border-white/10 hover:bg-white/5 transition-colors"
+                              disabled={qty >= left || isPastEvent}
+                              className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--text-primary)] disabled:opacity-30 border border-[var(--glass-border)] hover:bg-[var(--glass-hover)] transition-colors"
                             >
                               <ChevronUp className="w-3.5 h-3.5" />
                             </button>
@@ -579,31 +580,31 @@ export default function EventDetail() {
 
             {/* Price summary */}
             {selectedTicket && (
-              <div className="mb-4 p-4 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+              <div className="mb-4 p-4 rounded-xl" style={{ background: 'var(--btn-secondary-bg)', border: '1px solid var(--glass-border)' }}>
                 <div className="space-y-1.5">
                   <div className="flex justify-between items-center text-sm">
-                    <span className="text-slate-400">Tickets Subtotal</span>
-                    <span className="text-slate-300">₹{basePrice}</span>
+                    <span className="text-[var(--text-secondary)]">Tickets Subtotal</span>
+                    <span className="text-[var(--text-primary)]">₹{basePrice}</span>
                   </div>
                   {addonsPrice > 0 && (
                     <div className="flex justify-between items-center text-sm">
-                      <span className="text-slate-400">Add-ons Subtotal</span>
-                      <span className="text-slate-300">₹{addonsPrice}</span>
+                      <span className="text-[var(--text-secondary)]">Add-ons Subtotal</span>
+                      <span className="text-[var(--text-primary)]">₹{addonsPrice}</span>
                     </div>
                   )}
                   {appliedDiscount && (
                     <div className="flex justify-between items-center text-sm">
-                      <span className="text-emerald-400 flex items-center gap-1">
+                      <span className="text-emerald-500 flex items-center gap-1">
                         <BadgePercent className="w-3.5 h-3.5" />
                         Discount ({appliedDiscount.code})
                       </span>
-                      <span className="text-emerald-400">-₹{discountAmount}</span>
+                      <span className="text-emerald-500">-₹{discountAmount}</span>
                     </div>
                   )}
 
-                  <div className="flex justify-between items-center pt-1.5 border-t border-white/5">
-                    <span className="text-slate-400 text-sm">Total Amount</span>
-                    <span className="text-white font-bold text-xl">₹{totalPrice}</span>
+                  <div className="flex justify-between items-center pt-1.5 border-t border-[var(--glass-border)]">
+                    <span className="text-[var(--text-secondary)] text-sm">Total Amount</span>
+                    <span className="text-[var(--text-primary)] font-bold text-xl">₹{totalPrice}</span>
                   </div>
                 </div>
               </div>
@@ -661,16 +662,18 @@ export default function EventDetail() {
 
             {/* CTA */}
             <button
-              disabled={!selectedTicket || processing || quantity < 1 || quantity > available}
+              disabled={!selectedTicket || processing || quantity < 1 || quantity > available || isPastEvent}
               onClick={handleCheckout}
               className="btn-primary w-full justify-center py-4 text-base disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none"
             >
               {processing ? (
                 <div className="w-5 h-5 rounded-full border-2 border-white border-t-transparent animate-spin" />
+              ) : isPastEvent ? (
+                "Event has ended"
+              ) : selectedTicket && quantity > 0 ? (
+                `Proceed to Pay ₹${totalPrice}`
               ) : (
-                selectedTicket && quantity > 0
-                  ? `Proceed to Pay ₹${totalPrice}`
-                  : "Select a Ticket"
+                "Select a Ticket"
               )}
             </button>
 

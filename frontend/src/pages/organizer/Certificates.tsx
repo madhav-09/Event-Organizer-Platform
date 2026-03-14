@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
     Award, Send, Download, RefreshCw, Filter, Loader2, CheckCircle2,
-    Users, Mic, HelpCircle, ShoppingBag, Calendar, UserPlus, Trash2,
+    Users, Mic, HelpCircle, ShoppingBag, UserPlus, Trash2,
     Mail, User, Phone, Building2, Briefcase, Tag, FileText, ChevronDown, ChevronUp
 } from 'lucide-react';
 import {
@@ -92,7 +92,7 @@ function InputField({
 }) {
     return (
         <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
+            <label className="text-xs font-semibold text-[var(--text-muted)] flex items-center gap-1.5">
                 {icon}{label}{required && <span className="text-red-400">*</span>}
             </label>
             <input
@@ -114,17 +114,16 @@ function SelectField({
 }) {
     return (
         <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
+            <label className="text-xs font-semibold text-[var(--text-muted)] flex items-center gap-1.5">
                 {icon}{label}
             </label>
             <select
                 value={value}
                 onChange={e => onChange(e.target.value)}
                 className="input-glass py-2.5 text-sm"
-                style={{ background: '#0b0f1a' }}
             >
-                <option value="">— Select —</option>
-                {options.map(o => <option key={o} value={o} style={{ background: '#0b0f1a' }}>{o}</option>)}
+                <option value="" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>— Select —</option>
+                {options.map(o => <option key={o} value={o} style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>{o}</option>)}
             </select>
         </div>
     );
@@ -253,14 +252,14 @@ export default function Certificates() {
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="font-heading font-black text-2xl text-white flex items-center gap-3">
+                    <h1 className="font-heading font-black text-2xl text-[var(--text-primary)] flex items-center gap-3">
                         <span className="w-9 h-9 rounded-xl flex items-center justify-center text-base"
                             style={{ background: 'rgba(108,71,236,0.2)', border: '1px solid rgba(108,71,236,0.35)' }}>
                             🏅
                         </span>
                         Certificates
                     </h1>
-                    <p className="text-slate-500 mt-1 text-sm pl-12">Generate &amp; distribute achievement certificates</p>
+                    <p className="text-[var(--text-secondary)] mt-1 text-sm pl-12">Generate &amp; distribute achievement certificates</p>
                 </div>
 
                 {selectedEventId && (
@@ -277,8 +276,8 @@ export default function Certificates() {
                         </button>
                         <button onClick={() => { fetchCerts(); if (isParticipantRole) fetchParticipants(); }}
                             disabled={loadingCerts}
-                            className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-400 hover:text-white transition-colors"
-                            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+                            className="w-10 h-10 rounded-xl flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+                            style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}
                             title="Refresh">
                             <RefreshCw className={`w-4 h-4 ${loadingCerts ? 'animate-spin' : ''}`} />
                         </button>
@@ -288,20 +287,23 @@ export default function Certificates() {
 
             {/* Event Selector */}
             <div className="glass-card rounded-2xl px-5 py-4">
-                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">
-                    <Calendar className="inline w-3.5 h-3.5 mr-1" /> Event
-                </label>
+                <label className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider block mb-2">Event</label>
                 {loadingEvents ? (
-                    <div className="flex items-center gap-2 text-sm text-slate-500">
-                        <Loader2 className="w-4 h-4 animate-spin" /> Loading events…
+                    <div className="input-glass w-full md:w-96 py-2.5 text-sm text-[var(--text-muted)] flex items-center gap-2">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" /> Loading events…
                     </div>
                 ) : events.length === 0 ? (
-                    <p className="text-slate-500 text-sm">No events found. Create an event first.</p>
+                    <p className="text-[var(--text-secondary)] text-sm">No events found. Create an event first.</p>
                 ) : (
-                    <select value={selectedEventId} onChange={e => setSelectedEventId(e.target.value)}
-                        className="input-glass w-full md:w-96 text-sm py-2.5">
+                    <select
+                        value={selectedEventId}
+                        onChange={e => setSelectedEventId(e.target.value)}
+                        className="input-glass w-full md:w-96 text-sm py-2.5"
+                    >
                         {events.map(ev => (
-                            <option key={ev.event_id} value={ev.event_id} style={{ background: '#0b0f1a' }}>{ev.title}</option>
+                            <option key={ev.event_id} value={ev.event_id} style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>
+                                {ev.title}
+                            </option>
                         ))}
                     </select>
                 )}
@@ -322,7 +324,7 @@ export default function Certificates() {
                     ].map(s => (
                         <div key={s.label} className="glass-card rounded-xl p-4"
                             style={{ border: `1px solid ${s.bg.replace('0.1', '0.25')}` }}>
-                            <p className="text-xs text-slate-500 mb-1">{s.label}</p>
+                            <p className="text-xs text-[var(--text-muted)] mb-1">{s.label}</p>
                             <p className="font-heading font-bold text-lg" style={{ color: s.color }}>{s.value}</p>
                         </div>
                     ))}
@@ -351,13 +353,13 @@ export default function Certificates() {
 
                     {/* Panel header */}
                     <div className="px-5 py-4 border-b flex items-center gap-3"
-                        style={{ borderColor: 'rgba(255,255,255,0.07)', background: `${roleColor}0a` }}>
+                        style={{ borderColor: 'var(--glass-border)', background: `${roleColor}0a` }}>
                         <UserPlus className="w-4 h-4" style={{ color: roleColor }} />
-                        <span className="font-semibold text-white text-sm">
+                        <span className="font-semibold text-[var(--text-primary)] text-sm">
                             Add {activeRole === 'VOLUNTEER' ? 'Volunteer' : 'Vendor'}
                         </span>
-                        <span className="ml-auto text-xs text-slate-500 hidden sm:block">
-                            Fill in details → <strong className="text-slate-400">Add</strong>, then <strong className="text-slate-400">Generate</strong> → <strong className="text-slate-400">Send Emails</strong>
+                        <span className="ml-auto text-xs text-[var(--text-secondary)] hidden sm:block">
+                            Fill in details → <strong className="text-[var(--text-muted)]">Add</strong>, then <strong className="text-[var(--text-muted)]">Generate</strong> → <strong className="text-[var(--text-muted)]">Send Emails</strong>
                         </span>
                     </div>
 
@@ -478,8 +480,8 @@ export default function Certificates() {
 
                                                 {/* Name + email */}
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="text-sm font-medium text-white truncate">{p.name}</p>
-                                                    <p className="text-xs text-slate-500 truncate">{p.email}</p>
+                                                    <p className="text-sm font-medium text-[var(--text-primary)] truncate">{p.name}</p>
+                                                    <p className="text-xs text-[var(--text-secondary)] truncate">{p.email}</p>
                                                 </div>
 
                                                 {/* Secondary info pills */}
@@ -593,29 +595,29 @@ export default function Certificates() {
             ) : (
                 <div className="glass-card rounded-2xl overflow-hidden">
                     <div className="px-5 py-3.5 border-b flex items-center justify-between"
-                        style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
-                        <span className="text-sm font-semibold text-white">{certs.length} certificates</span>
-                        <span className="flex items-center gap-1.5 text-xs text-slate-500">
+                        style={{ borderColor: 'var(--glass-border)' }}>
+                        <span className="text-sm font-semibold text-[var(--text-primary)]">{certs.length} certificates</span>
+                        <span className="flex items-center gap-1.5 text-xs text-[var(--text-muted)]">
                             <Filter className="w-3.5 h-3.5" /> Filtered by: {activeRole}
                         </span>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
-                                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                                <tr style={{ borderBottom: '1px solid var(--glass-border)' }}>
                                     {['Name', 'Email', 'Type', 'Status', 'Action'].map(h => (
-                                        <th key={h} className="px-5 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{h}</th>
+                                        <th key={h} className="px-5 py-3 text-left text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">{h}</th>
                                     ))}
                                 </tr>
                             </thead>
                             <tbody>
                                 {certs.map((cert, i) => (
                                     <tr key={cert.id}
-                                        className="hover:bg-white/3 transition-colors"
-                                        style={{ borderBottom: i < certs.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
-                                        <td className="px-5 py-3.5 text-white font-medium">{cert.name}</td>
-                                        <td className="px-5 py-3.5 text-slate-400">{cert.email}</td>
-                                        <td className="px-5 py-3.5 text-slate-400 text-xs">{cert.certificate_type}</td>
+                                        className="hover:bg-[var(--glass-hover)] transition-colors"
+                                        style={{ borderBottom: i < certs.length - 1 ? '1px solid var(--glass-border)' : 'none' }}>
+                                        <td className="px-5 py-3.5 text-[var(--text-primary)] font-medium">{cert.name}</td>
+                                        <td className="px-5 py-3.5 text-[var(--text-secondary)]">{cert.email}</td>
+                                        <td className="px-5 py-3.5 text-[var(--text-muted)] text-xs">{cert.certificate_type}</td>
                                         <td className="px-5 py-3.5">
                                             {cert.status === 'sent' ? (
                                                 <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-400"

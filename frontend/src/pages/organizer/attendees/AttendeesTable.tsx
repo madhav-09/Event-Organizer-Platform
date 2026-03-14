@@ -12,7 +12,7 @@ export default function AttendeesTable({ attendees, filter }: Props) {
 
   if (!attendees.length) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-slate-600">
+      <div className="flex flex-col items-center justify-center py-16 text-[var(--text-muted)]">
         <Users className="w-10 h-10 mb-3 opacity-30" />
         <p className="text-sm">No attendees for this event yet.</p>
       </div>
@@ -41,10 +41,10 @@ export default function AttendeesTable({ attendees, filter }: Props) {
     <div className="overflow-x-auto">
       <table className="min-w-full text-sm">
         <thead>
-          <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+          <tr style={{ borderBottom: '1px solid var(--glass-border)' }}>
             {["Name", "Email", "Ticket", "Qty", "Status"].map((h, i) => (
               <th key={h}
-                className={`px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider ${i >= 3 ? "text-center" : "text-left"}`}>
+                className={`px-5 py-3 text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider ${i >= 3 ? "text-center" : "text-left"}`}>
                 {h}
               </th>
             ))}
@@ -54,13 +54,13 @@ export default function AttendeesTable({ attendees, filter }: Props) {
           {filtered.map((a, i) => (
             <tr
               key={a.booking_id}
-              className="transition-colors hover:bg-white/3"
-              style={{ borderBottom: i < filtered.length - 1 ? '1px solid rgba(255,255,255,0.05)' : undefined }}
+              className="transition-colors hover:bg-[var(--glass-hover)]"
+              style={{ borderBottom: i < filtered.length - 1 ? '1px solid var(--glass-border)' : undefined }}
             >
-              <td className="px-5 py-3.5 font-medium text-white">{a.user?.name ?? "—"}</td>
-              <td className="px-5 py-3.5 text-slate-400">{a.user?.email ?? "—"}</td>
-              <td className="px-5 py-3.5 text-slate-300">{a.ticket ?? "—"}</td>
-              <td className="px-5 py-3.5 text-center text-slate-300">{a.quantity}</td>
+              <td className="px-5 py-3.5 font-medium text-[var(--text-primary)]">{a.user?.name ?? "—"}</td>
+              <td className="px-5 py-3.5 text-[var(--text-secondary)]">{a.user?.email ?? "—"}</td>
+              <td className="px-5 py-3.5 text-[var(--text-muted)]">{a.ticket ?? "—"}</td>
+              <td className="px-5 py-3.5 text-center text-[var(--text-muted)]">{a.quantity}</td>
               <td className="px-5 py-3.5 text-center">
                 {a.checked_in ? (
                   <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold text-emerald-400 border border-emerald-500/30"

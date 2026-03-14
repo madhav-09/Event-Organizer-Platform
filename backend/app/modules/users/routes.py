@@ -372,8 +372,13 @@ async def search_events(
     q: Optional[str] = Query(None),
     city: Optional[str] = Query(None),
     venue: Optional[str] = Query(None),
+    show_past: bool = Query(False),
 ):
     query = {"status": "PUBLISHED"}
+
+    if not show_past:
+        from datetime import datetime
+        query["start_date"] = {"$gte": datetime.utcnow()}
 
     if q and q.strip():
         search_term = re.escape(q.strip())

@@ -62,15 +62,15 @@ export default function AttendeesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-heading font-black text-2xl text-white">Attendees</h2>
-          <p className="text-slate-500 text-sm mt-0.5">Scan QR codes to check in attendees</p>
+          <h2 className="font-heading font-black text-2xl text-[var(--text-primary)]">Attendees</h2>
+          <p className="text-[var(--text-secondary)] text-sm mt-0.5">Scan QR codes to check in attendees</p>
         </div>
         <div className="flex items-center gap-2">
           {selectedEventId && attendees.length > 0 && (
             <button
               onClick={handleExportCSV}
-              className="flex items-center gap-2 px-3 py-2 text-sm text-slate-400 rounded-xl transition-colors"
-              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
+              className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--text-muted)] rounded-xl transition-colors"
+              style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}
             >
               <Download size={15} />
               Export CSV
@@ -115,8 +115,8 @@ export default function AttendeesPage() {
                   <Icon className="w-5 h-5" style={{ color }} />
                 </div>
                 <div>
-                  <p className="text-2xl font-black text-white font-heading">{value}</p>
-                  <p className="text-xs text-slate-500">{label}</p>
+                  <p className="text-2xl font-black text-[var(--text-primary)] font-heading">{value}</p>
+                  <p className="text-xs text-[var(--text-secondary)]">{label}</p>
                 </div>
               </div>
             ))}
@@ -132,17 +132,17 @@ export default function AttendeesPage() {
             {/* Attendee List */}
             <div className="lg:col-span-3 glass-card rounded-2xl overflow-hidden">
               {/* Tabs */}
-              <div className="flex" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+              <div className="flex" style={{ borderBottom: '1px solid var(--glass-border)' }}>
                 <button
                   onClick={() => setActiveTab("not_checked_in")}
-                  className={`flex-1 py-3.5 text-sm font-semibold transition-colors relative ${activeTab === "not_checked_in" ? "text-brand-300" : "text-slate-500 hover:text-slate-300"
+                  className={`flex-1 py-3.5 text-sm font-semibold transition-colors relative ${activeTab === "not_checked_in" ? "text-brand-300" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                     }`}
                 >
                   Not Checked In
                   <span className={`ml-2 text-xs px-2 py-0.5 rounded-full font-bold ${activeTab === "not_checked_in"
                     ? "text-brand-300 border border-brand-500/30"
-                    : "text-slate-500 border border-white/10"
-                    }`} style={{ background: 'rgba(255,255,255,0.05)' }}>
+                    : "text-[var(--text-muted)] border border-[var(--glass-border)]"
+                    }`} style={{ background: 'var(--glass-bg)' }}>
                     {totalCount - checkedInCount}
                   </span>
                   {activeTab === "not_checked_in" && (

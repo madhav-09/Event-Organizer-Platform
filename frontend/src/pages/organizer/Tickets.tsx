@@ -178,8 +178,8 @@ export default function Tickets() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="font-heading font-black text-2xl text-white">Ticket Types</h1>
-          <p className="text-slate-500 mt-1 text-sm">Manage ticket tiers and pricing for each event</p>
+          <h1 className="font-heading font-black text-2xl text-[var(--text-primary)]">Ticket Types</h1>
+          <p className="text-[var(--text-secondary)] mt-1 text-sm">Manage ticket tiers and pricing for each event</p>
         </div>
         <button onClick={openAdd} disabled={!selectedEventId || eventsLoading}
           className="btn-primary text-sm px-4 py-2.5 disabled:opacity-40 disabled:transform-none">
@@ -190,15 +190,15 @@ export default function Tickets() {
 
       {/* Event Selector */}
       <div className="glass-card rounded-2xl px-5 py-4">
-        <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+        <label className="block text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">
           Select Event
         </label>
         {eventsLoading ? (
-          <div className="flex items-center gap-2 text-slate-400 text-sm">
+          <div className="flex items-center gap-2 text-[var(--text-muted)] text-sm">
             <Loader2 className="w-4 h-4 animate-spin" /> Loading events…
           </div>
         ) : events.length === 0 ? (
-          <p className="text-slate-500 text-sm">No events found. Create an event first.</p>
+          <p className="text-[var(--text-secondary)] text-sm">No events found. Create an event first.</p>
         ) : (
           <div className="relative w-full max-w-xs">
             <select
@@ -207,12 +207,12 @@ export default function Tickets() {
               className="input-glass w-full text-sm py-2.5 pr-9 appearance-none"
             >
               {events.map(ev => (
-                <option key={ev.event_id} value={ev.event_id} style={{ background: '#0b0f1a' }}>
+                <option key={ev.event_id} value={ev.event_id} style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>
                   {ev.title}
                 </option>
               ))}
             </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)] pointer-events-none" />
           </div>
         )}
       </div>
@@ -226,44 +226,44 @@ export default function Tickets() {
         ].map(({ label, value, accent, border }) => (
           <div key={label} className="glass-card rounded-2xl px-5 py-4"
             style={{ background: accent, borderColor: border }}>
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">{label}</p>
-            <p className="text-2xl font-black text-white font-heading">{value}</p>
+            <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">{label}</p>
+            <p className="text-2xl font-black text-[var(--text-primary)] font-heading">{value}</p>
           </div>
         ))}
       </div>
 
       {/* Table */}
       <div className="glass-card rounded-2xl overflow-hidden">
-        <div className="px-6 py-4 border-b flex items-center gap-2" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+        <div className="px-6 py-4 border-b flex items-center gap-2" style={{ borderColor: 'var(--glass-border)' }}>
           <Ticket className="w-4 h-4 text-brand-400" />
-          <h3 className="font-heading font-bold text-white">
+          <h3 className="font-heading font-bold text-[var(--text-primary)]">
             Ticket Types {selectedEvent ? `— ${selectedEvent.title}` : ''}
           </h3>
         </div>
 
         {!selectedEventId ? (
           <div className="py-16 text-center">
-            <ChevronDown className="w-10 h-10 text-slate-700 mx-auto mb-3" />
-            <p className="text-slate-500 text-sm">Select an event above to see its ticket types</p>
+            <ChevronDown className="w-10 h-10 text-[var(--text-muted)] mx-auto mb-3" />
+            <p className="text-[var(--text-secondary)] text-sm">Select an event above to see its ticket types</p>
           </div>
         ) : ticketsLoading ? (
-          <div className="flex items-center justify-center py-16 gap-3 text-slate-400">
+          <div className="flex items-center justify-center py-16 gap-3 text-[var(--text-muted)]">
             <Loader2 className="w-5 h-5 animate-spin text-brand-400" />
             <span className="text-sm">Loading tickets…</span>
           </div>
         ) : tickets.length === 0 ? (
           <div className="py-16 text-center">
-            <Ticket className="w-10 h-10 text-slate-700 mx-auto mb-3" />
-            <p className="text-slate-500 text-sm font-medium mb-1">No ticket types yet</p>
-            <p className="text-slate-600 text-xs">Click "Add Ticket Type" to create your first one</p>
+            <Ticket className="w-10 h-10 text-[var(--text-muted)] mx-auto mb-3" />
+            <p className="text-[var(--text-primary)] text-sm font-medium mb-1">No ticket types yet</p>
+            <p className="text-[var(--text-secondary)] text-xs">Click "Add Ticket Type" to create your first one</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead>
-                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+                <tr style={{ borderBottom: '1px solid var(--glass-border)' }}>
                   {['Ticket Name', 'Price', 'Sold / Total', 'Progress', 'Actions'].map(h => (
-                    <th key={h} className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{h}</th>
+                    <th key={h} className="px-5 py-3.5 text-left text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -283,7 +283,7 @@ export default function Tickets() {
                             style={{ background: ac.bg, border: `1px solid ${ac.border}` }}>
                             <Ticket className="w-3.5 h-3.5" style={{ color: ac.text }} />
                           </div>
-                          <span className="font-semibold text-white">{t.title}</span>
+                          <span className="font-semibold text-[var(--text-primary)]">{t.title}</span>
                         </div>
                       </td>
 
@@ -297,15 +297,15 @@ export default function Tickets() {
                       </td>
 
                       {/* Sold / Total */}
-                      <td className="px-5 py-4 text-slate-300">{sold} / {t.quantity}</td>
+                      <td className="px-5 py-4 text-[var(--text-secondary)]">{sold} / {t.quantity}</td>
 
                       {/* Progress */}
                       <td className="px-5 py-4 w-36">
-                        <div className="w-full h-1.5 rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                        <div className="w-full h-1.5 rounded-full" style={{ background: 'var(--glass-hover)' }}>
                           <div className="h-full rounded-full transition-all"
                             style={{ width: `${pct}%`, background: ac.text }} />
                         </div>
-                        <p className="text-xs text-slate-500 mt-1">{pct}% sold</p>
+                        <p className="text-xs text-[var(--text-muted)] mt-1">{pct}% sold</p>
                       </td>
 
                       {/* Actions */}
@@ -319,8 +319,8 @@ export default function Tickets() {
                           <button
                             onClick={() => handleDelete(t)}
                             disabled={deleting === t._id}
-                            className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-400 transition-colors disabled:opacity-50"
-                            style={{ background: 'rgba(255,255,255,0.05)' }}
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:text-red-400 transition-colors disabled:opacity-50"
+                            style={{ background: 'var(--glass-hover)' }}
                             title="Delete">
                             {deleting === t._id
                               ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -352,29 +352,29 @@ export default function Tickets() {
                   style={{ background: 'rgba(108,71,236,0.2)', border: '1px solid rgba(108,71,236,0.3)' }}>
                   <Ticket className="w-4 h-4 text-brand-400" />
                 </div>
-                <h3 className="font-heading font-bold text-white text-lg">
+                <h3 className="font-heading font-bold text-[var(--text-primary)] text-lg">
                   {editing ? 'Edit Ticket Type' : 'Add Ticket Type'}
                 </h3>
               </div>
               <button onClick={() => setShowModal(false)}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white transition-colors"
-                style={{ background: 'rgba(255,255,255,0.06)' }}>
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+                style={{ background: 'var(--glass-hover)' }}>
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Event context */}
             {selectedEvent && (
-              <div className="rounded-xl px-3 py-2 text-xs text-slate-400"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                📅 Event: <span className="text-white font-semibold">{selectedEvent.title}</span>
+              <div className="rounded-xl px-3 py-2 text-xs text-[var(--text-secondary)]"
+                style={{ background: 'var(--glass-hover)', border: '1px solid var(--glass-border)' }}>
+                📅 Event: <span className="text-[var(--text-primary)] font-semibold">{selectedEvent.title}</span>
               </div>
             )}
 
             <div className="space-y-4">
               {/* Ticket Name */}
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1.5">
                   Ticket Name *
                 </label>
                 <input
@@ -388,7 +388,7 @@ export default function Tickets() {
 
               {/* Price */}
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1.5">
                   Price (₹) — enter 0 for free
                 </label>
                 <input
@@ -404,7 +404,7 @@ export default function Tickets() {
 
               {/* Quantity */}
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1.5">
                   Total Quantity *
                 </label>
                 <input
@@ -420,12 +420,12 @@ export default function Tickets() {
               {/* Preview */}
               {form.title && (
                 <div className="rounded-xl p-3.5" style={{ background: 'rgba(108,71,236,0.08)', border: '1px solid rgba(108,71,236,0.2)' }}>
-                  <p className="text-xs text-slate-500 mb-1">Preview</p>
-                  <p className="text-sm text-white font-semibold">
+                  <p className="text-xs text-[var(--text-muted)] mb-1">Preview</p>
+                  <p className="text-sm text-[var(--text-primary)] font-semibold">
                     <span className="text-brand-300">{form.title || '—'}</span>
                     {' — '}
                     <span className="text-emerald-400">{form.price === 0 ? 'Free' : `₹${form.price.toLocaleString('en-IN')}`}</span>
-                    <span className="text-slate-400 font-normal"> · {form.quantity} seats</span>
+                    <span className="text-[var(--text-muted)] font-normal"> · {form.quantity} seats</span>
                   </p>
                 </div>
               )}
@@ -434,8 +434,8 @@ export default function Tickets() {
             {/* Actions */}
             <div className="flex gap-3 pt-2">
               <button onClick={() => setShowModal(false)}
-                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-slate-400 transition-colors hover:text-white"
-                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
+                style={{ background: 'var(--glass-hover)', border: '1px solid var(--glass-border)' }}>
                 Cancel
               </button>
               <button onClick={handleSave} disabled={saving || !form.title.trim()}

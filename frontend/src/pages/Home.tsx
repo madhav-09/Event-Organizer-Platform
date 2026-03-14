@@ -28,12 +28,12 @@ interface Event {
 
 function EventCardSkeleton() {
   return (
-    <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid rgba(255,255,255,0.06)' }}>
-      <div className="h-48 shimmer" style={{ background: 'rgba(255,255,255,0.04)' }} />
+    <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--bg-card)', border: '1px solid var(--glass-border)' }}>
+      <div className="h-48 shimmer" style={{ background: 'var(--btn-secondary-bg)' }} />
       <div className="p-4 space-y-3">
-        <div className="h-4 rounded-lg shimmer" style={{ background: 'rgba(255,255,255,0.04)', width: '70%' }} />
-        <div className="h-3 rounded-lg shimmer" style={{ background: 'rgba(255,255,255,0.04)', width: '50%' }} />
-        <div className="h-3 rounded-lg shimmer" style={{ background: 'rgba(255,255,255,0.04)', width: '60%' }} />
+        <div className="h-4 rounded-lg shimmer" style={{ background: 'var(--btn-secondary-bg)', width: '70%' }} />
+        <div className="h-3 rounded-lg shimmer" style={{ background: 'var(--btn-secondary-bg)', width: '50%' }} />
+        <div className="h-3 rounded-lg shimmer" style={{ background: 'var(--btn-secondary-bg)', width: '60%' }} />
       </div>
     </div>
   );
@@ -43,13 +43,14 @@ export default function Home() {
   const [events, setEvents] = useState<Event[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [loading, setLoading] = useState(true);
+  const [showPast, setShowPast] = useState(false);
   const { user } = useAuth();
   const [wishlistIds, setWishlistIds] = useState<Set<string>>(new Set());
 
   const [searchParams] = useSearchParams();
   const city = searchParams.get("city");
 
-  const fetchEvents = async (params?: { q?: string; city?: string | null }) => {
+  const fetchEvents = async (params?: { q?: string; city?: string | null; show_past?: boolean }) => {
     setLoading(true);
     try {
       const res = await api.get<Event[]>("/users/search", { params });
@@ -62,9 +63,9 @@ export default function Home() {
   };
 
   useEffect(() => {
-    fetchEvents({ city });
+    fetchEvents({ city, show_past: showPast });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [city]);
+  }, [city, showPast]);
 
   useEffect(() => {
     if (user) {
@@ -114,30 +115,48 @@ export default function Home() {
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
-      <HeroSearch onSearch={(params) => fetchEvents({ q: params?.q, city })} />
+      <HeroSearch onSearch={(params) => fetchEvents({ q: params?.q, city, show_past: showPast })} />
       <CategoryFilter selected={selectedCategory} onSelect={setSelectedCategory} />
 
       {/* Events section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Section header */}
-        <div className="flex items-center justify-between mb-10">
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
           <div>
             <div className="flex items-center gap-2.5 mb-2">
               <div className="w-8 h-8 rounded-xl flex items-center justify-center"
                 style={{ background: 'rgba(108,71,236,0.15)', border: '1px solid rgba(108,71,236,0.25)' }}>
                 <TrendingUp className="w-4 h-4 text-brand-400" />
               </div>
-              <span className="text-brand-400 text-sm font-semibold uppercase tracking-widest">Live Events</span>
+              <span className="text-brand-400 text-sm font-semibold uppercase tracking-widest">
+                {showPast ? "Past Events" : "Live Events"}
+              </span>
             </div>
-            <h2 className="font-heading font-black text-3xl sm:text-4xl text-white">
-              Trending <span className="gradient-text">Now</span>
+            <h2 className="font-heading font-black text-3xl sm:text-4xl text-[var(--text-primary)]">
+              {showPast ? "Memory" : "Trending"} <span className="gradient-text">{showPast ? "Lane" : "Now"}</span>
             </h2>
           </div>
-          {!loading && filteredEvents.length > 0 && (
-            <Link to="/" className="hidden sm:flex items-center gap-1.5 text-sm text-slate-400 hover:text-white transition-colors group">
-              View all <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
-          )}
+          
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setShowPast(!showPast)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+              style={{
+                background: showPast ? 'rgba(108,71,236,0.1)' : 'var(--btn-secondary-bg)',
+                border: `1px solid ${showPast ? 'rgba(108,71,236,0.3)' : 'var(--glass-border)'}`,
+                color: showPast ? 'var(--brand)' : 'var(--text-secondary)'
+              }}
+            >
+              <Calendar className="w-4 h-4" />
+              {showPast ? "Show Live Events" : "View Past Events"}
+            </button>
+            
+            {!loading && filteredEvents.length > 0 && (
+              <Link to="/" className="hidden sm:flex items-center gap-1.5 text-sm text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors group">
+                View all <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            )}
+          </div>
         </div>
 
         {loading ? (
@@ -173,9 +192,9 @@ export default function Home() {
           </div>
         ) : (
           <div className="text-center py-20 glass-card rounded-2xl">
-            <Calendar className="w-16 h-16 mx-auto text-slate-700 mb-4" />
-            <h3 className="text-white font-heading font-bold text-xl mb-2">No events found</h3>
-            <p className="text-slate-500 text-sm">Try a different category or city</p>
+            <Calendar className="w-16 h-16 mx-auto text-[var(--text-muted)] mb-4" />
+            <h3 className="text-[var(--text-primary)] font-heading font-bold text-xl mb-2">No events found</h3>
+            <p className="text-[var(--text-secondary)] text-sm">Try a different category or city</p>
           </div>
         )}
       </section>

@@ -129,8 +129,8 @@ export default function Agenda() {
         <div className="space-y-8">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="font-heading font-black text-2xl text-white">Agenda & Schedule</h1>
-                    <p className="text-slate-500 mt-1 text-sm">Plan and organize your event timeline</p>
+                    <h1 className="font-heading font-black text-2xl text-[var(--text-primary)]">Agenda & Schedule</h1>
+                    <p className="text-[var(--text-secondary)] mt-1 text-sm">Plan and organize your event timeline</p>
                 </div>
                 {selectedEventObj && (
                     <button onClick={openAdd} className="btn-primary text-sm px-4 py-2.5">
@@ -141,13 +141,13 @@ export default function Agenda() {
 
             {/* Event Selector */}
             <div className="glass-card rounded-2xl px-5 py-4">
-                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">Event</label>
+                <label className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider block mb-2">Event</label>
                 {loadingEvents ? (
-                    <div className="input-glass w-full md:w-96 py-2.5 text-sm text-slate-500 flex items-center gap-2">
+                    <div className="input-glass w-full md:w-96 py-2.5 text-sm text-[var(--text-muted)] flex items-center gap-2">
                         <Loader2 className="w-3.5 h-3.5 animate-spin" /> Loading events…
                     </div>
                 ) : events.length === 0 ? (
-                    <p className="text-slate-500 text-sm">No events found. Create an event first.</p>
+                    <p className="text-[var(--text-secondary)] text-sm">No events found. Create an event first.</p>
                 ) : (
                     <select
                         value={selectedEventObj?.id || ''}
@@ -155,7 +155,7 @@ export default function Agenda() {
                         className="input-glass w-full md:w-96 text-sm py-2.5"
                     >
                         {events.map(ev => (
-                            <option key={ev.event_id} value={ev.event_id} style={{ background: '#0b0f1a' }}>
+                            <option key={ev.event_id} value={ev.event_id} style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>
                                 {ev.title}
                             </option>
                         ))}
@@ -164,14 +164,14 @@ export default function Agenda() {
             </div>
 
             {loadingAgenda ? (
-                <div className="flex items-center justify-center py-16 gap-3 text-slate-400">
+                <div className="flex items-center justify-center py-16 gap-3 text-[var(--text-muted)]">
                     <Loader2 className="w-5 h-5 animate-spin text-brand-400" />
                     <span className="text-sm">Loading agenda…</span>
                 </div>
             ) : (!selectedEventObj) ? null : sortedItems.length === 0 ? (
                 <div className="glass-card rounded-2xl py-16 text-center">
-                    <CalendarDays className="w-10 h-10 text-slate-700 mx-auto mb-3" />
-                    <p className="text-slate-500 text-sm">No sessions yet. Add the first one!</p>
+                    <CalendarDays className="w-10 h-10 text-[var(--text-muted)] mx-auto mb-3" />
+                    <p className="text-[var(--text-secondary)] text-sm">No sessions yet. Add the first one!</p>
                 </div>
             ) : (
                 <div className="space-y-4">
@@ -181,15 +181,15 @@ export default function Agenda() {
                             <div key={item._id} className="glass-card rounded-2xl p-5 flex gap-5 items-start group">
                                 {/* Time column */}
                                 <div className="w-24 flex-shrink-0 text-center">
-                                    <p className="font-heading font-bold text-white text-sm">{item.startTime}</p>
-                                    <div className="h-px my-1.5" style={{ background: 'rgba(255,255,255,0.08)' }} />
-                                    <p className="text-xs text-slate-500">{item.endTime}</p>
+                                    <p className="font-heading font-bold text-[var(--text-primary)] text-sm">{item.startTime}</p>
+                                    <div className="h-px my-1.5" style={{ background: 'var(--glass-border)' }} />
+                                    <p className="text-xs text-[var(--text-secondary)]">{item.endTime}</p>
                                 </div>
 
                                 {/* Left connector */}
                                 <div className="flex flex-col items-center pt-1 flex-shrink-0">
                                     <div className="w-3 h-3 rounded-full border-2" style={{ borderColor: colors.text, background: colors.bg }} />
-                                    <div className="w-px flex-1 mt-1" style={{ background: 'rgba(255,255,255,0.08)', minHeight: '40px' }} />
+                                    <div className="w-px flex-1 mt-1" style={{ background: 'var(--glass-border)', minHeight: '40px' }} />
                                 </div>
 
                                 {/* Content */}
@@ -200,30 +200,30 @@ export default function Agenda() {
                                                 <span className="text-xs font-semibold px-2 py-0.5 rounded-md" style={{ background: colors.bg, color: colors.text, border: `1px solid ${colors.border}` }}>
                                                     {colors.label}
                                                 </span>
-                                                <h3 className="font-heading font-bold text-white text-sm">{item.title}</h3>
+                                                <h3 className="font-heading font-bold text-[var(--text-primary)] text-sm">{item.title}</h3>
                                             </div>
-                                            {item.description && <p className="text-xs text-slate-400 mb-2">{item.description}</p>}
+                                            {item.description && <p className="text-xs text-[var(--text-secondary)] mb-2">{item.description}</p>}
                                             <div className="flex items-center gap-4 flex-wrap mt-1">
                                                 {item.speaker && (
-                                                    <span className="flex items-center gap-1.5 text-xs text-slate-500">
+                                                    <span className="flex items-center gap-1.5 text-xs text-[var(--text-muted)]">
                                                         <User className="w-3 h-3" /> {item.speaker}
                                                     </span>
                                                 )}
                                                 {item.room && (
-                                                    <span className="flex items-center gap-1.5 text-xs text-slate-500">
+                                                    <span className="flex items-center gap-1.5 text-xs text-[var(--text-muted)]">
                                                         <MapPin className="w-3 h-3" /> {item.room}
                                                     </span>
                                                 )}
-                                                <span className="flex items-center gap-1.5 text-xs text-slate-500">
+                                                <span className="flex items-center gap-1.5 text-xs text-[var(--text-muted)]">
                                                     <Clock className="w-3 h-3" /> {item.startTime} – {item.endTime}
                                                 </span>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button onClick={() => openEdit(item)} className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-brand-300 transition-colors" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                                            <button onClick={() => openEdit(item)} className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:text-brand-300 transition-colors" style={{ background: 'var(--glass-hover)' }}>
                                                 <Edit2 className="w-3.5 h-3.5" />
                                             </button>
-                                            <button onClick={() => handleDelete(item._id)} className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-red-400 transition-colors" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                                            <button onClick={() => handleDelete(item._id)} className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:text-red-400 transition-colors" style={{ background: 'var(--glass-hover)' }}>
                                                 <Trash2 className="w-3.5 h-3.5" />
                                             </button>
                                         </div>
@@ -241,49 +241,49 @@ export default function Agenda() {
                     style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }}>
                     <div className="glass-card rounded-2xl w-full max-w-lg p-6 space-y-5 max-h-[90vh] overflow-y-auto">
                         <div className="flex items-center justify-between">
-                            <h3 className="font-heading font-bold text-white text-lg">{editing ? 'Edit Session' : 'Add Session'}</h3>
-                            <button onClick={() => setShowModal(false)} className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                            <h3 className="font-heading font-bold text-[var(--text-primary)] text-lg">{editing ? 'Edit Session' : 'Add Session'}</h3>
+                            <button onClick={() => setShowModal(false)} className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)]" style={{ background: 'var(--glass-hover)' }}>
                                 <X className="w-4 h-4" />
                             </button>
                         </div>
 
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Session Title *</label>
+                                <label className="block text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1.5">Session Title *</label>
                                 <input type="text" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} placeholder="e.g. Opening Keynote" className="input-glass w-full text-sm py-2.5" />
                             </div>
                             <div>
-                                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Type *</label>
+                                <label className="block text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1.5">Type *</label>
                                 <select value={form.type} onChange={e => setForm(f => ({ ...f, type: e.target.value as AgendaItem['type'] }))} className="input-glass w-full text-sm py-2.5">
-                                    {Object.entries(TYPE_COLORS).map(([k, v]) => <option key={k} value={k} style={{ background: '#0b0f1a' }}>{v.label}</option>)}
+                                    {Object.entries(TYPE_COLORS).map(([k, v]) => <option key={k} value={k} style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>{v.label}</option>)}
                                 </select>
                             </div>
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Start Time *</label>
+                                    <label className="block text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1.5">Start Time *</label>
                                     <input type="time" value={form.startTime} onChange={e => setForm(f => ({ ...f, startTime: e.target.value }))} className="input-glass w-full text-sm py-2.5" />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">End Time *</label>
+                                    <label className="block text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1.5">End Time *</label>
                                     <input type="time" value={form.endTime} onChange={e => setForm(f => ({ ...f, endTime: e.target.value }))} className="input-glass w-full text-sm py-2.5" />
                                 </div>
                             </div>
                             <div>
-                                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Speaker</label>
+                                <label className="block text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1.5">Speaker</label>
                                 <input type="text" value={form.speaker} onChange={e => setForm(f => ({ ...f, speaker: e.target.value }))} placeholder="Speaker name (optional)" className="input-glass w-full text-sm py-2.5" />
                             </div>
                             <div>
-                                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Room / Venue</label>
+                                <label className="block text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1.5">Room / Venue</label>
                                 <input type="text" value={form.room} onChange={e => setForm(f => ({ ...f, room: e.target.value }))} placeholder="e.g. Main Hall" className="input-glass w-full text-sm py-2.5" />
                             </div>
                             <div>
-                                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">Description</label>
+                                <label className="block text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1.5">Description</label>
                                 <textarea rows={3} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Brief description…" className="input-glass w-full text-sm py-2.5 resize-none" />
                             </div>
                         </div>
 
                         <div className="flex gap-3 pt-2">
-                            <button onClick={() => setShowModal(false)} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-slate-400" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>Cancel</button>
+                            <button onClick={() => setShowModal(false)} className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-[var(--text-muted)]" style={{ background: 'var(--glass-hover)', border: '1px solid var(--glass-border)' }}>Cancel</button>
                             <button onClick={handleSave} disabled={saving} className="flex-1 btn-primary justify-center py-2.5 text-sm">
                                 {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : (editing ? 'Save Changes' : 'Add Session')}
                             </button>

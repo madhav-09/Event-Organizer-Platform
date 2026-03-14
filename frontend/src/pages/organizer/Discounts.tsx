@@ -196,8 +196,8 @@ export default function Discounts() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="font-heading font-black text-2xl text-white">Discount Codes</h1>
-          <p className="text-slate-500 mt-1 text-sm">Create and manage promotional codes for your events</p>
+          <h1 className="font-heading font-black text-2xl text-[var(--text-primary)]">Discount Codes</h1>
+          <p className="text-[var(--text-secondary)] mt-1 text-sm">Create and manage coupon codes for your event</p>
         </div>
         <button onClick={openAdd} className="btn-primary text-sm px-4 py-2.5">
           <Plus className="w-4 h-4" />
@@ -213,17 +213,19 @@ export default function Discounts() {
           { label: 'Total Redemptions', value: loading ? '—' : totalUsed, color: 'rgba(245,158,11,0.2)', border: 'rgba(245,158,11,0.3)' },
         ].map(({ label, value, color, border }) => (
           <div key={label} className="glass-card rounded-2xl px-5 py-4" style={{ background: color, borderColor: border }}>
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">{label}</p>
-            <p className="text-2xl font-black text-white font-heading">{value}</p>
+            <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-1">{label}</p>
+            <p className="text-2xl font-black text-[var(--text-primary)] font-heading">{value}</p>
           </div>
         ))}
       </div>
 
       {/* Table */}
       <div className="glass-card rounded-2xl overflow-hidden">
-        <div className="px-6 py-4 border-b flex items-center gap-2" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+        <div className="px-6 py-4 border-b flex items-center gap-2" style={{ borderColor: 'var(--glass-border)' }}>
           <Tag className="w-4 h-4 text-brand-400" />
-          <h3 className="font-heading font-bold text-white">All Discount Codes</h3>
+          <h3 className="font-heading font-bold text-[var(--text-primary)]">
+            Active Discount Codes
+          </h3>
         </div>
 
         {loading ? (
@@ -255,8 +257,8 @@ export default function Discounts() {
                   const eventTitle = getEventTitle(d.event_id);
 
                   return (
-                    <tr key={d._id} className="transition-colors hover:bg-white/[0.02]"
-                      style={{ borderBottom: i < discounts.length - 1 ? '1px solid rgba(255,255,255,0.05)' : undefined }}>
+                    <tr key={d._id} className="transition-colors hover:bg-[var(--glass-hover)]"
+                      style={{ borderBottom: i < discounts.length - 1 ? '1px solid var(--glass-border)' : undefined }}>
 
                       {/* Code */}
                       <td className="px-5 py-4">
@@ -285,7 +287,7 @@ export default function Discounts() {
                       </td>
 
                       {/* Value */}
-                      <td className="px-5 py-4 font-bold text-white">
+                      <td className="px-5 py-4 font-bold text-[var(--text-primary)]">
                         {d.type === 'PERCENTAGE' ? `${d.value}%` : `₹${d.value}`}
                       </td>
 
@@ -367,7 +369,7 @@ export default function Discounts() {
                   style={{ background: 'rgba(108,71,236,0.2)', border: '1px solid rgba(108,71,236,0.3)' }}>
                   <Tag className="w-4 h-4 text-brand-400" />
                 </div>
-                <h3 className="font-heading font-bold text-white text-lg">
+                <h3 className="font-heading font-bold text-[var(--text-primary)] text-lg">
                   {editing ? 'Edit Discount Code' : 'Create Discount Code'}
                 </h3>
               </div>
@@ -415,7 +417,10 @@ export default function Discounts() {
                     <option value="FIXED_AMOUNT" style={{ background: '#0b0f1a' }}>Fixed Amount (₹)</option>
                   </select>
                 </div>
-                <div>
+                <div className="glass-card rounded-2xl px-5 py-4">
+        <label className="block text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">
+          Select Event
+        </label>
                   <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
                     Value ({form.type === 'PERCENTAGE' ? '%' : '₹'}) *
                   </label>
@@ -433,7 +438,7 @@ export default function Discounts() {
 
               {/* Event Selector */}
               <div>
-                <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
+                <label className="block text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-1.5">
                   Apply To Event
                 </label>
                 <select
@@ -441,9 +446,9 @@ export default function Discounts() {
                   onChange={e => setForm(f => ({ ...f, event_id: e.target.value }))}
                   className="input-glass w-full text-sm py-2.5"
                 >
-                  <option value="" style={{ background: '#0b0f1a' }}>🌐 All Events (Global)</option>
+                  <option value="" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>🌐 All Events (Global)</option>
                   {events.map(ev => (
-                    <option key={ev.event_id} value={ev.event_id} style={{ background: '#0b0f1a' }}>
+                    <option key={ev.event_id} value={ev.event_id} style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>
                       📅 {ev.title}
                     </option>
                   ))}

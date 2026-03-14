@@ -128,8 +128,8 @@ export default function MyBookings() {
               <Ticket className="w-5 h-5 text-brand-400" />
             </div>
             <div>
-              <h1 className="font-heading font-black text-2xl sm:text-3xl text-white">My Dashboard</h1>
-              <p className="text-slate-500 text-sm">Bookings & certificates in one place</p>
+              <h1 className="font-heading font-black text-2xl sm:text-3xl text-[var(--text-primary)]">My Dashboard</h1>
+              <p className="text-[var(--text-secondary)] text-sm">Bookings & certificates in one place</p>
             </div>
           </div>
 
@@ -144,9 +144,9 @@ export default function MyBookings() {
                 onClick={() => setActiveTab(t.key)}
                 className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all`}
                 style={{
-                  background: activeTab === t.key ? 'rgba(108,71,236,0.25)' : 'rgba(255,255,255,0.05)',
-                  border: `1px solid ${activeTab === t.key ? 'rgba(108,71,236,0.4)' : 'rgba(255,255,255,0.08)'}`,
-                  color: activeTab === t.key ? '#c4b5fd' : '#64748b',
+                  background: activeTab === t.key ? 'rgba(108,71,236,0.25)' : 'var(--btn-secondary-bg)',
+                  border: `1px solid ${activeTab === t.key ? 'rgba(108,71,236,0.4)' : 'var(--glass-border)'}`,
+                  color: activeTab === t.key ? 'var(--brand-300)' : 'var(--text-secondary)',
                 }}
               >
                 {t.icon} {t.label}
@@ -165,8 +165,8 @@ export default function MyBookings() {
             ) : (bookings.length === 0 || error) ? (
               <div className="text-center py-24 glass-card rounded-2xl animate-fade-up" style={{ animationFillMode: 'both' }}>
                 <ShoppingBag className="w-16 h-16 text-slate-700 mx-auto mb-5" />
-                <h3 className="font-heading font-bold text-xl text-white mb-3">{error ? "Couldn't load bookings" : "No bookings yet"}</h3>
-                <p className="text-slate-500 text-sm mb-8">{error ? "Please try again later" : "Discover and book events near you"}</p>
+                <h3 className="font-heading font-bold text-xl text-[var(--text-primary)] mb-3">{error ? "Couldn't load bookings" : "No bookings yet"}</h3>
+                <p className="text-[var(--text-secondary)] text-sm mb-8">{error ? "Please try again later" : "Discover and book events near you"}</p>
                 <Link to="/" className="btn-primary mx-auto">
                   Browse Events
                 </Link>
@@ -216,19 +216,19 @@ export default function MyBookings() {
                                 </span>
                                 <Link
                                   to={`/event/${booking.event.id}`}
-                                  className="block font-heading font-bold text-white text-base hover:text-brand-300 transition-colors leading-snug"
+                                  className="block font-heading font-bold text-[var(--text-primary)] text-base hover:text-brand-300 transition-colors leading-snug"
                                 >
                                   {booking.event.title}
-                                  <ExternalLink className="inline w-3.5 h-3.5 ml-1.5 text-slate-500" />
+                                  <ExternalLink className="inline w-3.5 h-3.5 ml-1.5 text-[var(--text-muted)]" />
                                 </Link>
                               </div>
                               <div className="text-right flex-shrink-0">
-                                <p className="font-bold text-white text-lg">₹{booking.total_amount}</p>
-                                <p className="text-slate-500 text-xs">{booking.quantity}× {booking.ticket.title}</p>
+                                <p className="font-bold text-[var(--text-primary)] text-lg">₹{booking.total_amount}</p>
+                                <p className="text-[var(--text-muted)] text-xs">{booking.quantity}× {booking.ticket.title}</p>
                               </div>
                             </div>
 
-                            <div className="flex flex-wrap gap-3 text-xs text-slate-400">
+                            <div className="flex flex-wrap gap-3 text-xs text-[var(--text-muted)]">
                               <span className="flex items-center gap-1.5">
                                 <Calendar className="w-3.5 h-3.5 text-brand-400" />
                                 {formatDate(booking.event.date)} at {formatTime(booking.event.date)}
@@ -245,7 +245,7 @@ export default function MyBookings() {
                             <div className="mt-4 flex items-center justify-end">
                               {confirmDeleteId === booking.booking_id ? (
                                 <div className="flex items-center gap-3 text-sm">
-                                  <span className="text-slate-400">Cancel this booking?</span>
+                                  <span className="text-[var(--text-muted)]">Cancel this booking?</span>
                                   <button
                                     onClick={() => handleDelete(booking.booking_id)}
                                     className="px-3 py-1.5 rounded-lg text-red-400 font-medium"
@@ -311,8 +311,8 @@ export default function MyBookings() {
             ) : certs.length === 0 ? (
               <div className="text-center py-24 glass-card rounded-2xl">
                 <Award className="w-16 h-16 text-slate-700 mx-auto mb-5" />
-                <h3 className="font-heading font-bold text-xl text-white mb-2">No certificates yet</h3>
-                <p className="text-slate-500 text-sm">Certificates you receive will appear here</p>
+                <h3 className="font-heading font-bold text-xl text-[var(--text-primary)] mb-2">No certificates yet</h3>
+                <p className="text-[var(--text-secondary)] text-sm">Certificates you receive will appear here</p>
               </div>
             ) : (
               certs.map((cert: any) => (
@@ -320,8 +320,8 @@ export default function MyBookings() {
                   <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
                     style={{ background: 'rgba(108,71,236,0.15)', border: '1px solid rgba(108,71,236,0.25)' }}>🏅</div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-white font-bold text-sm truncate">{cert.certificate_type}</p>
-                    <p className="text-slate-400 text-xs mt-0.5">{cert.event_name} · {cert.event_date}</p>
+                    <p className="text-[var(--text-primary)] font-bold text-sm truncate">{cert.certificate_type}</p>
+                    <p className="text-[var(--text-muted)] text-xs mt-0.5">{cert.event_name} · {cert.event_date}</p>
                     <span className="inline-block mt-1.5 text-xs px-2 py-0.5 rounded-md font-semibold"
                       style={{ background: 'rgba(108,71,236,0.15)', color: '#c4b5fd' }}>
                       {cert.role.charAt(0) + cert.role.slice(1).toLowerCase()}

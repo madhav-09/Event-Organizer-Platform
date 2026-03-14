@@ -18,9 +18,9 @@ export default function Footer() {
               <div className="w-9 h-9 rounded-xl overflow-hidden border border-white/10">
                 <img src={logo} alt="Logo" className="w-full h-full object-contain" />
               </div>
-              <span className="font-heading font-bold text-white text-lg">Swasthya Chetna</span>
+              <span className="font-heading font-bold text-[var(--text-primary)] text-lg">Swasthya Chetna</span>
             </div>
-            <p className="text-slate-400 text-sm leading-relaxed mb-6">
+            <p className="text-[var(--text-secondary)] text-sm leading-relaxed mb-6">
               Discover and book tickets for the best events happening near you. Every moment, perfectly planned.
             </p>
             {/* Social links */}
@@ -35,10 +35,10 @@ export default function Footer() {
                   key={label}
                   href="#"
                   aria-label={label}
-                  className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-400 hover:text-white transition-all duration-200 hover:scale-110"
+                  className="w-9 h-9 rounded-xl flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all duration-200 hover:scale-110"
                   style={{
-                    background: 'rgba(255,255,255,0.06)',
-                    border: '1px solid rgba(255,255,255,0.08)',
+                    background: 'var(--btn-secondary-bg)',
+                    border: '1px solid var(--glass-border)',
                   }}
                 >
                   <Icon className="w-4 h-4" />
@@ -49,7 +49,7 @@ export default function Footer() {
 
           {/* Quick Links */}
           <div>
-            <h3 className="font-heading font-semibold text-white mb-5 text-sm uppercase tracking-widest">
+            <h3 className="font-heading font-semibold text-[var(--text-primary)] mb-5 text-sm uppercase tracking-widest">
               Quick Links
             </h3>
             <ul className="space-y-3">
@@ -62,7 +62,7 @@ export default function Footer() {
                 <li key={label}>
                   <Link
                     to={to}
-                    className="text-slate-400 hover:text-white text-sm transition-colors duration-200 flex items-center gap-2 group"
+                    className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-sm transition-colors duration-200 flex items-center gap-2 group"
                   >
                     <span className="w-1 h-1 rounded-full bg-brand-500 opacity-0 group-hover:opacity-100 transition-opacity" />
                     {label}
@@ -74,7 +74,7 @@ export default function Footer() {
 
           {/* Support */}
           <div>
-            <h3 className="font-heading font-semibold text-white mb-5 text-sm uppercase tracking-widest">
+            <h3 className="font-heading font-semibold text-[var(--text-primary)] mb-5 text-sm uppercase tracking-widest">
               Support
             </h3>
             <ul className="space-y-3">
@@ -87,7 +87,7 @@ export default function Footer() {
                 <li key={label}>
                   <Link
                     to={to}
-                    className="text-slate-400 hover:text-white text-sm transition-colors duration-200 flex items-center gap-2 group"
+                    className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-sm transition-colors duration-200 flex items-center gap-2 group"
                   >
                     <span className="w-1 h-1 rounded-full bg-brand-500 opacity-0 group-hover:opacity-100 transition-opacity" />
                     {label}
@@ -99,21 +99,21 @@ export default function Footer() {
 
           {/* Contact */}
           <div>
-            <h3 className="font-heading font-semibold text-white mb-5 text-sm uppercase tracking-widest">
+            <h3 className="font-heading font-semibold text-[var(--text-primary)] mb-5 text-sm uppercase tracking-widest">
               Contact
             </h3>
             <ul className="space-y-4">
               <li className="flex items-start gap-3">
                 <Mail className="w-4 h-4 text-brand-400 flex-shrink-0 mt-0.5" />
-                <span className="text-slate-400 text-sm">support@swasthyachetna.com</span>
+                <span className="text-[var(--text-secondary)] text-sm">support@swasthyachetna.com</span>
               </li>
               <li className="flex items-start gap-3">
                 <Phone className="w-4 h-4 text-brand-400 flex-shrink-0 mt-0.5" />
-                <span className="text-slate-400 text-sm">+91 1800-123-4567</span>
+                <span className="text-[var(--text-secondary)] text-sm">+91 1800-123-4567</span>
               </li>
               <li className="flex items-start gap-3">
                 <MapPin className="w-4 h-4 text-brand-400 flex-shrink-0 mt-0.5" />
-                <span className="text-slate-400 text-sm">Vadodara, Gujarat, India</span>
+                <span className="text-[var(--text-secondary)] text-sm">Vadodara, Gujarat, India</span>
               </li>
             </ul>
 
@@ -122,7 +122,7 @@ export default function Footer() {
               style={{ background: 'rgba(108,71,236,0.1)', border: '1px solid rgba(108,71,236,0.2)' }}>
               <div className="flex items-center gap-2 mb-1">
                 <Zap className="w-4 h-4 text-brand-400" />
-                <span className="text-sm font-semibold text-white">Stay Updated</span>
+                <span className="text-sm font-semibold text-[var(--text-primary)]">Stay Updated</span>
               </div>
               <p className="text-xs text-slate-500">Get the latest events in your inbox.</p>
             </div>
@@ -130,8 +130,8 @@ export default function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="border-t border-white/5 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="text-slate-500 text-sm">
+        <div className="border-t border-[var(--glass-border)] pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <p className="text-[var(--text-muted)] text-sm">
             © 2026 Swasthya Chetna. All rights reserved.
           </p>
           <div className="flex gap-6">
@@ -139,7 +139,7 @@ export default function Footer() {
               <Link
                 key={item}
                 to={`/${item.toLowerCase()}`}
-                className="text-slate-500 hover:text-slate-300 text-sm transition-colors"
+                className="text-[var(--text-muted)] hover:text-[var(--text-primary)] text-sm transition-colors"
               >
                 {item}
               </Link>

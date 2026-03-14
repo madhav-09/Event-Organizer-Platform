@@ -6,6 +6,33 @@
 
 /* ── CSS Custom Properties ── */
 :root {
+  /* Light Theme Variables */
+  --bg-primary: #F8FAFC;
+  --bg-secondary: #F1F5F9;
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #F1F5F9;
+  --glass: rgba(255, 255, 255, 0.8);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-hover: rgba(255, 255, 255, 0.95);
+  --input-bg: rgba(0, 0, 0, 0.03);
+  --btn-secondary-bg: rgba(0, 0, 0, 0.05);
+  --brand: #6c47ec;
+  --brand-light: #8467f3;
+  --brand-dark: #4e1cc8;
+  --accent-blue: #3b82f6;
+  --accent-sky: #0ea5e9;
+  --accent-pink: #ec4899;
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #64748B;
+  --sidebar-width: 256px;
+  --navbar-height: 64px;
+  --radius-card: 16px;
+  --radius-btn: 12px;
+}
+
+.dark {
+  /* Dark Theme Variables */
   --bg-primary: #0B0F1A;
   --bg-secondary: #121827;
   --bg-card: #1a2235;
@@ -13,19 +40,11 @@
   --glass: rgba(255, 255, 255, 0.06);
   --glass-border: rgba(255, 255, 255, 0.10);
   --glass-hover: rgba(255, 255, 255, 0.10);
-  --brand: #6c47ec;
-  --brand-light: #8467f3;
-  --brand-dark: #4e1cc8;
-  --accent-blue: #3b82f6;
-  --accent-sky: #0ea5e9;
-  --accent-pink: #ec4899;
+  --input-bg: rgba(255, 255, 255, 0.05);
+  --btn-secondary-bg: rgba(255, 255, 255, 0.08);
   --text-primary: #f1f5f9;
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
-  --sidebar-width: 256px;
-  --navbar-height: 64px;
-  --radius-card: 16px;
-  --radius-btn: 12px;
 }
 
 /* ── Base Styles ── */
@@ -90,10 +109,10 @@ body {
     background: var(--glass-hover);
   }
   .glass-card {
-    background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%);
+    background: var(--glass);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,0.10);
+    border: 1px solid var(--glass-border);
   }
 
   /* Gradient text */
@@ -183,23 +202,25 @@ body {
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold text-white transition-all duration-300;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-300;
+    background: var(--btn-secondary-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--text-primary);
   }
   .btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.13);
+    background: var(--glass-hover);
     transform: translateY(-1px);
   }
 
   /* Premium Input */
   .input-glass {
-    @apply w-full px-4 py-3 rounded-xl text-white placeholder-slate-500 outline-none transition-all duration-300;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.10);
+    @apply w-full px-4 py-3 rounded-xl placeholder-slate-500 outline-none transition-all duration-300;
+    background: var(--input-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--text-primary);
   }
   .input-glass:focus {
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--glass-card);
     border-color: rgba(108, 71, 236, 0.6);
     box-shadow: 0 0 0 3px rgba(108, 71, 236, 0.15);
   }
@@ -239,16 +260,16 @@ body {
   /* Sidebar items */
   .sidebar-item {
     @apply flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer;
-    color: rgba(255,255,255,0.55);
+    color: var(--text-secondary);
   }
   .sidebar-item:hover {
-    background: rgba(255, 255, 255, 0.06);
-    color: rgba(255,255,255,0.85);
+    background: var(--btn-secondary-bg);
+    color: var(--text-primary);
   }
   .sidebar-item.active {
-    color: white;
-    background: linear-gradient(135deg, rgba(108, 71, 236, 0.25) 0%, rgba(79, 70, 229, 0.15) 100%);
-    border: 1px solid rgba(108, 71, 236, 0.3);
+    color: var(--brand);
+    background: rgba(108, 71, 236, 0.1);
+    border: 1px solid rgba(108, 71, 236, 0.2);
   }
 
   /* Card */
@@ -259,8 +280,8 @@ body {
   }
   .event-card:hover {
     transform: translateY(-4px);
-    border-color: rgba(255,255,255,0.12);
-    box-shadow: 0 20px 60px -10px rgba(0,0,0,0.5);
+    border-color: var(--brand);
+    box-shadow: 0 20px 60px -10px rgba(0,0,0,0.15);
   }
 }
 

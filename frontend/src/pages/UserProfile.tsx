@@ -53,29 +53,29 @@ export default function UserProfile() {
             <div className="max-w-3xl mx-auto space-y-6">
                 {/* Header */}
                 <div className="animate-fade-up">
-                    <h1 className="font-heading font-black text-3xl text-white">My Profile</h1>
-                    <p className="text-slate-500 mt-2">Manage your personal information.</p>
+                    <h1 className="font-heading font-black text-3xl text-[var(--text-primary)]">My Profile</h1>
+                    <p className="text-[var(--text-secondary)] mt-2">Manage your personal information.</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-up" style={{ animationDelay: '100ms', animationFillMode: 'both' }}>
                     {/* Profile Form */}
                     <div className="md:col-span-2 glass-card rounded-2xl p-6 sm:p-8">
                         {/* Avatar */}
-                        <div className="flex items-center gap-4 mb-8 pb-6 border-b" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+                        <div className="flex items-center gap-4 mb-8 pb-6 border-b border-[var(--glass-border)]">
                             <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-white text-xl font-black flex-shrink-0"
                                 style={{ background: 'linear-gradient(135deg, #6c47ec, #4f46e5)' }}>
                                 {initials}
                             </div>
                             <div>
-                                <p className="font-heading font-bold text-white text-lg">{form.name || "Your Name"}</p>
-                                <p className="text-slate-500 text-sm">{user?.role === "ORGANIZER" ? "Organizer" : "User"}</p>
+                                <p className="font-heading font-bold text-[var(--text-primary)] text-lg">{form.name || "Your Name"}</p>
+                                <p className="text-[var(--text-muted)] text-sm">{user?.role === "ORGANIZER" ? "Organizer" : "User"}</p>
                             </div>
                         </div>
 
                         <form onSubmit={handleSave} className="space-y-5">
                             {/* Name */}
                             <div>
-                                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Full Name</label>
+                                <label className="block text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">Full Name</label>
                                 <div className="relative">
                                     <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                                         <User className="w-4 h-4 text-slate-600" />
@@ -93,7 +93,7 @@ export default function UserProfile() {
 
                             {/* Email */}
                             <div>
-                                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Email Address</label>
+                                <label className="block text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2">Email Address</label>
                                 <div className="relative">
                                     <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                                         <Mail className="w-4 h-4 text-slate-600" />
@@ -137,8 +137,8 @@ export default function UserProfile() {
                                 style={{ background: 'rgba(108,71,236,0.15)', border: '1px solid rgba(108,71,236,0.25)' }}>
                                 <Ticket className="w-5 h-5 text-brand-400" />
                             </div>
-                            <h3 className="font-heading font-bold text-white mb-1">My Bookings</h3>
-                            <p className="text-slate-500 text-sm mb-4">View upcoming events and history.</p>
+                            <h3 className="font-heading font-bold text-[var(--text-primary)] mb-1">My Bookings</h3>
+                            <p className="text-[var(--text-secondary)] text-sm mb-4">View upcoming events and history.</p>
                             <span className="flex items-center gap-1.5 text-brand-400 text-sm font-medium group-hover:gap-2.5 transition-all">
                                 Go to Bookings <ArrowRight className="w-4 h-4" />
                             </span>
@@ -153,8 +153,8 @@ export default function UserProfile() {
                                 style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.2)' }}>
                                 <span className="text-red-400 text-lg">♥</span>
                             </div>
-                            <h3 className="font-heading font-bold text-white mb-1">Wishlist</h3>
-                            <p className="text-slate-500 text-sm mb-4">Events you've saved for later.</p>
+                            <h3 className="font-heading font-bold text-[var(--text-primary)] mb-1">Wishlist</h3>
+                            <p className="text-[var(--text-secondary)] text-sm mb-4">Events you've saved for later.</p>
                             <span className="flex items-center gap-1.5 text-red-400 text-sm font-medium group-hover:gap-2.5 transition-all">
                                 View Wishlist <ArrowRight className="w-4 h-4" />
                             </span>

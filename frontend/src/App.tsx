@@ -35,11 +35,12 @@ const App = () => {
         toastOptions={{
           duration: 4000,
           style: {
-            background: "#1e293b",
-            color: "#f1f5f9",
+            background: "var(--bg-card)",
+            color: "var(--text-primary)",
             borderRadius: "12px",
             padding: "14px 18px",
             boxShadow: "0 10px 40px rgba(0,0,0,0.2)",
+            border: "1px solid var(--glass-border)",
           },
           success: {
             iconTheme: { primary: "#22c55e", secondary: "#f1f5f9" },

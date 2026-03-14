@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import logo from "../assets/logo.png";
+import ThemeToggle from "./ThemeToggle";
 
 const POPULAR_CITIES = ["Pune", "Mumbai", "Delhi", "Bangalore", "Hyderabad", "Chennai", "Ahmedabad"];
 
@@ -17,7 +18,7 @@ function NavLink({ to, children, onClick }: { to: string; children: React.ReactN
     <Link
       to={to}
       onClick={onClick}
-      className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-slate-300 hover:text-white hover:bg-white/6 transition-all duration-150 group"
+      className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-hover)] transition-all duration-150 group"
     >
       {children}
     </Link>
@@ -89,12 +90,10 @@ export default function Navbar() {
         className="fixed inset-x-0 top-0 z-[60] transition-all duration-300"
         style={{
           height: 'var(--navbar-height)',
-          background: scrolled
-            ? 'rgba(11, 15, 26, 0.92)'
-            : 'rgba(11, 15, 26, 0.75)',
+          background: 'var(--glass)',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
-          borderBottom: scrolled ? '1px solid rgba(255,255,255,0.08)' : '1px solid transparent',
+          borderBottom: scrolled ? '1px solid var(--glass-border)' : '1px solid transparent',
         }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-full flex items-center justify-between gap-4">
@@ -104,7 +103,7 @@ export default function Navbar() {
             <div className="w-8 h-8 rounded-xl overflow-hidden border border-white/10">
               <img src={logo} alt="Logo" className="w-full h-full object-contain" />
             </div>
-            <span className="font-heading font-bold text-white text-base hidden sm:block">
+            <span className="font-heading font-bold text-[var(--text-primary)] text-base hidden sm:block">
               Swasthya <span className="gradient-text">Chetna</span>
             </span>
           </Link>
@@ -115,7 +114,7 @@ export default function Navbar() {
             <div className="relative" ref={cityRef}>
               <button
                 onClick={() => setShowCityDropdown(!showCityDropdown)}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm text-slate-300 hover:text-white hover:bg-white/6 transition-all duration-150"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-hover)] transition-all duration-150"
               >
                 <MapPin className="w-4 h-4 text-brand-400" />
                 <span>{selectedCity}</span>
@@ -161,110 +160,115 @@ export default function Navbar() {
           {/* Desktop Right */}
           <div className="hidden md:flex items-center gap-3">
             {user ? (
-              <div className="relative" ref={profileRef}>
-                <button
-                  onClick={() => setShowProfileDropdown(!showProfileDropdown)}
-                  className="flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all duration-150 hover:bg-white/6"
-                  style={{ border: '1px solid rgba(255,255,255,0.08)' }}
-                >
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center bg-gradient-to-br from-brand-500 to-indigo-500 text-white text-xs font-bold flex-shrink-0">
-                    {user.name?.[0]?.toUpperCase() ?? "U"}
-                  </div>
-                  <span className="text-sm text-slate-300 max-w-[100px] truncate">{user.name}</span>
-                  {roleInfo && (
-                    <span className={`hidden lg:inline-flex text-xs px-2 py-0.5 rounded-full border ${roleInfo.color}`}>
-                      {roleInfo.label}
-                    </span>
+              <div className="flex items-center gap-3">
+                <ThemeToggle />
+                <div className="relative" ref={profileRef}>
+                  <button
+                    onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl transition-all duration-150 hover:bg-white/6"
+                    style={{ border: '1px solid var(--glass-border)' }}
+                  >
+                    <div className="w-7 h-7 rounded-full flex items-center justify-center bg-gradient-to-br from-brand-500 to-indigo-500 text-white text-xs font-bold flex-shrink-0">
+                      {user.name?.[0]?.toUpperCase() ?? "U"}
+                    </div>
+                    <span className="text-sm text-[var(--text-secondary)] max-w-[100px] truncate">{user.name}</span>
+                    {roleInfo && (
+                      <span className={`hidden lg:inline-flex text-xs px-2 py-0.5 rounded-full border ${roleInfo.color}`}>
+                        {roleInfo.label}
+                      </span>
+                    )}
+                    <ChevronDown className={`w-3.5 h-3.5 text-slate-500 transition-transform duration-200 ${showProfileDropdown ? "rotate-180" : ""}`} />
+                  </button>
+
+                  {showProfileDropdown && (
+                    <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl overflow-hidden animate-slide-down z-50"
+                      style={{
+                        background: 'var(--bg-card)',
+                        border: '1px solid var(--glass-border)',
+                        backdropFilter: 'blur(20px)',
+                        boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+                      }}>
+                      <div className="px-4 py-3 border-b border-[var(--glass-border)]">
+                        <p className="text-[var(--text-primary)] font-medium text-sm truncate">{user.name}</p>
+                        <p className="text-[var(--text-muted)] text-xs truncate">{user.email ?? user.role}</p>
+                      </div>
+
+                      <div className="p-2">
+                        {/* USER links */}
+                        {user.role === "USER" && (
+                          <>
+                            <NavLink to="/profile" onClick={() => setShowProfileDropdown(false)}>
+                              <User className="w-4 h-4 text-slate-400" />My Profile
+                            </NavLink>
+                            <NavLink to="/my-bookings" onClick={() => setShowProfileDropdown(false)}>
+                              <Ticket className="w-4 h-4 text-slate-400" />My Bookings
+                            </NavLink>
+                            <NavLink to="/wishlist" onClick={() => setShowProfileDropdown(false)}>
+                              <Heart className="w-4 h-4 text-slate-400" />My Wishlist
+                            </NavLink>
+                          </>
+                        )}
+
+                        {/* ORGANIZER links */}
+                        {user.role === "ORGANIZER" && (
+                          <>
+                            <NavLink to="/organizer/dashboard/profile" onClick={() => setShowProfileDropdown(false)}>
+                              <User className="w-4 h-4 text-slate-400" />My Profile
+                            </NavLink>
+                            <NavLink to="/organizer/dashboard/overview" onClick={() => setShowProfileDropdown(false)}>
+                              <LayoutDashboard className="w-4 h-4 text-slate-400" />Dashboard
+                            </NavLink>
+                            <NavLink to="/organizer/events" onClick={() => setShowProfileDropdown(false)}>
+                              <Calendar className="w-4 h-4 text-slate-400" />My Events
+                            </NavLink>
+                            <NavLink to="/my-bookings" onClick={() => setShowProfileDropdown(false)}>
+                              <Ticket className="w-4 h-4 text-slate-400" />My Bookings
+                            </NavLink>
+                            <NavLink to="/wishlist" onClick={() => setShowProfileDropdown(false)}>
+                              <Heart className="w-4 h-4 text-slate-400" />My Wishlist
+                            </NavLink>
+                          </>
+                        )}
+
+                        {/* ADMIN links */}
+                        {user.role === "ADMIN" && (
+                          <>
+                            <NavLink to="/admin" onClick={() => setShowProfileDropdown(false)}>
+                              <Settings className="w-4 h-4 text-slate-400" />Admin Panel
+                            </NavLink>
+                            <NavLink to="/my-bookings" onClick={() => setShowProfileDropdown(false)}>
+                              <Ticket className="w-4 h-4 text-slate-400" />My Bookings
+                            </NavLink>
+                            <NavLink to="/wishlist" onClick={() => setShowProfileDropdown(false)}>
+                              <Heart className="w-4 h-4 text-slate-400" />My Wishlist
+                            </NavLink>
+                          </>
+                        )}
+
+                        {/* Divider + Logout */}
+                        <div className="h-px bg-white/5 my-1" />
+                        <button
+                          onClick={handleLogout}
+                          className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-xl text-sm text-red-400 hover:text-red-300 hover:bg-red-500/8 transition-all duration-150"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          Sign Out
+                        </button>
+                      </div>
+                    </div>
                   )}
-                  <ChevronDown className={`w-3.5 h-3.5 text-slate-500 transition-transform duration-200 ${showProfileDropdown ? "rotate-180" : ""}`} />
-                </button>
-
-                {showProfileDropdown && (
-                  <div className="absolute right-0 top-full mt-2 w-56 rounded-2xl overflow-hidden animate-slide-down z-50"
-                    style={{
-                      background: 'rgba(18, 24, 39, 0.98)',
-                      border: '1px solid rgba(255,255,255,0.10)',
-                      backdropFilter: 'blur(20px)',
-                      boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
-                    }}>
-                    {/* Header */}
-                    <div className="px-4 py-3 border-b border-white/5">
-                      <p className="text-white font-medium text-sm truncate">{user.name}</p>
-                      <p className="text-slate-500 text-xs truncate">{user.email ?? user.role}</p>
-                    </div>
-
-                    <div className="p-2">
-                      {/* USER links */}
-                      {user.role === "USER" && (
-                        <>
-                          <NavLink to="/profile" onClick={() => setShowProfileDropdown(false)}>
-                            <User className="w-4 h-4 text-slate-400" />My Profile
-                          </NavLink>
-                          <NavLink to="/my-bookings" onClick={() => setShowProfileDropdown(false)}>
-                            <Ticket className="w-4 h-4 text-slate-400" />My Bookings
-                          </NavLink>
-                          <NavLink to="/wishlist" onClick={() => setShowProfileDropdown(false)}>
-                            <Heart className="w-4 h-4 text-slate-400" />My Wishlist
-                          </NavLink>
-                        </>
-                      )}
-
-                      {/* ORGANIZER links */}
-                      {user.role === "ORGANIZER" && (
-                        <>
-                          <NavLink to="/organizer/dashboard/profile" onClick={() => setShowProfileDropdown(false)}>
-                            <User className="w-4 h-4 text-slate-400" />My Profile
-                          </NavLink>
-                          <NavLink to="/organizer/dashboard/overview" onClick={() => setShowProfileDropdown(false)}>
-                            <LayoutDashboard className="w-4 h-4 text-slate-400" />Dashboard
-                          </NavLink>
-                          <NavLink to="/organizer/events" onClick={() => setShowProfileDropdown(false)}>
-                            <Calendar className="w-4 h-4 text-slate-400" />My Events
-                          </NavLink>
-                          <NavLink to="/my-bookings" onClick={() => setShowProfileDropdown(false)}>
-                            <Ticket className="w-4 h-4 text-slate-400" />My Bookings
-                          </NavLink>
-                          <NavLink to="/wishlist" onClick={() => setShowProfileDropdown(false)}>
-                            <Heart className="w-4 h-4 text-slate-400" />My Wishlist
-                          </NavLink>
-                        </>
-                      )}
-
-                      {/* ADMIN links */}
-                      {user.role === "ADMIN" && (
-                        <>
-                          <NavLink to="/admin" onClick={() => setShowProfileDropdown(false)}>
-                            <Settings className="w-4 h-4 text-slate-400" />Admin Panel
-                          </NavLink>
-                          <NavLink to="/my-bookings" onClick={() => setShowProfileDropdown(false)}>
-                            <Ticket className="w-4 h-4 text-slate-400" />My Bookings
-                          </NavLink>
-                          <NavLink to="/wishlist" onClick={() => setShowProfileDropdown(false)}>
-                            <Heart className="w-4 h-4 text-slate-400" />My Wishlist
-                          </NavLink>
-                        </>
-                      )}
-
-                      {/* Divider + Logout */}
-                      <div className="h-px bg-white/5 my-1" />
-                      <button
-                        onClick={handleLogout}
-                        className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-xl text-sm text-red-400 hover:text-red-300 hover:bg-red-500/8 transition-all duration-150"
-                      >
-                        <LogOut className="w-4 h-4" />
-                        Sign Out
-                      </button>
-                    </div>
-                  </div>
-                )}
+                </div>
               </div>
             ) : (
-              <Link
-                to="/login"
-                className="btn-primary text-sm px-5 py-2.5"
-              >
-                Sign In
-              </Link>
+              <div className="flex items-center gap-3">
+                <ThemeToggle />
+                <Link
+                  to="/login"
+                  className="btn-primary text-sm px-5 py-2.5"
+                >
+                  Sign In
+                </Link>
+              </div>
             )}
           </div>
 
@@ -296,18 +300,21 @@ export default function Navbar() {
         className={`fixed top-0 right-0 bottom-0 z-[60] md:hidden w-80 max-w-full transition-transform duration-300 ${showMobileMenu ? "translate-x-0" : "translate-x-full"
           }`}
         style={{
-          background: 'rgba(11, 15, 26, 0.98)',
+          background: 'var(--bg-primary)',
           backdropFilter: 'blur(24px)',
-          borderLeft: '1px solid rgba(255,255,255,0.08)',
+          borderLeft: '1px solid var(--glass-border)',
         }}
       >
         {/* Mobile header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/5"
           style={{ height: 'var(--navbar-height)' }}>
-          <span className="font-heading font-bold text-white">Menu</span>
+          <div className="flex items-center gap-3">
+            <span className="font-heading font-bold text-[var(--text-primary)]">Menu</span>
+            <ThemeToggle />
+          </div>
           <button
             onClick={closeMobile}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/5"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--btn-secondary-bg)]"
           >
             <X className="w-4 h-4" />
           </button>
@@ -318,7 +325,7 @@ export default function Navbar() {
 
             {/* City selector (mobile) */}
             <div className="mb-3 px-1">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-2">Browse By City</p>
+              <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-widest mb-2">Browse By City</p>
               <div className="flex flex-wrap gap-2">
                 {POPULAR_CITIES.slice(0, 5).map((city) => (
                   <button
@@ -329,7 +336,7 @@ export default function Navbar() {
                       : "text-slate-400 border-white/10"
                       }`}
                     style={{
-                      background: selectedCity === city ? "rgba(108,71,236,0.15)" : "rgba(255,255,255,0.04)",
+                      background: selectedCity === city ? "rgba(108,71,236,0.15)" : "var(--btn-secondary-bg)",
                       border: '1px solid',
                     }}
                   >
@@ -354,12 +361,12 @@ export default function Navbar() {
               <>
                 {/* User info */}
                 <div className="flex items-center gap-3 px-3 py-3 mt-2 rounded-xl"
-                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                  style={{ background: 'var(--bg-card)', border: '1px solid var(--glass-border)' }}>
                   <div className="w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center bg-gradient-to-br from-brand-500 to-indigo-500 text-white font-bold text-sm">
                     {user.name?.[0]?.toUpperCase() ?? "U"}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-white text-sm font-medium truncate">{user.name}</p>
+                    <p className="text-[var(--text-primary)] text-sm font-medium truncate">{user.name}</p>
                     {roleInfo && (
                       <span className={`inline-flex text-xs px-2 py-0.5 rounded-full border ${roleInfo.color}`}>
                         {roleInfo.label}

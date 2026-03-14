@@ -47,12 +47,12 @@ export default function CityGrid() {
             <p className="text-brand-400 text-sm font-semibold uppercase tracking-widest mb-3">
               Browse by Location
             </p>
-            <h2 className="font-heading font-black text-3xl sm:text-4xl lg:text-5xl text-white">
+            <h2 className="font-heading font-black text-3xl sm:text-4xl lg:text-5xl text-[var(--text-primary)]">
               Events in Your{" "}
               <span className="gradient-text">City</span>
             </h2>
           </div>
-          <p className="text-slate-400 text-sm max-w-sm">
+          <p className="text-[var(--text-secondary)] text-sm max-w-sm">
             Discover exciting events happening across India's vibrant cities.
           </p>
         </div>

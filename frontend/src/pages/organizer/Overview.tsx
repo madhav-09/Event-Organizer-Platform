@@ -30,10 +30,10 @@ const KPI_CONFIG = [
 
 const CHART_TOOLTIP = {
   contentStyle: {
-    background: 'rgba(18,24,39,0.97)',
-    border: '1px solid rgba(255,255,255,0.1)',
+    background: 'var(--bg-secondary)',
+    border: '1px solid var(--glass-border)',
     borderRadius: '12px',
-    color: '#e2e8f0',
+    color: 'var(--text-primary)',
   },
 };
 
@@ -79,13 +79,13 @@ const Overview = () => {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="font-heading font-black text-2xl text-white">Dashboard Overview</h1>
-        <p className="text-slate-500 mt-1 text-sm">Monitor registrations, revenue, and check-ins</p>
+        <h1 className="font-heading font-black text-2xl text-[var(--text-primary)]">Dashboard Overview</h1>
+        <p className="text-[var(--text-secondary)] mt-1 text-sm">Monitor registrations, revenue, and check-ins</p>
       </div>
 
       {/* Event filter */}
       <div className="glass-card rounded-2xl px-5 py-4">
-        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">
+        <label className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider block mb-2">
           Filter by Event
         </label>
         <select
@@ -94,9 +94,9 @@ const Overview = () => {
           className="input-glass w-full md:w-[420px] text-sm py-2.5"
           style={{ '--tw-ring-color': 'rgba(108,71,236,0.5)' } as React.CSSProperties}
         >
-          <option value="ALL" style={{ background: '#0b0f1a' }}>All Events</option>
+          <option value="ALL" style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>All Events</option>
           {events.map((e) => (
-            <option key={e.event_id} value={e.event_id} style={{ background: '#0b0f1a' }}>
+            <option key={e.event_id} value={e.event_id} style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}>
               {e.title} • {new Date(e.date).toLocaleDateString()} • {e.location}
             </option>
           ))}
@@ -111,13 +111,13 @@ const Overview = () => {
           return (
             <div key={key} className="glass-card rounded-2xl p-5">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{label}</span>
+                <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">{label}</span>
                 <div className="w-8 h-8 rounded-xl flex items-center justify-center"
-                  style={{ background: accent, border: `1px solid ${border}` }}>
+                   style={{ background: accent, border: `1px solid ${border}` }}>
                   <Icon className="w-4 h-4" style={{ color }} />
                 </div>
               </div>
-              <p className="text-2xl font-black text-white font-heading">{loading ? "—" : display}</p>
+              <p className="text-2xl font-black text-[var(--text-primary)] font-heading">{loading ? "—" : display}</p>
             </div>
           );
         })}
@@ -126,13 +126,13 @@ const Overview = () => {
       {/* Line Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="glass-card rounded-2xl p-6 h-72">
-          <h3 className="font-heading font-semibold text-white text-sm mb-4 flex items-center gap-2">
+          <h3 className="font-heading font-semibold text-[var(--text-primary)] text-sm mb-4 flex items-center gap-2">
             <TrendingUp className="w-4 h-4 text-brand-400" /> Registrations Trend
           </h3>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={registrationsTrend}>
-              <XAxis dataKey="_id" tick={{ fontSize: 10, fill: '#64748b' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 10, fill: '#64748b' }} axisLine={false} tickLine={false} />
+              <XAxis dataKey="_id" tick={{ fontSize: 10, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 10, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} />
               <Tooltip {...CHART_TOOLTIP} />
               <Line type="monotone" dataKey="count" stroke="#6c47ec" strokeWidth={2.5} dot={false} />
             </LineChart>
@@ -140,13 +140,13 @@ const Overview = () => {
         </div>
 
         <div className="glass-card rounded-2xl p-6 h-72">
-          <h3 className="font-heading font-semibold text-white text-sm mb-4 flex items-center gap-2">
+          <h3 className="font-heading font-semibold text-[var(--text-primary)] text-sm mb-4 flex items-center gap-2">
             <IndianRupee className="w-4 h-4 text-amber-400" /> Revenue Trend
           </h3>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={revenueTrend}>
-              <XAxis dataKey="_id" tick={{ fontSize: 10, fill: '#64748b' }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontSize: 10, fill: '#64748b' }} tickFormatter={v => `₹${v}`} axisLine={false} tickLine={false} />
+              <XAxis dataKey="_id" tick={{ fontSize: 10, fill: 'var(--text-muted)' }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 10, fill: 'var(--text-muted)' }} tickFormatter={v => `₹${v}`} axisLine={false} tickLine={false} />
               <Tooltip {...CHART_TOOLTIP} />
               <Line type="monotone" dataKey="revenue" stroke="#f59e0b" strokeWidth={2.5} dot={false} />
             </LineChart>
@@ -161,14 +161,14 @@ const Overview = () => {
           { title: "Check-in Status", data: checkinData },
         ].map(({ title, data }) => (
           <div key={title} className="glass-card rounded-2xl p-6 h-72">
-            <h3 className="font-heading font-semibold text-white text-sm mb-4">{title}</h3>
+            <h3 className="font-heading font-semibold text-[var(--text-primary)] text-sm mb-4">{title}</h3>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie data={data} dataKey="value" nameKey="name" innerRadius={55} outerRadius={85}>
                   {data.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                 </Pie>
                 <Tooltip contentStyle={CHART_TOOLTIP.contentStyle} />
-                <Legend wrapperStyle={{ color: '#94a3b8', fontSize: 12 }} />
+                <Legend wrapperStyle={{ color: 'var(--text-muted)', fontSize: 12 }} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -177,42 +177,42 @@ const Overview = () => {
 
       {/* Recent Bookings */}
       <div className="glass-card rounded-2xl overflow-hidden">
-        <div className="px-6 py-4 border-b flex items-center gap-2" style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
+        <div className="px-6 py-4 border-b flex items-center gap-2" style={{ borderColor: 'var(--glass-border)' }}>
           <Activity className="w-4 h-4 text-brand-400" />
-          <h3 className="font-heading font-bold text-white">Recent Bookings</h3>
+          <h3 className="font-heading font-bold text-[var(--text-primary)]">Recent Bookings</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead>
-              <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+              <tr style={{ borderBottom: '1px solid var(--glass-border)' }}>
                 {["User", "Event", "Qty", "Amount", "Status", "Date"].map(h => (
-                  <th key={h} className="px-5 py-3.5 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider">{h}</th>
+                  <th key={h} className="px-5 py-3.5 text-left text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {recentBookings.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-5 py-10 text-center text-slate-500 text-sm">No recent bookings found</td>
+                  <td colSpan={6} className="px-5 py-10 text-center text-[var(--text-secondary)] text-sm">No recent bookings found</td>
                 </tr>
               )}
               {recentBookings.map((b, i) => (
-                <tr key={i} className="transition-colors hover:bg-white/3"
-                  style={{ borderBottom: i < recentBookings.length - 1 ? '1px solid rgba(255,255,255,0.05)' : undefined }}>
+                <tr key={i} className="transition-colors hover:bg-[var(--glass-hover)]"
+                  style={{ borderBottom: i < recentBookings.length - 1 ? '1px solid var(--glass-border)' : undefined }}>
                   <td className="px-5 py-3.5">
-                    <p className="font-medium text-white text-sm">{b.user.name}</p>
-                    <p className="text-slate-500 text-xs">{b.user.email}</p>
+                    <p className="font-medium text-[var(--text-primary)] text-sm">{b.user.name}</p>
+                    <p className="text-[var(--text-secondary)] text-xs">{b.user.email}</p>
                   </td>
-                  <td className="px-5 py-3.5 text-slate-300 text-sm">{b.event}</td>
-                  <td className="px-5 py-3.5 text-slate-300 text-sm">{b.quantity}</td>
+                  <td className="px-5 py-3.5 text-[var(--text-secondary)] text-sm">{b.event}</td>
+                  <td className="px-5 py-3.5 text-[var(--text-secondary)] text-sm">{b.quantity}</td>
                   <td className="px-5 py-3.5 font-bold text-brand-300 text-sm">₹{b.amount}</td>
                   <td className="px-5 py-3.5">
                     <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${b.status === "CONFIRMED" ? "text-emerald-400" : "text-amber-400"
-                      }`} style={{ background: 'rgba(255,255,255,0.06)' }}>
+                      }`} style={{ background: 'var(--glass-hover)' }}>
                       {b.status}
                     </span>
                   </td>
-                  <td className="px-5 py-3.5 text-slate-500 text-xs">
+                  <td className="px-5 py-3.5 text-[var(--text-muted)] text-xs">
                     {new Date(b.created_at).toLocaleDateString()}
                   </td>
                 </tr>
