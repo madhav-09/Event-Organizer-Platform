@@ -39,11 +39,24 @@ EVENT_SEARCH_PROJECTION = {
 # ================= REGISTER =================
 @router.post("/register")
 async def register_user(user: User):
+    # 🔒 Password strength validation
+    raw_password = user.password
+    if len(raw_password) < 8:
+        raise HTTPException(
+            status_code=422,
+            detail="Password must be at least 8 characters long."
+        )
+    if not any(c.isdigit() or not c.isalpha() for c in raw_password):
+        raise HTTPException(
+            status_code=422,
+            detail="Password must contain at least one number or special character."
+        )
+
     existing = await db.users.find_one({"email": user.email})
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    user.password = hash_password(user.password)
+    user.password = hash_password(raw_password)
     result = await db.users.insert_one(user.dict(by_alias=True))
 
     return {
@@ -65,9 +78,16 @@ async def login_user(
     email = form_data.username
     password = form_data.password
 
+    # Generic 401 — do not reveal whether email or password is wrong
+    auth_error = HTTPException(
+        status_code=401,
+        detail="Invalid email or password",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
     user = await db.users.find_one({"email": email})
     if not user or not verify_password(password, user["password"]):
-        raise HTTPException(status_code=400, detail="Invalid credentials")
+        raise auth_error
 
     if user.get("is_blocked"):
         raise HTTPException(status_code=403, detail="Account is blocked. Contact support.")

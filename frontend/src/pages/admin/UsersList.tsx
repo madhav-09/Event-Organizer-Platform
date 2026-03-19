@@ -37,7 +37,11 @@ export default function UsersList() {
   const fetchUsers = () => {
     setLoading(true);
     api.get("/admin/users")
-      .then((res) => setUsers(Array.isArray(res.data) ? res.data : []))
+      .then((res) => {
+        // API returns { users: [...], total: N }
+        const data = res.data;
+        setUsers(Array.isArray(data) ? data : (data?.users ?? []));
+      })
       .catch((err) => {
         const msg = err?.response?.data?.detail || "Failed to load users";
         toast.error(Array.isArray(msg) ? msg[0]?.msg : msg);

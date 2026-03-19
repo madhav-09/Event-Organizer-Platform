@@ -1,7 +1,7 @@
 import { Mail, Lock, User, ArrowRight, Sparkles, Eye, EyeOff } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { loginUser, registerUser } from '../services/auth_api';
 import type { RegisterPayload, LoginPayload } from '../services/auth_api';
 import type { AxiosError } from 'axios';
@@ -18,10 +18,18 @@ interface FormData {
 export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const [searchParams] = useSearchParams();
 
   const [isSignUp, setIsSignUp] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  // Show a session-expired toast if redirected here by the auth interceptor
+  useEffect(() => {
+    if (searchParams.get('reason') === 'session_expired') {
+      toast.error('Your session has expired. Please sign in again.');
+    }
+  }, []);
 
   const [formData, setFormData] = useState<FormData>({ name: '', email: '', password: '' });
 

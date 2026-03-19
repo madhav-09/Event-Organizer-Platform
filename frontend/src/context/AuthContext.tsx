@@ -23,6 +23,13 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+/** Clear all auth data from localStorage */
+function clearAuthStorage() {
+  localStorage.removeItem("access_token");
+  localStorage.removeItem("refresh_token");
+  localStorage.removeItem("user");
+}
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(() => {
     try {
@@ -44,14 +51,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-    localStorage.removeItem("user");
+    clearAuthStorage();
     setUser(null);
+    // Redirect to login after logout
+    window.location.href = "/login";
   };
 
   useEffect(() => {
-    const onSessionExpired = () => setUser(null);
+    const onSessionExpired = () => {
+      clearAuthStorage();
+      setUser(null);
+      // Redirect to login with a message via query param
+      window.location.href = "/login?reason=session_expired";
+    };
     window.addEventListener("auth:session-expired", onSessionExpired);
     return () => window.removeEventListener("auth:session-expired", onSessionExpired);
   }, []);

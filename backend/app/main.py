@@ -1,8 +1,9 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException, Request
+from fastapi import FastAPI, UploadFile, File, HTTPException, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from fastapi.exceptions import RequestValidationError
 from app.core.config import PROJECT_NAME
+from app.common.utils.dependencies import get_current_user
 import logging
 import asyncio
 import os
@@ -71,6 +72,17 @@ app.add_middleware(
 )
 
 
+# ================= SECURITY HEADERS =================
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response: Response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "geolocation=(), microphone=()"
+    return response
+
+
 # ================= HEALTH CHECK =================
 @app.get("/health")
 async def health_check():
@@ -108,25 +120,37 @@ cloudinary.config(
 
 
 # ================= IMAGE UPLOAD =================
-@app.post("/upload")
-async def upload_image(file: UploadFile = File(...)):
+ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+MAX_UPLOAD_SIZE_BYTES = 5 * 1024 * 1024  # 5 MB
 
-    if not file:
-        return {"url": ""}
+
+@app.post("/upload")
+async def upload_image(
+    file: UploadFile = File(...),
+    current_user=Depends(get_current_user()),
+):
+    # Validate content type
+    if file.content_type not in ALLOWED_CONTENT_TYPES:
+        raise HTTPException(
+            status_code=415,
+            detail=f"Unsupported file type. Allowed types: JPEG, PNG, WEBP, GIF."
+        )
+
+    # Read file and validate size
+    contents = await file.read()
+    if len(contents) > MAX_UPLOAD_SIZE_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail="File too large. Maximum allowed size is 5 MB."
+        )
 
     try:
         result = cloudinary.uploader.upload(
-            file.file,
-            folder="event_platform"
+            contents,
+            folder="event_platform",
+            resource_type="image",
         )
-
-        return {
-            "url": result.get("secure_url")
-        }
-
+        return {"url": result.get("secure_url")}
     except Exception as e:
         logger.error(f"Cloudinary upload failed: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail="Image upload failed"
-        )
+        raise HTTPException(status_code=500, detail="Image upload failed")
