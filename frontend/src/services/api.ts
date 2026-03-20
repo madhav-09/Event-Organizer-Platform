@@ -2,7 +2,7 @@ import axios from 'axios';
 import type { InternalAxiosRequestConfig } from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://35.154.225.67:8000',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://13.202.85.18:8000',
 });
 
 api.interceptors.request.use(
