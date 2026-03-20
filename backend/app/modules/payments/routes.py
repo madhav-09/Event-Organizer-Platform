@@ -2,12 +2,14 @@ from fastapi import APIRouter, HTTPException
 from bson import ObjectId
 from typing import Optional
 from datetime import datetime
+import logging
 from app.core.database import db
 from app.core.payment import client as razorpay_client
 from app.common.utils.email import send_email
 from app.common.utils.pdf import generate_ticket_pdf
 
 router = APIRouter(prefix="/payments", tags=["payments"])
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------
@@ -113,14 +115,17 @@ async def verify_payment(payload: dict):
 
     pdf_bytes = generate_ticket_pdf(ticket_payload)
 
-    await send_email(
-        to_email=user["email"],
-        subject=f"🎟️ Ticket Confirmed: {event['title']}",
-        template_name="ticket_booking.html",
-        context=ticket_payload,
-        pdf_bytes=pdf_bytes,
-        pdf_filename=f"{event['title']}_ticket.pdf"
-    )
+    try:
+        await send_email(
+            to_email=user["email"],
+            subject=f"Ticket Confirmed: {event['title']}",
+            template_name="ticket_booking.html",
+            context=ticket_payload,
+            pdf_bytes=pdf_bytes,
+            pdf_filename=f"{event['title']}_ticket.pdf"
+        )
+    except Exception as e:
+        logger.warning("Ticket email failed for %s: %s", user["email"], e)
 
     return {"message": "Payment verified and ticket sent"}
 
