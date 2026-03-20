@@ -2,8 +2,7 @@ import axios from 'axios';
 import type { InternalAxiosRequestConfig } from 'axios';
 
 const api = axios.create({
-  // baseURL: 'https://event-organizer-platform.onrender.com',
-  baseURL: 'http://localhost:8000',
+  baseURL: 'http://35.154.225.67:8000',
 });
 
 api.interceptors.request.use(
