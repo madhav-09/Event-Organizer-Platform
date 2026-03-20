@@ -2,7 +2,7 @@ import { Calendar, MapPin, Clock, Heart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { memo, useMemo } from "react";
 
-const BACKEND_URL = "https://event-organizer-platform.onrender.com";
+const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || "http://13.202.85.18:8000";
 
 const CATEGORY_COLORS: Record<string, string> = {
   Music: "from-pink-500 to-rose-600",
