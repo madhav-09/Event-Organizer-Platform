@@ -2,6 +2,10 @@
 
 A high-performance, full-scale **Online Event Management Platform** inspired by **Townscript**, designed for modern event businesses. This platform enables users to discover, book, and attend events, while providing organizers with a premium, glassmorphic dashboard to manage registrations, ticketing, and attendee engagement.
 
+## Live App
+
+- App live at: http://13.202.85.18
+
 ---
 
 ## 🌟 Key Features
