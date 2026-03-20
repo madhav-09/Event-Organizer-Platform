@@ -54,10 +54,17 @@ jobs:
           mkdir -p ~/.ssh
           python - << 'PY' > ~/.ssh/id_rsa
           import os
-          key = os.environ["EC2_SSH_KEY"].replace("\\n", "\n")
+          key = os.environ.get("EC2_SSH_KEY", "").strip().replace("\r", "")
+          if "\\n" in key:
+              key = key.replace("\\n", "\n")
+          if not key.startswith("-----BEGIN") or "PRIVATE KEY-----" not in key:
+              raise SystemExit("EC2_SSH_KEY is missing or malformed")
+          if not key.endswith("\n"):
+              key += "\n"
           print(key, end="")
           PY
           chmod 600 ~/.ssh/id_rsa
+          ssh-keygen -y -f ~/.ssh/id_rsa > /dev/null
 
       - name: Deploy over SSH
         env:
