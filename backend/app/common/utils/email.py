@@ -18,6 +18,7 @@ SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
 SMTP_PORT = int(os.getenv("SMTP_PORT", 587))
 EMAIL_USER = os.getenv("EMAIL_USER")
 EMAIL_PASS = os.getenv("EMAIL_PASS")
+FROM_EMAIL = os.getenv("FROM_EMAIL") or EMAIL_USER
 SMTP_STARTTLS = os.getenv("SMTP_STARTTLS", "true").lower() in {"1", "true", "yes", "on"}
 SMTP_USE_TLS = os.getenv("SMTP_USE_TLS", "false").lower() in {"1", "true", "yes", "on"}
 
@@ -43,10 +44,10 @@ async def send_email(
         template = env.get_template(template_name)
         html_content = template.render(**context)
 
-        # Build MIME message
-        msg = MIMEMultipart("alternative")
+        # Use multipart/mixed when attachment is present so email clients keep the PDF as attachment.
+        msg = MIMEMultipart("mixed") if pdf_bytes else MIMEMultipart("alternative")
         msg["Subject"] = subject
-        msg["From"] = EMAIL_USER
+        msg["From"] = FROM_EMAIL
         msg["To"] = to_email
 
         msg.attach(MIMEText(html_content, "html"))
