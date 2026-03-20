@@ -53,10 +53,20 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           python - << 'PY' > ~/.ssh/id_rsa
+          import base64
           import os
           key = os.environ.get("EC2_SSH_KEY", "").strip().replace("\r", "")
+          if key.startswith('"') and key.endswith('"'):
+            key = key[1:-1]
           if "\\n" in key:
               key = key.replace("\\n", "\n")
+          if "-----BEGIN" not in key:
+            try:
+              decoded = base64.b64decode(key).decode("utf-8").replace("\r", "")
+              if "-----BEGIN" in decoded:
+                key = decoded
+            except Exception:
+              pass
           if not key.startswith("-----BEGIN") or "PRIVATE KEY-----" not in key:
               raise SystemExit("EC2_SSH_KEY is missing or malformed")
           if not key.endswith("\n"):
@@ -71,7 +81,7 @@ jobs:
           EC2_HOST: ${{ secrets.EC2_HOST }}
           EC2_USERNAME: ${{ secrets.EC2_USERNAME }}
         run: |
-          ssh -o StrictHostKeyChecking=no "$EC2_USERNAME@$EC2_HOST" << 'EOF'
+          ssh -i ~/.ssh/id_rsa -o IdentitiesOnly=yes -o StrictHostKeyChecking=no "$EC2_USERNAME@$EC2_HOST" << 'EOF'
           set -e
           cd ~/Event-Organizer-Platform
           git fetch origin
